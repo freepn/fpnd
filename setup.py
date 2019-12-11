@@ -26,7 +26,7 @@ def read_file(filename):
 setup(
     name='fpnd',
     packages=['node_tools',],
-    scripts=['scripts/fpnd.py']
+    scripts=['scripts/fpnd.py'],
     version=__version__,
     license='LGPL-3.0',
     description='Python fpnd node tools.',
