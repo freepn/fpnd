@@ -31,13 +31,19 @@ async def main():
             await client.get_data('peer')
             peer_data = client.data
             for peer in peer_data:
-                logger.info('Peer: {}'.format(peer.get('address')))
+                peer_status = AttrDict.from_nested_dict(peer)
+                peer_id = peer.get('address')
+                logger.info('Peer: {}'.format(peer_id))
+                cache.update([(peer_id, peer_status)])
 
             # get/display all available network data
             await client.get_data('network')
             network_data = client.data
             for network in network_data:
-                logger.info('Network: {}'.format(network.get('id')))
+                net_status = AttrDict.from_nested_dict(network)
+                net_id = network.get('address')
+                logger.info('Network: {}'.format(net_id))
+                cache.update([(net_id, net_status)])
 
         except exceptions.ZeroTierConnectionError:
             pass
