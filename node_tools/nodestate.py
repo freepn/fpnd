@@ -9,7 +9,7 @@ import aiohttp
 
 from ztcli_api import ZeroTier
 from ztcli_api import exceptions
-from helper_funcs import get_token
+from node_tools.helper_funcs import get_token
 
 
 async def main():
