@@ -18,6 +18,7 @@ async def main():
     async with aiohttp.ClientSession() as session:
         ZT_API = get_token()
         client = ZeroTier(ZT_API, loop, session)
+        #cache.clear()
 
         try:
             # get status details of the local node
@@ -29,21 +30,50 @@ async def main():
 
             # get status details of the node peers
             await client.get_data('peer')
-            peer_data = client.data
-            for peer in peer_data:
+            active_peers = ( peer for peer in client.data )
+            cached_peers = ( peer for peer in list(cache) )
+            active_list = []
+            for peer in active_peers:
                 peer_status = AttrDict.from_nested_dict(peer)
                 peer_id = peer.get('address')
-                logger.info('Peer: {}'.format(peer_id))
-                cache.update([(peer_id, peer_status)])
+                active_list.append(peer_id)
+                if peer_id in cache:
+                    print('Updating peer {}'.format(peer_id))
+                    cache.update([(peer_id, peer_status)])
+                elif peer_id not in cache:
+                    print('Adding peer {}'.format(peer_id))
+                    cache.update([(peer_id, peer_status)])
+            for peer_id in cached_peers:
+                if ( peer_id != node_id and len(peer_id) == 10 and peer_id not in active_list ):
+                    print('Removing peer: {}'.format(peer_id))
+                    try:
+                        del cache[peer_id]
+                    except KeyError:
+                        print('Key {} not found'.format(peer_id))
 
             # get/display all available network data
             await client.get_data('network')
-            network_data = client.data
-            for network in network_data:
+            active_nets = ( net for net in client.data )
+            cached_nets = ( net for net in list(cache) if len(net) == 16 )
+            net_list = []
+            for network in active_nets:
                 net_status = AttrDict.from_nested_dict(network)
-                net_id = network.get('address')
-                logger.info('Network: {}'.format(net_id))
-                cache.update([(net_id, net_status)])
+                net_id = network.get('id')
+                net_list.append(net_id)
+                if net_id in cache:
+                    print('Updating network: {}'.format(net_id))
+                    cache.update([(net_id, net_status)])
+                elif net_id not in cache:
+                    print('Adding network: {}'.format(net_id))
+                    cache.update([(net_id, net_status)])
+            for net_id in cached_nets:
+                if ( net_id not in net_list ):
+                    print('Removing net: {}'.format(net_id))
+                    try:
+                        del cache[net_id]
+                    except KeyError:
+                        print('Key {} not found'.format(net_id))
+
 
         except exceptions.ZeroTierConnectionError:
             pass
