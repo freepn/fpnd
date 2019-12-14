@@ -3,6 +3,23 @@
 """Miscellaneous helper functions."""
 from __future__ import print_function
 
+import ztcli_api
+from node_tools.exceptions import MemberNodeNoDataError as MemberNodeNoDataError
+
+class Constant(tuple):
+    "Pretty display of immutable constant."
+    def __new__(cls, name):
+        return tuple.__new__(cls, (name,))
+
+    def __repr__(self):
+        return '%s' % self[0]
+
+# error return for async state data updates
+ENODATA = Constant('ENODATA')
+
+NODE_SETTINGS = {
+    u'max_cache_age': 300,  # maximum cache age in seconds
+}
 
 def exec_full(filepath):
     import os
@@ -42,7 +59,12 @@ def update_state():
     import pathlib
     here = pathlib.Path(__file__).parent
     node_scr = here.joinpath("nodestate.py")
-    exec_full(node_scr)
+    try:
+        exec_full(node_scr)
+        return 'OK'
+    except:
+        return ENODATA
+        raise MemberNodeNoDataError
 
 
 def get_token():

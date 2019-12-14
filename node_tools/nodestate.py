@@ -7,14 +7,14 @@ import logging
 
 from diskcache import Index
 from ztcli_api import ZeroTier
-from ztcli_api import exceptions
 from node_tools.helper_funcs import get_token, get_cachedir, AttrDict
+from node_tools.exceptions import MemberNodeNoDataError as MemberNodeNoDataError
+
 
 logger = logging.getLogger(__name__)
 
-
 async def main():
-    """Example code to retrieve data from a ZeroTier node using tasks."""
+    """State cache updater to retrieve data from a local ZeroTier node."""
     async with aiohttp.ClientSession() as session:
         ZT_API = get_token()
         client = ZeroTier(ZT_API, loop, session)
@@ -54,30 +54,30 @@ async def main():
             # get/display all available network data
             await client.get_data('network')
             active_nets = ( net for net in client.data )
-            cached_nets = ( net for net in list(cache) if len(net) == 16 )
-            net_list = []
-            for network in active_nets:
+            cached_nets = ( net for net in list(cache) )
+            active_nets = []
+            for net in active_nets:
                 net_status = AttrDict.from_nested_dict(network)
                 net_id = network.get('id')
-                net_list.append(net_id)
+                active_nets.append(net_id)
                 if net_id in cache:
-                    logger.info('Updating network: {}'.format(net_id))
+                    print('Updating network: {}'.format(net_id))
                     cache.update([(net_id, net_status)])
                 elif net_id not in cache:
-                    logger.info('Adding network: {}'.format(net_id))
+                    print('Adding network: {}'.format(net_id))
                     cache.update([(net_id, net_status)])
             for net_id in cached_nets:
-                if ( net_id not in net_list ):
-                    logger.info('Removing net: {}'.format(net_id))
+                if ( net_id != 'utc-time' and len(net_id) == 16 and net_id not in active_nets ):
+                    print('Removing net: {}'.format(net_id))
                     try:
                         del cache[net_id]
                     except KeyError:
                         logger.error('Key {} not found'.format(net_id))
 
 
-        except exceptions.ZeroTierConnectionError:
+        except:
             logger.error('Cache getting stale')
-            raise exceptions.ZeroTierNoDataAvailable
+            raise MemberNodeNoDataError
 
 
 cache = Index(get_cachedir())
