@@ -4,7 +4,8 @@
 from __future__ import print_function
 
 import ztcli_api
-from node_tools.exceptions import MemberNodeNoDataError as MemberNodeNoDataError
+from ztcli_api import ZeroTierConnectionError as ZeroTierConnectionError
+
 
 class Constant(tuple):
     "Pretty display of immutable constant."
@@ -30,6 +31,16 @@ def exec_full(filepath):
     with open(filepath, 'rb') as file:
         exec(compile(file.read(), filepath, 'exec'), global_namespace)
 
+def get_cachedir():
+    """Get state cachedir according to OS (creates it if needed)"""
+    import os
+    import tempfile
+    temp_dir = tempfile.gettempdir()
+    cache_dir = os.path.join(temp_dir,'fpn_state')
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    return cache_dir
+
 
 def get_filepath():
     import platform
@@ -44,34 +55,29 @@ def get_filepath():
         return "C:\ProgramData\ZeroTier\One"
 
 
-def get_cachedir():
-    """Get state cachedir according to OS (creates it if needed)"""
-    import os
-    import tempfile
-    temp_dir = tempfile.gettempdir()
-    cache_dir = os.path.join(temp_dir,'fpn_state')
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    return cache_dir
-
-
-def update_state():
-    import pathlib
-    here = pathlib.Path(__file__).parent
-    node_scr = here.joinpath("nodestate.py")
-    try:
-        exec_full(node_scr)
-        return 'OK'
-    except:
-        return ENODATA
-        raise MemberNodeNoDataError
-
-
 def get_token():
     """Get authentication token (requires root or user acl)"""
     with open(get_filepath()+"/authtoken.secret") as file:
         auth_token = file.read()
     return auth_token
+
+
+def json_check(data):
+    import json
+    print('Data type is: {}'.format(type(data)))
+
+    json_dump = json.dumps(data, indent=4, separators=(',', ': '))
+    json_load = json.loads(json_dump)
+    assert data == json_load
+    print('Dump type is: {}'.format(type(json_dump)))
+    print('Load type is: {}'.format(type(json_load)))
+    print('Format is JSON:')
+    json_pprint(json_load)
+
+
+def json_pprint(obj):
+    import json
+    print(json.dumps(obj, indent=2, separators=(',', ': ')))
 
 
 def json_to_obj(data):
@@ -85,9 +91,16 @@ def json_to_obj(data):
     return json.loads(data, object_hook=lambda d: Namespace(**d))
 
 
-def json_pprint(obj):
-    import json
-    print(json.dumps(obj, indent=2, separators=(',', ': ')))
+def update_state():
+    import pathlib
+    here = pathlib.Path(__file__).parent
+    node_scr = here.joinpath("nodestate.py")
+    try:
+        exec_full(node_scr)
+        return 'OK'
+    except ZeroTierConnectionError as exc:
+        return ENODATA
+        logger.error(str(exc))
 
 
 class AttrDict(dict):

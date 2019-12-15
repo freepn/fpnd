@@ -6,7 +6,6 @@ __all__ = (
     'MemberNodeNoDataError',)
 
 
-
 class MemberNodeError(Exception):
     """Base class for general FPN MemberNode errors."""
 
