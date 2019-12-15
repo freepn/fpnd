@@ -13,6 +13,7 @@ from node_tools.helper_funcs import get_token, get_cachedir, AttrDict
 
 logger = logging.getLogger(__name__)
 
+
 async def main():
     """State cache updater to retrieve data from a local ZeroTier node."""
     async with aiohttp.ClientSession() as session:
@@ -29,8 +30,8 @@ async def main():
 
             # get status details of the node peers
             await client.get_data('peer')
-            active_peers = ( peer for peer in client.data )
-            cached_peers = ( peer for peer in list(cache) )
+            active_peers = (peer for peer in client.data)
+            cached_peers = (peer for peer in list(cache))
             active_list = []
             for peer in active_peers:
                 peer_status = AttrDict.from_nested_dict(peer)
@@ -43,7 +44,7 @@ async def main():
                     logger.info('Adding peer {}'.format(peer_id))
                     cache.update([(peer_id, peer_status)])
             for peer_id in cached_peers:
-                if ( peer_id != node_id and len(peer_id) == 10 and peer_id not in active_list ):
+                if (peer_id != node_id and len(peer_id) == 10 and peer_id not in active_list):
                     logger.info('Removing peer: {}'.format(peer_id))
                     try:
                         del cache[peer_id]
@@ -52,12 +53,12 @@ async def main():
 
             # get all available network data
             await client.get_data('network')
-            active_nets = ( net for net in client.data )
-            cached_nets = ( net for net in list(cache) )
+            active_nets = (net for net in client.data)
+            cached_nets = (net for net in list(cache))
             active_nets = []
             for net in active_nets:
-                net_status = AttrDict.from_nested_dict(network)
-                net_id = network.get('id')
+                net_status = AttrDict.from_nested_dict(net)
+                net_id = net.get('id')
                 active_nets.append(net_id)
                 if net_id in cache:
                     logger.info('Updating network: {}'.format(net_id))
@@ -66,7 +67,7 @@ async def main():
                     logger.info('Adding network: {}'.format(net_id))
                     cache.update([(net_id, net_status)])
             for net_id in cached_nets:
-                if ( len(net_id) == 16 and net_id not in active_nets ):
+                if (len(net_id) == 16 and net_id not in active_nets):
                     logger.info('Removing net: {}'.format(net_id))
                     try:
                         del cache[net_id]

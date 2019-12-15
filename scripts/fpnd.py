@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 # Target:   Python 3.6
 
-import os
 import sys
-import glob
 import time
 import datetime
 import logging
@@ -12,10 +10,21 @@ import logging
 from daemon import Daemon
 from daemon.parent_logger import setup_logging
 
+try:
+    from datetime import timezone
+    utc = timezone.utc
+except ImportError:
+    from daemon.timezone import UTC
+    utc = UTC()
+
 if sys.hexversion >= 0x3020000:
     from configparser import ConfigParser as SafeConfigParser
 else:
     from configparser import SafeConfigParser
+
+
+logger = logging.getLogger(__name__)
+timestamp = datetime.datetime.now()  # use local time for console
 
 
 def config_from_ini():

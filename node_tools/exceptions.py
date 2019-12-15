@@ -12,4 +12,3 @@ class MemberNodeError(Exception):
 
 class MemberNodeNoDataError(MemberNodeError):
     """No data error when (external) API data is not available."""
-

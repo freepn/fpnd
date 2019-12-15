@@ -3,8 +3,10 @@
 """Miscellaneous helper functions."""
 from __future__ import print_function
 
-import ztcli_api
-from ztcli_api import ZeroTierConnectionError as ZeroTierConnectionError
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class Constant(tuple):
@@ -15,15 +17,16 @@ class Constant(tuple):
     def __repr__(self):
         return '%s' % self[0]
 
-# error return for async state data updates
-ENODATA = Constant('ENODATA')
+
+ENODATA = Constant('ENODATA')  # error return for async state data updates
+
 
 NODE_SETTINGS = {
     u'max_cache_age': 300,  # maximum cache age in seconds
 }
 
+
 def exec_full(filepath):
-    import os
     global_namespace = {
         "__file__": filepath,
         "__name__": "__main__",
@@ -31,12 +34,13 @@ def exec_full(filepath):
     with open(filepath, 'rb') as file:
         exec(compile(file.read(), filepath, 'exec'), global_namespace)
 
+
 def get_cachedir():
     """Get state cachedir according to OS (creates it if needed)"""
     import os
     import tempfile
     temp_dir = tempfile.gettempdir()
-    cache_dir = os.path.join(temp_dir,'fpn_state')
+    cache_dir = os.path.join(temp_dir, 'fpn_state')
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
     return cache_dir
@@ -52,7 +56,7 @@ def get_filepath():
     elif platform.system() == "FreeBSD" or platform.system() == "OpenBSD":
         return "/var/db/zerotier-one"
     elif platform.system() == "Windows":
-        return "C:\ProgramData\ZeroTier\One"
+        return "C:\\ProgramData\\ZeroTier\\One"
 
 
 def get_token():
@@ -98,7 +102,7 @@ def update_state():
     try:
         exec_full(node_scr)
         return 'OK'
-    except ZeroTierConnectionError as exc:
+    except Exception as exc:
         return ENODATA
         logger.error(str(exc))
 
@@ -118,4 +122,4 @@ class AttrDict(dict):
             return data
         else:
             return AttrDict({key: AttrDict.from_nested_dict(data[key])
-                                for key in data})
+                             for key in data})
