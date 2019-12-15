@@ -36,9 +36,10 @@ setup(
     author_email='nerdboy@gentoo.org',
     download_url=FPND_DOWNLOAD_URL,
     keywords=['freepn', 'vpn', 'p2p'],
-    dependency_links=[
-        'git+https://github.com/sarnold/ztcli-async.git@master#egg=ztcli_api',
-        'git+https://github.com/sarnold/python-daemon.git@master#egg=daemon',
+    install_requires=[
+        'ztcli-async @ git+https://github.com/sarnold/ztcli-async',
+        'daemon @ git+https://github.com/sarnold/python-daemon',
+        'diskcache @ git+https://github.com/grantjenks/python-diskcache@v4.1.0',
     ],
     classifiers=[
         'Environment :: Console',
