@@ -34,9 +34,12 @@ setup(
     url='https://github.com/sarnold/fpnd',
     author='Stephen L Arnold',
     author_email='nerdboy@gentoo.org',
-    install_requires=['ztcli_async', 'daemon'],
     download_url=FPND_DOWNLOAD_URL,
     keywords=['freepn', 'vpn', 'p2p'],
+    dependency_links=[
+        'git+https://github.com/sarnold/ztcli-async.git@master#egg=ztcli_api',
+        'git+https://github.com/sarnold/python-daemon.git@master#egg=daemon',
+    ],
     classifiers=[
         'Environment :: Console',
         'Intended Audience :: Developers',
