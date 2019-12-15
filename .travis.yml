@@ -8,11 +8,14 @@ python:
     - "nightly"
 
 # command to install dependencies
-install: pip install pytest pytest-pep8 pytest-flake8 tox-travis
+install:
+  - "pip install pytest"
+  - "pip install pytest-pep8"
+  - "pip install pytest-flake8"
 
 # command to run tests (no tests yet)
 script:
-  - tox
+  - py.test --pep8 --flake8 node_tools scripts
 
 matrix:
   fast_finish: true
