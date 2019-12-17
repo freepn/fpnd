@@ -1,0 +1,14 @@
+[Unit]
+Description=fpnd control daemon
+Requires=zerotier-one.service
+After=zerotier-one.service
+
+[Service]
+ExecStart=/usr/sbin/fpnd start
+ExecStop=/usr/sbin/fpnd stop
+Type=simple
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

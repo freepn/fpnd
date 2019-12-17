@@ -31,10 +31,10 @@ setup(
                   'bin/fpn0-setup.sh',
                   'bin/fpn1-down.sh',
                   'bin/fpn1-setup.sh']),
-        ('share/fpnd/etc',  ['debian/fpnd.ini']),
-        ('share/fpnd/init', ['debian/fpnd.service',
-                             'debian/fpnd.sysvinit',
-                             'debian/fpnd.openrc']),
+        ('share/fpnd/etc',  ['etc/fpnd.ini']),
+        ('share/fpnd/init', ['etc/fpnd.service',
+                             'etc/fpnd.sysvinit',
+                             'etc/fpnd.openrc']),
     ],
     scripts=[
         'scripts/fpnd.py'

@@ -1,0 +1,52 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          fs-watcher
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start/stop fs-watcher that watches specified files/folders for changes
+### END INIT INFO
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+DESC="contols fpnd daemon"
+NAME="fpnd"
+DAEMON="/usr/sbin/fpnd"
+DAEMON_CONFIG="/etc/fpnd.ini"
+
+
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+start() {
+    $DAEMON start
+}
+
+stop() {
+    $DAEMON stop
+}
+
+restart() {
+    $DAEMON restart
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+
+    stop)
+        stop
+        ;;
+
+    restart|force-reload)
+        restart
+        ;;
+
+    status)
+        ;;
+    *)
+        echo "Usage: $SCRIPTNAME {start|stop|restart}" >&2
+        exit 3
+        ;;
+esac

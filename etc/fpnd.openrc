@@ -1,0 +1,30 @@
+#!/sbin/openrc-run
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+
+description="fpnd - FreePN daemon"
+command="/usr/sbin/fpnd"
+pidfile="/run/fpnd.pid"
+
+depend() {
+        need zerotier
+        use logger clock
+}
+
+start_pre() {
+	checkpath -q -d -m 0775 -o root:fpnd /var/log/fpnd
+}
+
+start() {
+	ebegin "Starting fpnd"
+	start-stop-daemon --start \
+		--exec $command -- start
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping fpnd"
+	start-stop-daemon  --stop
+		--exec $command -- stop
+	eend $?
+}
