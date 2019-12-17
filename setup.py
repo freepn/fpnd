@@ -27,17 +27,17 @@ setup(
     name='fpnd',
     packages=['node_tools',],
     data_files=[
+        ('sbin', ['bin/fpn0-down.sh',
+                  'bin/fpn0-setup.sh',
+                  'bin/fpn1-down.sh',
+                  'bin/fpn1-setup.sh']),
         ('share/fpnd/etc',  ['debian/fpnd.ini']),
         ('share/fpnd/init', ['debian/fpnd.service',
                              'debian/fpnd.sysvinit',
                              'debian/fpnd.openrc']),
     ],
     scripts=[
-        ('sbin', ['scripts/fpnd.py',])
-        ('sbin', ['bin/fpn0-down.sh',
-                  'bin/fpn0-setup.sh',
-                  'bin/fpn1-down.sh',
-                  'bin/fpn1-setup.sh']),
+        'scripts/fpnd.py'
     ],
     version=__version__,
     license='AGPL-3.0',
