@@ -26,9 +26,21 @@ def read_file(filename):
 setup(
     name='fpnd',
     packages=['node_tools',],
-    scripts=['scripts/fpnd.py'],
+    data_files=[
+        ('share/fpnd/etc',  ['debian/fpnd.ini']),
+        ('share/fpnd/init', ['debian/fpnd.service',
+                             'debian/fpnd.sysvinit',
+                             'debian/fpnd.openrc']),
+    ],
+    scripts=[
+        ('sbin', ['scripts/fpnd.py',])
+        ('sbin', ['bin/fpn0-down.sh',
+                  'bin/fpn0-setup.sh',
+                  'bin/fpn1-down.sh',
+                  'bin/fpn1-setup.sh']),
+    ],
     version=__version__,
-    license='LGPL-3.0',
+    license='AGPL-3.0',
     description='Python fpnd node tools.',
     long_description=read_file('README.rst'),
     url='https://github.com/sarnold/fpnd',

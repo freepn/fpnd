@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # Target:   Python 3.6
 
+import os
 import sys
 import time
 import datetime
@@ -29,7 +30,7 @@ timestamp = datetime.datetime.now()  # use local time for console
 
 def config_from_ini():
     config = SafeConfigParser()
-    candidates = ['/etc/fpnd/settings.ini',
+    candidates = ['/etc/fpnd.ini',
                   'member_settings.ini',
                   ]
     found = config.read(candidates)
@@ -39,7 +40,7 @@ def config_from_ini():
         return None, message
 
     for tgt_ini in found:
-        if 'fpnd' in tgt_ini and config.has_option('Options', 'prefix'):
+        if 'fpnd' in tgt_ini and config['Options']['prefix'] is None:
             message = 'Found system settings...'
             return config, message
         if 'member' in tgt_ini and config.has_option('Options', 'prefix'):
@@ -55,13 +56,18 @@ def do_setup():
     if my_conf is not None:
         debug = my_conf.getboolean('Options', 'debug')
         prefix = my_conf['Options']['prefix']
-        pid_file = my_conf['Paths']['pid_path'] + prefix + my_conf['Options']['pid_name']
-        log_file = my_conf['Paths']['log_path'] + prefix + my_conf['Options']['log_name']
+        pid_path = my_conf['Paths']['pid_path']
+        log_path = my_conf['Paths']['log_path']
+        pid_file = my_conf['Options']['pid_name']
+        log_file = + my_conf['Options']['log_name']
+        pid = os.path.join(pid_path, prefix, pid_file)
+        log = os.path.join(log_path, prefix, log_file)
+
     else:
         debug = False
-        pid_file = '/tmp/fpnd.pid'
-        log_file = '/tmp/fpnd.log'
-    return pid_file, log_file, debug, msg
+        pid = '/tmp/fpnd.pid'
+        log = '/tmp/fpnd.log'
+    return pid, log, debug, msg
 
 
 # Inherit from Daemon class
