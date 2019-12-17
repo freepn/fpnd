@@ -8,7 +8,7 @@ except ImportError:
     from distutils.core import setup
 
 
-__version__ = '0.0.1'
+__version__ = '0.0.4'
 
 FPND_DOWNLOAD_URL = (
     'https://github.com/sarnold/fpnd/tarball/' + __version__
@@ -27,17 +27,17 @@ setup(
     name='fpnd',
     packages=['node_tools',],
     data_files=[
-        ('sbin', ['bin/fpn0-down.sh',
-                  'bin/fpn0-setup.sh',
-                  'bin/fpn1-down.sh',
-                  'bin/fpn1-setup.sh']),
+        ('sbin', ['bin/fpn0-down',
+                  'bin/fpn0-setup',
+                  'bin/fpn1-down',
+                  'bin/fpn1-setup']),
         ('share/fpnd/etc',  ['etc/fpnd.ini']),
         ('share/fpnd/init', ['etc/fpnd.service',
                              'etc/fpnd.sysvinit',
                              'etc/fpnd.openrc']),
     ],
     scripts=[
-        'scripts/fpnd.py'
+        'scripts/fpnd'
     ],
     version=__version__,
     license='AGPL-3.0',
