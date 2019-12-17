@@ -37,7 +37,7 @@ setup(
                              'etc/fpnd.openrc']),
     ],
     scripts=[
-        'scripts/fpnd'
+        'scripts/fpnd.py'
     ],
     version=__version__,
     license='AGPL-3.0',
