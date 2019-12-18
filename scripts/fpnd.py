@@ -31,6 +31,7 @@ timestamp = datetime.datetime.now()  # use local time for console
 def config_from_ini():
     config = SafeConfigParser()
     candidates = ['/etc/fpnd.ini',
+                  '/usr/lib/fpnd/fpnd.ini',
                   'member_settings.ini',
                   ]
     found = config.read(candidates)

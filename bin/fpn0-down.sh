@@ -55,16 +55,6 @@ ZT_INTERFACE=$(zerotier-cli get "${ZT_NETWORK}" portDeviceName)
 ZT_ADDRESS=$(zerotier-cli get "${ZT_NETWORK}" ip4)
 ZT_GATEWAY=$(zerotier-cli -j listnetworks | grep "${ZT_INTERFACE}" -A 14 | grep via | awk '{ print $2 }' | tail -n 1 | cut -d'"' -f2)
 
-#ZT_OUT_IFACE="fpn0"
-# apparently we stop passing data if names are different on both ends :/
-#if [[ -n $ZT_INTERFACE && -n $ZT_ADDRESS && -z $ZT_OUT_IFACE ]]; then
-    #echo "Renaming local egress interface to fpn0..."
-    #ip link set "$ZT_INTERFACE" down
-    #ip link set "$ZT_INTERFACE" name "$ZT_OUT_IFACE"
-    #ip link set "$ZT_OUT_IFACE" up
-    #ZT_INTERFACE="$ZT_OUT_IFACE"
-#fi
-
 TABLE_NAME="fpn0-route"
 TABLE_PATH="/etc/iproute2/rt_tables"
 FPN_RT_TABLE=$(cat "${TABLE_PATH}" | { grep -o "${TABLE_NAME}" || test $? = 1; })
@@ -85,6 +75,7 @@ else
 fi
 
 IPV4_INTERFACE=$(ip -o link show up | awk -F': ' '{print $2}' | grep -e 'eth' -e 'en' -e 'wl' -e 'mlan' | head -n 1)
+
 # set this to your "normal" network interface if needed
 #IPV4_INTERFACE="eth0"
 #IPV4_INTERFACE="wlan0"

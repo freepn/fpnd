@@ -1,15 +1,12 @@
 #!/bin/bash
-# fpn1-setup.sh v0.0
+# fpn1-down.sh v0.0
 #   Configures incoming FPN routing interface/rules on target node
 #
 # PREREQS:
-#   1. zt/iptables/iproute2 plus assoc. kernel modules installed on target node
-#   2. network controller has available network with global default route
-#   3. target node has been joined and authorized on the above network
-#   4. target node has been configured as default gateway on the above network
+#   1. The fpn1-setup.sh script has been run
+#   2. current test is complete
 #
-# NOTE you may provide the ZT network ID as the only argument if
-#      it does not automatically select the correct FPN1 network ID
+# NOTE you must provide the ZT network ID as the only argument
 
 #set -x
 
@@ -42,12 +39,6 @@ if ((num_zt_tgts < 1)); then
     echo "No FPN networks found!!"
     echo "Has this device joined a network yet?"
     exit 1
-elif ((num_zt_tgts < 2)); then
-    echo "Only 1 FPN network found!!"
-    echo "Has this device joined a second network yet?"
-    exit 1
-elif ((num_zt_tgts = 2)); then
-    echo "Two FPN networks found, parsing network IDs..."
 fi
 
 while read -r line; do
@@ -74,16 +65,6 @@ fi
 ZT_INTERFACE=$(zerotier-cli get "${ZT_SRC_NETID}" portDeviceName)
 ZT_SRC_ADDR=$(zerotier-cli get "${ZT_SRC_NETID}" ip4)
 
-#ZT_IN_IFACE="fpn1"
-# apparently we stop passing data if names are different on both ends :/
-#if [[ -n $ZT_INTERFACE && -n $ZT_SRC_ADDR && -z $ZT_IN_IFACE ]]; then
-    #echo "Renaming local ingress interface to fpn1..."
-    #ip link set "$ZT_INTERFACE" down
-    #ip link set "$ZT_INTERFACE" name "$ZT_IN_IFACE"
-    #ip link set "$ZT_IN_IFACE" up
-    #ZT_INTERFACE="$ZT_IN_IFACE"
-#fi
-
 # this should be the active interface with default route
 IPV4_INTERFACE=$(ip -o link show up | awk -F': ' '{print $2}' | grep -e 'en' -e 'wl' -e 'lan' -e 'wan' -e 'eth' | head -n 1)
 INET_GATEWAY=$(ip route show | awk '/default / {print $3}')
@@ -105,17 +86,22 @@ if [[ -n $VERBOSE ]]; then
     echo "  INET interface: ${IPV4_INTERFACE}"
     echo "  INET address: ${INET_ADDRESS}"
     echo "  INET gateway: ${INET_GATEWAY}"
+    echo ""
 fi
 
-echo "Allow forwarding for FPN source traffic"
-sysctl -w net.ipv4.ip_forward=1
+echo "Reset forwarding for FPN source traffic"
+sysctl -w net.ipv4.ip_forward=0
 
 # setup nat/masq to forward outbound/return traffic
-iptables -t nat -A POSTROUTING -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -j SNAT --to-source "${INET_ADDRESS}"
-iptables -A FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 80 -j ACCEPT
-iptables -A FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 443 -j ACCEPT
-iptables -A FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
-iptables -A FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 443 -j ACCEPT
+echo "Deleting nat and forwarding rules..."
+iptables -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 80 -j ACCEPT
+iptables -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 443 -j ACCEPT
+iptables -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
+iptables -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 443 -j ACCEPT
+iptables -t nat -D POSTROUTING -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -j SNAT --to-source "${INET_ADDRESS}"
+
+#echo "Leaving FPN1 network..."
+#zerotier-cli leave "${ZT_SRC_NETID}"
 
 echo ""
 if ((failures < 1)); then
