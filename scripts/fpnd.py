@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3.6
 # -*- coding: utf-8 -*-
 # Target:   Python 3.6
 
@@ -31,6 +31,7 @@ timestamp = datetime.datetime.now()  # use local time for console
 def config_from_ini():
     config = SafeConfigParser()
     candidates = ['/etc/fpnd.ini',
+                  '/etc/fpnd/fpnd.ini',
                   '/usr/lib/fpnd/fpnd.ini',
                   'member_settings.ini',
                   ]
@@ -38,10 +39,10 @@ def config_from_ini():
 
     if not found:
         message = 'No usable cfg found, files in /tmp/ dir.'
-        return None, message
+        return False, message
 
     for tgt_ini in found:
-        if 'fpnd' in tgt_ini and config['Options']['prefix'] is None:
+        if 'fpnd' in tgt_ini:
             message = 'Found system settings...'
             return config, message
         if 'member' in tgt_ini and config.has_option('Options', 'prefix'):
@@ -54,13 +55,16 @@ def config_from_ini():
 
 def do_setup():
     my_conf, msg = config_from_ini()
-    if my_conf is not None:
+    if my_conf:
         debug = my_conf.getboolean('Options', 'debug')
-        prefix = my_conf['Options']['prefix']
+        if not 'system' in msg:
+            prefix = my_conf['Options']['prefix']
+        else:
+            prefix = ''
         pid_path = my_conf['Paths']['pid_path']
         log_path = my_conf['Paths']['log_path']
         pid_file = my_conf['Options']['pid_name']
-        log_file = + my_conf['Options']['log_name']
+        log_file = my_conf['Options']['log_name']
         pid = os.path.join(pid_path, prefix, pid_file)
         log = os.path.join(log_path, prefix, log_file)
 

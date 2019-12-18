@@ -3,11 +3,11 @@
 # Distributed under the terms of the GNU General Public License v2
 
 description="fpnd - FreePN daemon"
-command="/usr/sbin/fpnd"
-pidfile="/run/fpnd.pid"
+command="/usr/bin/fpnd.py"
+pidfile="/var/run/${SVCNAME}.pid"
 
 depend() {
-        need zerotier
+#        need zerotier
         use logger clock
 }
 
@@ -18,13 +18,13 @@ start_pre() {
 start() {
 	ebegin "Starting fpnd"
 	start-stop-daemon --start \
-		--exec $command -- start
+		--exec $command --pidfile $pidfile -- start
 	eend $?
 }
 
 stop() {
 	ebegin "Stopping fpnd"
-	start-stop-daemon  --stop
-		--exec $command -- stop
+	start-stop-daemon  --stop \
+		--exec $command --pidfile $pidfile -- stop
 	eend $?
 }
