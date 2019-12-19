@@ -8,7 +8,7 @@ except ImportError:
     from distutils.core import setup
 
 
-__version__ = '0.0.4'
+__version__ = '0.7.1'
 
 FPND_DOWNLOAD_URL = (
     'https://github.com/sarnold/fpnd/tarball/' + __version__
@@ -30,15 +30,15 @@ setup(
         ('lib/fpnd', ['bin/fpn0-down.sh',
                       'bin/fpn0-setup.sh',
                       'bin/fpn1-down.sh',
-                      'bin/fpn1-setup.sh']),
-        ('share/fpnd', ['etc/fpnd.ini']),
-        ('lib/fpnd', ['scripts/fpnd.py',
+                      'bin/fpn1-setup.sh',
+                      'etc/fpnd.ini',
+                      'scripts/fpnd.py',
                       'scripts/fpn_cache_check.py']),
         ('bin', ['bin/fpnd']),
     ],
     version=__version__,
     license='AGPL-3.0',
-    description='Python fpnd node tools.',
+    description='Python and shell fpnd node tools.',
     long_description=read_file('README.rst'),
     url='https://github.com/sarnold/fpnd',
     author='Stephen L Arnold',
@@ -46,8 +46,8 @@ setup(
     download_url=FPND_DOWNLOAD_URL,
     keywords=['freepn', 'vpn', 'p2p'],
     install_requires=[
-        'ztcli-async @ git+https://github.com/sarnold/ztcli-async',
-        'daemon @ git+https://github.com/sarnold/python-daemon',
+        'ztcli-async @ git+https://github.com/sarnold/ztcli-async@0.0.3',
+        'daemon @ git+https://github.com/sarnold/python-daemon@0.2.1',
         'diskcache @ git+https://github.com/grantjenks/python-diskcache@v4.1.0',
     ],
     classifiers=[
@@ -60,5 +60,4 @@ setup(
         'Programming Language :: Python :: 3',
         'Natural Language :: English',
     ],
-    python_requires='!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
 )
