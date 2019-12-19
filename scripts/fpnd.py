@@ -57,7 +57,7 @@ def do_setup():
     my_conf, msg = config_from_ini()
     if my_conf:
         debug = my_conf.getboolean('Options', 'debug')
-        if not 'system' in msg:
+        if 'system' not in msg:
             prefix = my_conf['Options']['prefix']
         else:
             prefix = ''
