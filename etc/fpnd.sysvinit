@@ -1,6 +1,6 @@
 #!/bin/bash
 ### BEGIN INIT INFO
-# Provides:          fs-watcher
+# Provides:          fpnd
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
@@ -11,12 +11,12 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="contols fpnd daemon"
 NAME="fpnd"
-DAEMON="/usr/sbin/fpnd"
+DAEMON="/usr/bin/fpnd"
 DAEMON_CONFIG="/etc/fpnd.ini"
 
+test -f $DAEMON || exit 0
 
-# Exit if the package is not installed
-[ -x "$DAEMON" ] || exit 0
+. /lib/lsb/init-functions
 
 start() {
     $DAEMON start
@@ -46,7 +46,7 @@ case "$1" in
     status)
         ;;
     *)
-        echo "Usage: $SCRIPTNAME {start|stop|restart}" >&2
-        exit 3
+        log_action_msg "Usage: $SCRIPTNAME {start|stop|restart|force-reload}" >&2
+        exit 2
         ;;
 esac

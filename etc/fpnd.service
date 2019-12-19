@@ -4,8 +4,8 @@ Requires=zerotier-one.service
 After=zerotier-one.service
 
 [Service]
-ExecStart=/usr/sbin/fpnd start
-ExecStop=/usr/sbin/fpnd stop
+ExecStart=/usr/lib/fpnd/fpnd.py start
+ExecStop=/usr/lib/fpnd/fpnd.py stop
 Type=simple
 Restart=always
 RestartSec=5

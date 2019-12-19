@@ -34,7 +34,6 @@ setup(
                       'etc/fpnd.ini',
                       'scripts/fpnd.py',
                       'scripts/fpn_cache_check.py']),
-        ('bin', ['bin/fpnd']),
     ],
     version=__version__,
     license='AGPL-3.0',

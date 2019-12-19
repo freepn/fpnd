@@ -3,7 +3,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 description="fpnd - FreePN daemon"
-command="/usr/bin/fpnd.py"
+command="/usr/sbin/fpnd.py"
 pidfile="/var/run/${SVCNAME}.pid"
 
 depend() {
