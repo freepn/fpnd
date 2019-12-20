@@ -10,6 +10,7 @@ import logging
 
 from daemon import Daemon
 from daemon.parent_logger import setup_logging
+from node_tools.network_funcs import get_net_cmds
 
 try:
     from datetime import timezone
@@ -57,6 +58,7 @@ def do_setup():
     my_conf, msg = config_from_ini()
     if my_conf:
         debug = my_conf.getboolean('Options', 'debug')
+        home = my_conf['Paths']['home_dir']
         if 'system' not in msg:
             prefix = my_conf['Options']['prefix']
         else:
@@ -70,31 +72,35 @@ def do_setup():
 
     else:
         debug = False
+        home = False
         pid = '/tmp/fpnd.pid'
         log = '/tmp/fpnd.log'
-    return pid, log, debug, msg
+    return home, pid, log, debug, msg
 
 
 # Inherit from Daemon class
 class fpnDaemon(Daemon):
     # implement run method
     def run(self):
+        up0, down0, up1, down1 = get_net_cmds(self.home_dir)
 
         # Wait
         time.sleep(30)
 
 
 if __name__ == "__main__":
-    pid_file, log_file, debug, msg = do_setup()
+    home, pid_file, log_file, debug, msg = do_setup()
     setup_logging(debug, log_file)
     logger = logging.getLogger("fpnd")
+    if not home:
+        home = '.'
 
     if len(sys.argv) == 2:
         arg = sys.argv[1]
         if arg in ('start'):
             logger.info(msg)
         if arg in ('start', 'stop', 'restart'):
-            d = fpnDaemon(pid_file, verbose=0)
+            d = fpnDaemon(pid_file, home_dir=home, verbose=0)
             getattr(d, arg)()
     else:
         print("usage: %s start|stop|restart" % sys.argv[0])

@@ -8,6 +8,8 @@ import logging
 from diskcache import Index
 from ztcli_api import ZeroTier
 from ztcli_api import ZeroTierConnectionError
+from node_tools.cache_funcs import update_node_data, update_peer_data
+from node_tools.cache_funcs import find_key
 from node_tools.helper_funcs import get_token, get_cachedir, AttrDict
 
 
@@ -23,14 +25,20 @@ async def main():
         try:
             # get status details of the local node
             await client.get_data('status')
-            status_data = AttrDict.from_nested_dict(client.data)
-            node_id = client.data.get('address')
+            node_data = client.data
+            node_id = node_data.get('address')
             logger.info('Found node: {}'.format(node_id))
-            cache.update([(node_id, status_data)])
+            # status = AttrDict.from_nested_dict(node_data)
+            update_node_data(cache, node_data)
+            node_key = find_key(cache, 'node')
+            print('Returned node key is: {}'.format(node_key))
 
             # get status details of the node peers
             await client.get_data('peer')
-            active_peers = (peer for peer in client.data)
+            peer_data = client.data
+            logger.info('Found {} peers'.format(len(peer_data)))
+            update_peer_data(cache, peer_data)
+            active_peers = (peer for peer in peer_data)
             cached_peers = (peer for peer in list(cache))
             active_list = []
             for peer in active_peers:
