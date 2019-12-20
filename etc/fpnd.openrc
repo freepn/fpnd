@@ -1,10 +1,13 @@
 #!/sbin/openrc-run
-# Copyright 1999-2013 Gentoo Foundation
+# Copyright 1999-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
+
+CONFIG="/etc/fpnd/fpnd.ini"
 
 description="fpnd - FreePN daemon"
 command="/usr/sbin/fpnd.py"
-pidfile="/var/run/${SVCNAME}.pid"
+pidfile="/run/${SVCNAME}.pid"
+command_args="start"
 
 depend() {
 #        need zerotier
@@ -12,19 +15,8 @@ depend() {
 }
 
 start_pre() {
-	checkpath -q -d -m 0775 -o root:fpnd /var/log/fpnd
-}
-
-start() {
-	ebegin "Starting fpnd"
-	start-stop-daemon --start \
-		--exec $command --pidfile $pidfile -- start
-	eend $?
-}
-
-stop() {
-	ebegin "Stopping fpnd"
-	start-stop-daemon  --stop \
-		--exec $command --pidfile $pidfile -- stop
-	eend $?
+	if [ ! -f ${CONFIG} ]; then
+		eerror "Configuration file ${CONFIG} not found"
+		return 1
+	fi
 }
