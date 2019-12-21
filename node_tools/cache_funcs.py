@@ -58,7 +58,8 @@ def load_cache_by_type(cache, data, key_str):
                     create_cache_entry(cache, item, key_str)
                 elif not item:
                     logger.debug('Removing cache entry for key: {}'.format(key))
-                    del cache[key]
+                    with cache.transact():
+                        del cache[key]
                 else:
                     update_cache_entry(cache, item, key)
     key_list = find_keys(cache, key_str)
