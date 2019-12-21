@@ -22,7 +22,7 @@ exec &> >(tee -ia /tmp/fpn1-setup-${DATE}_output.log)
 exec 2> >(tee -ia /tmp/fpn1-setup-${DATE}_error.log)
 
 # uncomment for more output
-VERBOSE="anything"
+#VERBOSE="anything"
 
 # uncomment AND set if you have a weird interface name that depends
 # on eth0 UP but null, eg, this is needed on espressobin
@@ -30,8 +30,8 @@ VERBOSE="anything"
 
 ZT_UP=$(/etc/init.d/zerotier status | grep -o started)
 if [[ $ZT_UP != "started" ]]; then
-    echo "FPN zerotier service is not running!!"
-    echo "Please start the zerotier service and then re-run this script."
+    [[ -n $VERBOSE ]] && echo "FPN zerotier service is not running!!"
+    [[ -n $VERBOSE ]] && echo "Please start the zerotier service and then re-run this script."
     exit 1
 fi
 
@@ -47,28 +47,29 @@ elif ((num_zt_tgts < 2)); then
     echo "Has this device joined a second network yet?"
     exit 1
 elif ((num_zt_tgts = 2)); then
-    echo "Two FPN networks found, parsing network IDs..."
+    [[ -n $VERBOSE ]] && echo "Two FPN networks found, parsing network IDs..."
 fi
 
 while read -r line; do
-    echo "Checking network..."
+    [[ -n $VERBOSE ]] && echo "Checking network..."
     LAST_OCTET=$(echo "$line" | cut -d"/" -f2 | cut -d"," -f2 | cut -d'.' -f4)
     ZT_NET_ID=$(echo "$line" | cut -d" " -f3)
     if [[ $LAST_OCTET = 1 ]]; then
         ZT_SRC_NETID="${ZT_NET_ID}"
-        echo "  Found $ZT_SRC_NETID"
+        [[ -n $VERBOSE ]] && echo "  Found $ZT_SRC_NETID"
         break
     else
-        echo "  No gateway found"
+        [[ -n $VERBOSE ]] && echo "  No gateway found"
     fi
 done < <(zerotier-cli listnetworks | grep zt)
 
 ZT_SRC_NETID=${1:-$ZT_SRC_NETID}
 
 if [[ -n $ZT_SRC_NETID ]]; then
-    echo "Using FPN1 ID: $ZT_SRC_NETID"
+    [[ -n $VERBOSE ]] && echo "Using FPN1 ID: $ZT_SRC_NETID"
 else
     echo "Please provide the network ID as argument."
+    exit 1
 fi
 
 ZT_INTERFACE=$(zerotier-cli get "${ZT_SRC_NETID}" portDeviceName)
@@ -97,8 +98,12 @@ if [[ -n $VERBOSE ]]; then
     echo "  INET gateway: ${INET_GATEWAY}"
 fi
 
-echo "Allow forwarding for FPN source traffic"
-sysctl -w net.ipv4.ip_forward=1
+if [[ -n $VERBOSE ]]; then
+    echo "Allow forwarding for FPN source traffic"
+    sysctl -w net.ipv4.ip_forward=1
+else
+    sysctl -w net.ipv4.ip_forward=1 > /dev/null 2>&1
+fi
 
 # setup nat/masq to forward outbound/return traffic
 iptables -t nat -A POSTROUTING -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -j SNAT --to-source "${INET_ADDRESS}"
@@ -107,7 +112,7 @@ iptables -A FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET
 iptables -A FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
 iptables -A FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 443 -j ACCEPT
 
-echo ""
+[[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then
     echo "Success"
 else

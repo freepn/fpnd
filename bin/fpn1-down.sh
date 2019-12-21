@@ -19,7 +19,7 @@ exec &> >(tee -ia /tmp/fpn1-setup-${DATE}_output.log)
 exec 2> >(tee -ia /tmp/fpn1-setup-${DATE}_error.log)
 
 # uncomment for more output
-VERBOSE="anything"
+#VERBOSE="anything"
 
 # uncomment AND set if you have a weird interface name that depends
 # on eth0 UP but null, eg, this is needed on espressobin
@@ -36,30 +36,31 @@ zt_route_tgts=( $(ip route show | grep zt | cut -d" " -f3) )
 num_zt_tgts=${#zt_route_tgts[@]}
 
 if ((num_zt_tgts < 1)); then
-    echo "No FPN networks found!!"
-    echo "Has this device joined a network yet?"
+    [[ -n $VERBOSE ]] && echo "No FPN networks found!!"
+    [[ -n $VERBOSE ]] && echo "Has this device joined a network yet?"
     exit 1
 fi
 
 while read -r line; do
-    echo "Checking network..."
+    [[ -n $VERBOSE ]] && echo "Checking network..."
     LAST_OCTET=$(echo "$line" | cut -d"/" -f2 | cut -d"," -f2 | cut -d'.' -f4)
     ZT_NET_ID=$(echo "$line" | cut -d" " -f3)
     if [[ $LAST_OCTET = 1 ]]; then
         ZT_SRC_NETID="${ZT_NET_ID}"
-        echo "  Found $ZT_SRC_NETID"
+        [[ -n $VERBOSE ]] && echo "  Found $ZT_SRC_NETID"
         break
     else
-        echo "  No gateway found"
+        [[ -n $VERBOSE ]] && echo "  No gateway found"
     fi
 done < <(zerotier-cli listnetworks | grep zt)
 
 ZT_SRC_NETID=${1:-$ZT_SRC_NETID}
 
 if [[ -n $ZT_SRC_NETID ]]; then
-    echo "Using FPN1 ID: $ZT_SRC_NETID"
+    [[ -n $VERBOSE ]] && echo "Using FPN1 ID: $ZT_SRC_NETID"
 else
     echo "Please provide the network ID as argument."
+    exit 1
 fi
 
 ZT_INTERFACE=$(zerotier-cli get "${ZT_SRC_NETID}" portDeviceName)
@@ -89,11 +90,15 @@ if [[ -n $VERBOSE ]]; then
     echo ""
 fi
 
-echo "Reset forwarding for FPN source traffic"
-sysctl -w net.ipv4.ip_forward=0
+if [[ -n $VERBOSE ]]; then
+    echo "Reset forwarding for FPN source traffic"
+    sysctl -w net.ipv4.ip_forward=0
+else
+    sysctl -w net.ipv4.ip_forward=0 > /dev/null 2>&1
+fi
 
 # setup nat/masq to forward outbound/return traffic
-echo "Deleting nat and forwarding rules..."
+[[ -n $VERBOSE ]] && echo "Deleting nat and forwarding rules..."
 iptables -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 80 -j ACCEPT
 iptables -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 443 -j ACCEPT
 iptables -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
@@ -103,7 +108,7 @@ iptables -t nat -D POSTROUTING -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -j SNAT
 #echo "Leaving FPN1 network..."
 #zerotier-cli leave "${ZT_SRC_NETID}"
 
-echo ""
+[[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then
     echo "Success"
 else
