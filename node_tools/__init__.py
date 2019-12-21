@@ -1,8 +1,7 @@
 # coding: utf-8
 
-from .cache_funcs import find_key as find_key
-from .cache_funcs import update_node_data as update_node_data
-from .cache_funcs import update_peer_data as update_peer_data
+from .cache_funcs import find_keys as find_keys
+from .cache_funcs import load_cache_by_type as load_cache_by_type
 from .helper_funcs import get_cachedir as get_cachedir
 from .helper_funcs import get_token as get_token
 from .helper_funcs import json_check as json_check
@@ -22,14 +21,13 @@ __all__ = [
     'MemberNodeError',
     'MemberNodeNoDataError',
     'NODE_SETTINGS',
-    'find_key',
+    'find_keys',
     'get_cachedir',
     'get_net_cmds',
     'get_token',
     'json_check',
     'json_pprint',
+    'load_cache_by_type',
     'run_net_cmd',
-    'update_node_data',
-    'update_peer_data',
     'update_state',
 ]

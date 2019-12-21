@@ -8,39 +8,68 @@ from node_tools.helper_funcs import AttrDict
 logger = logging.getLogger(__name__)
 
 
-def find_key(cache, key_str):
-    """Find key(s) in cache using key type string, return list of keys."""
+def create_cache_entry(cache, data, key_str):
+    """Load new cache entry by key type."""
+    new_data = AttrDict.from_nested_dict(data)
+    logger.debug('Pushing entry for: {}'.format(key_str))
+    with cache.transact():
+        key = cache.push(new_data, prefix=key_str)
+    logger.debug('New key created for: {}'.format(key))
+
+
+def find_keys(cache, key_str):
+    """Find API key(s) in cache using key type string, return list of keys."""
     key_types = ['node', 'peer', 'net']
     if key_str not in key_types:
-        logger.error('Key type {} not allowed'.format(key_str))
+        logger.debug('Key type {} not valid'.format(key_str))
         return None
-    cache_keys = list(cache)
-    valid_keys = [key for key in cache_keys if key_str in key]
-    return valid_keys
+    valid_keys = [key for key in list(cache) if key_str in key]
+    if not valid_keys:
+        logger.debug('Key type {} not in cache'.format(key_str))
+        # logger.error('valid_keys: {}'.format(valid_keys))
+        return None
+    else:
+        return valid_keys
 
 
 def get_node_status():
     """Get node ID and status from cache."""
+    raise NotImplementedError
 
 
-def update_net_data(cache, data):
-    """Load or update network data for all networks."""
-
-
-def update_node_data(cache, data):
-    """Load or update node status data."""
-    keys = list(cache)
-    node_data = AttrDict.from_nested_dict(data)
-    old_id = node_data.get('address')
-    if any(old_id in key for key in keys):
-        del cache[old_id]
-    if any("node" in key for key in keys):
-        key_list = [key for key in keys if 'node' in key]
-        if len(key_list) == 1:
-            cache[key_list[0]] = node_data
+def load_cache_by_type(cache, data, key_str):
+    """Load or update cache by key type string (uses find_keys)."""
+    from itertools import zip_longest
+    key_list = find_keys(cache, key_str)
+    logger.debug('Starting load_cache with key_list: {}'.format(key_list))
+    if not key_list:
+        if 'node' in key_str:
+            create_cache_entry(cache, data, key_str)
+        else:
+            for item in data:
+                create_cache_entry(cache, item, key_str)
     else:
-        cache.push(node_data, prefix='node')
+        if 'node' in str(key_list):
+            key, _ = cache.pull(prefix=key_str)
+            update_cache_entry(cache, data, key)
+        else:
+            for key, item in zip_longest(key_list, data):
+                if not key:
+                    create_cache_entry(cache, item, key_str)
+                elif not item:
+                    logger.debug('Removing cache entry for key: {}'.format(key))
+                    del cache[key]
+                else:
+                    update_cache_entry(cache, item, key)
+    key_list = find_keys(cache, key_str)
+    logger.debug('Leaving load_cache with key_list: {}'.format(key_list))
 
 
-def update_peer_data(cache, data):
-    """Load or update peer data for all peers."""
+def update_cache_entry(cache, data, key):
+    """Update single cache entry by key."""
+    new_data = AttrDict.from_nested_dict(data)
+    old_id = new_data.get('address')
+    logger.error('New data has address: {}'.format(old_id))
+    logger.debug('Updating cache entry for key: {}'.format(key))
+    with cache.transact():
+        cache[key] = new_data
