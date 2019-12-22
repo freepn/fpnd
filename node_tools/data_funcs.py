@@ -36,7 +36,13 @@ def do_logstats(msg=None):
 def with_cache_aging(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        """reset timestamp and clear if needed"""
+        """
+        cache wrapper for update_runner() function
+        * get timestamp and clear cache if stale
+        * log some debug info
+        * update cache timestamp based on result
+        :return: result from update_runner()
+        """
         utc_stamp = datetime.datetime.now(utc)
         do_logstats('Entering cache wrapper')
         if 'utc-time' in cache:
@@ -48,8 +54,11 @@ def with_cache_aging(func):
                 logger.debug('Cache data is too old!!')
                 logger.debug('Stale data will be removed!!')
                 cache.clear()
+            else:
+                logger.info('Cache is {} sec old (still valid)'.format(cache_age.seconds))
 
         result = func(*args, **kwargs)
+        logger.info('Get data result was: {}'.format(result))
 
         if result is ENODATA or result is None:
             cache.update([('utc-time', stamp)])
@@ -70,11 +79,11 @@ def update_runner():
         size = len(cache)
     except:  # noqa: E722
         logger.debug('No data available, cache was NOT updated')
+        pass
     else:
         if size < 1:
             logger.debug('No data available (live or cached)')
         elif size > 0:
-            logger.debug('Get data result: {}'.format(res))
             do_logstats()
         else:
             logger.debug('Cache empty and API returned ENODATA')

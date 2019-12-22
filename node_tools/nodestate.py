@@ -12,7 +12,7 @@ from node_tools.cache_funcs import find_keys, load_cache_by_type
 from node_tools.helper_funcs import get_token, get_cachedir
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('nodestate')
 
 
 async def main():

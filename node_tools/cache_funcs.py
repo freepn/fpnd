@@ -73,7 +73,7 @@ def update_cache_entry(cache, data, key):
     else:
         tgt = 'address'
     old_id = new_data.get(tgt)
-    logger.info('New data has address: {}'.format(old_id))
+    logger.info('New data has id: {}'.format(old_id))
     logger.debug('Updating cache entry for key: {}'.format(key))
     with cache.transact():
         cache[key] = new_data
