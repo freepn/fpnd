@@ -72,7 +72,7 @@ def with_cache_aging(func):
 
 @with_cache_aging
 def update_runner():
-    do_logstats('Entering update runner')
+    do_logstats('Entering update_runner')
 
     try:
         res = update_state()
@@ -87,4 +87,5 @@ def update_runner():
             do_logstats()
         else:
             logger.debug('Cache empty and API returned ENODATA')
+    do_logstats('Leaviing update_runner')
     return res

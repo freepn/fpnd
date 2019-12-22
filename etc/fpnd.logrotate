@@ -1,0 +1,7 @@
+/var/log/fpnd.log {
+	compress
+	daily
+	rotate 7
+	missingok
+	copytruncate
+}
