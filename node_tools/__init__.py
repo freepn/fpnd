@@ -1,7 +1,9 @@
 # coding: utf-8
+"""Main fpnd node module"""
 
 from .cache_funcs import find_keys as find_keys
 from .cache_funcs import load_cache_by_type as load_cache_by_type
+from .data_funcs import update_runner as update_runner
 from .helper_funcs import get_cachedir as get_cachedir
 from .helper_funcs import get_token as get_token
 from .helper_funcs import json_check as json_check
@@ -29,5 +31,6 @@ __all__ = [
     'json_pprint',
     'load_cache_by_type',
     'run_net_cmd',
+    'update_runner',
     'update_state',
 ]

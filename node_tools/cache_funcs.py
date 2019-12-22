@@ -26,7 +26,6 @@ def find_keys(cache, key_str):
     valid_keys = [key for key in list(cache) if key_str in key]
     if not valid_keys:
         logger.debug('Key type {} not in cache'.format(key_str))
-        # logger.error('valid_keys: {}'.format(valid_keys))
         return None
     else:
         return valid_keys
@@ -69,8 +68,12 @@ def load_cache_by_type(cache, data, key_str):
 def update_cache_entry(cache, data, key):
     """Update single cache entry by key."""
     new_data = AttrDict.from_nested_dict(data)
-    old_id = new_data.get('address')
-    logger.error('New data has address: {}'.format(old_id))
+    if 'net' in str(key):
+        tgt = 'id'
+    else:
+        tgt = 'address'
+    old_id = new_data.get(tgt)
+    logger.info('New data has address: {}'.format(old_id))
     logger.debug('Updating cache entry for key: {}'.format(key))
     with cache.transact():
         cache[key] = new_data

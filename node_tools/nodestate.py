@@ -29,7 +29,7 @@ async def main():
             node_id = node_data.get('address')
             logger.info('Found node: {}'.format(node_id))
             node_key = find_keys(cache, 'node')
-            logger.error('Returned {} key is: {}'.format('node', node_key))
+            logger.debug('Returned {} key is: {}'.format('node', node_key))
             load_cache_by_type(cache, node_data, 'node')
 
             # get status details of the node peers
@@ -37,7 +37,7 @@ async def main():
             peer_data = client.data
             logger.info('Found {} peers'.format(len(peer_data)))
             peer_keys = find_keys(cache, 'peer')
-            logger.error('Returned peer keys: {}'.format(peer_keys))
+            logger.debug('Returned peer keys: {}'.format(peer_keys))
             load_cache_by_type(cache, peer_data, 'peer')
 
             # get all available network data
@@ -45,7 +45,7 @@ async def main():
             net_data = client.data
             logger.info('Found {} networks'.format(len(net_data)))
             net_keys = find_keys(cache, 'net')
-            logger.error('Returned network keys: {}'.format(net_keys))
+            logger.debug('Returned network keys: {}'.format(net_keys))
             load_cache_by_type(cache, net_data, 'net')
 
         except ZeroTierConnectionError as exc:

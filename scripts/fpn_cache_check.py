@@ -18,7 +18,7 @@ except ImportError:
 
 cache = Index(get_cachedir())
 max_age = NODE_SETTINGS['max_cache_age']
-utc_stamp = datetime.datetime.now()  # use local time for console
+utc_stamp = datetime.datetime.now(utc)  # use local time for console
 
 # reset timestamp if needed
 if 'utc-time' in cache:
