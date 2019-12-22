@@ -7,9 +7,14 @@ import sys
 import time
 import datetime
 import logging
+import schedule
 
 from daemon import Daemon
 from daemon.parent_logger import setup_logging
+from node_tools.network_funcs import get_net_cmds
+from node_tools.data_funcs import update_runner
+from node_tools.helper_funcs import NODE_SETTINGS
+
 
 try:
     from datetime import timezone
@@ -25,7 +30,8 @@ else:
 
 
 logger = logging.getLogger(__name__)
-timestamp = datetime.datetime.now()  # use local time for console
+max_age = NODE_SETTINGS['max_cache_age']
+timestamp = datetime.datetime.now(utc)  # use local time for console
 
 
 def config_from_ini():
@@ -57,6 +63,7 @@ def do_setup():
     my_conf, msg = config_from_ini()
     if my_conf:
         debug = my_conf.getboolean('Options', 'debug')
+        home = my_conf['Paths']['home_dir']
         if 'system' not in msg:
             prefix = my_conf['Options']['prefix']
         else:
@@ -70,31 +77,55 @@ def do_setup():
 
     else:
         debug = False
+        home = False
         pid = '/tmp/fpnd.pid'
         log = '/tmp/fpnd.log'
-    return pid, log, debug, msg
+    return home, pid, log, debug, msg
+
+
+def setup_scheduling(max_age):
+    """Initial setup for scheduled jobs"""
+    sleep_time = max_age / 2
+    baseJob = schedule.every(sleep_time).seconds
+    baseJob.do(update_runner)
+    logger.debug('Leaving setup_scheduling: {}'.format(baseJob))
+
+
+def do_scheduling():
+    schedule.run_all(10)
+    time.sleep(5)
+    logger.debug('Leaving do_scheduling')
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 
 # Inherit from Daemon class
 class fpnDaemon(Daemon):
     # implement run method
     def run(self):
-
-        # Wait
-        time.sleep(30)
+        up0, down0, up1, down1 = get_net_cmds(self.home_dir)
+        # logger.debug('up0 is: {}'.format(up0))
+        do_scheduling()
 
 
 if __name__ == "__main__":
-    pid_file, log_file, debug, msg = do_setup()
+    home, pid_file, log_file, debug, msg = do_setup()
     setup_logging(debug, log_file)
     logger = logging.getLogger("fpnd")
+    setup_scheduling(max_age)
+    if not home:
+        home = '.'
+
+    logger.debug('Leaving main, max_age is: {}'.format(max_age))
 
     if len(sys.argv) == 2:
         arg = sys.argv[1]
         if arg in ('start'):
             logger.info(msg)
         if arg in ('start', 'stop', 'restart'):
-            d = fpnDaemon(pid_file, verbose=0)
+            d = fpnDaemon(pid_file, home_dir=home, verbose=0)
             getattr(d, arg)()
     else:
         print("usage: %s start|stop|restart" % sys.argv[0])

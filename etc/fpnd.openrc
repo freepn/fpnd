@@ -10,7 +10,7 @@ pidfile="/run/${SVCNAME}.pid"
 command_args="start"
 
 depend() {
-#        need zerotier
+        need zerotier
         use logger clock
 }
 

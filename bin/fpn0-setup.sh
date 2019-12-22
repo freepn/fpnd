@@ -32,36 +32,37 @@ if [[ $ZT_UP != "started" ]]; then
     exit 1
 fi
 
-echo "Checking kernel rp_filter setting..."
+[[ -n $VERBOSE ]] && echo "Checking kernel rp_filter setting..."
 RP_NEED="2"
 RP_ORIG="$(sysctl net.ipv4.conf.all.rp_filter | cut -f3 -d' ')"
 
 if [[ ${RP_NEED} = "${RP_ORIG}" ]]; then
-    echo "  RP good..."
+    [[ -n $VERBOSE ]] && echo "  RP good..."
 else
-    echo "  RP needs garlic filter..."
-    sysctl -w net.ipv4.conf.all.rp_filter=$RP_NEED
+    [[ -n $VERBOSE ]] && echo "  RP needs garlic filter..."
+    sysctl -w net.ipv4.conf.all.rp_filter=$RP_NEED > /dev/null 2>&1
 fi
 
 while read -r line; do
-    echo "Checking network..."
+    [[ -n $VERBOSE ]] && echo "Checking network..."
     LAST_OCTET=$(echo "$line" | cut -d"/" -f2 | cut -d"," -f2 | cut -d'.' -f4)
     ZT_NET_ID=$(echo "$line" | cut -d" " -f3)
     if [[ $LAST_OCTET != 1 ]]; then
         ZT_NETWORK="${ZT_NET_ID}"
-        echo "  Found $ZT_NETWORK"
+        [[ -n $VERBOSE ]] && echo "  Found $ZT_NETWORK"
         break
     else
-        echo "  Skipping gateway network"
+        [[ -n $VERBOSE ]] && echo "  Skipping gateway network"
     fi
 done < <(zerotier-cli listnetworks | grep zt)
 
 ZT_NETWORK=${1:-$ZT_NETWORK}
 
 if [[ -n $ZT_NETWORK ]]; then
-    echo "Using FPN0 ID: $ZT_NETWORK"
+    [[ -n $VERBOSE ]] && echo "Using FPN0 ID: $ZT_NETWORK"
 else
     echo "Please provide the network ID as argument."
+    exit 1
 fi
 
 ZT_INTERFACE=$(zerotier-cli get "${ZT_NETWORK}" portDeviceName)
@@ -72,16 +73,20 @@ TABLE_NAME="fpn0-route"
 TABLE_PATH="/etc/iproute2/rt_tables"
 FPN_RT_TABLE=$(cat "${TABLE_PATH}" | { grep -o "${TABLE_NAME}" || test $? = 1; })
 
-echo "Checking for FPN routing table..."
+[[ -n $VERBOSE ]] && echo "Checking for FPN routing table..."
 if [[ ${FPN_RT_TABLE} = "${TABLE_NAME}" ]]; then
-    echo "  RT good..."
+    [[ -n $VERBOSE ]] && echo "  RT good..."
 else
-    echo "  Inserting routing table..."
+    [[ -n $VERBOSE ]] && echo "  Inserting routing table..."
     echo "200   ${TABLE_NAME}" >> /etc/iproute2/rt_tables
 fi
 
-echo "Checking FPN network settings..."
-zerotier-cli set "${ZT_NETWORK}" allowGlobal=1 2>&1 | grep allowGlobal
+if [[ -n $VERBOSE ]]; then
+    echo "Checking FPN network settings..."
+    zerotier-cli set "${ZT_NETWORK}" allowGlobal=1 2>&1 | grep allowGlobal
+else
+    zerotier-cli set "${ZT_NETWORK}" allowGlobal=1 > /dev/null 2>&1
+fi
 
 IPV4_INTERFACE=$(ip -o link show up | awk -F': ' '{print $2}' | grep -e 'eth' -e 'en' -e 'wl' -e 'mlan' | head -n 1)
 
@@ -118,7 +123,7 @@ iptables -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --se
 iptables -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
 iptables -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
 
-echo ""
+[[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then
     echo "Success"
 else
