@@ -9,7 +9,8 @@ import pytest
 
 from diskcache import Index
 
-from node_tools.helper_funcs import update_state, get_cachedir
+from node_tools.helper_funcs import get_cachedir
+from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import ENODATA, NODE_SETTINGS
 
 try:
@@ -40,14 +41,16 @@ try:
 
 except KeyError:
     pass
+    has_aging = False
 
 
 def should_be_enodata_or_ok():
-    res = update_state()
+    res = update_runner()
     return res
 
 
-res = update_state()
+# res = update_state()
+res = update_runner()
 
 
 def test_should_be_enodata_or_ok():
