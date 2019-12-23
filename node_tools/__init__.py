@@ -2,6 +2,7 @@
 """Main fpnd node module"""
 
 from .cache_funcs import find_keys as find_keys
+from .cache_funcs import get_status as get_status
 from .cache_funcs import load_cache_by_type as load_cache_by_type
 from .data_funcs import update_runner as update_runner
 from .helper_funcs import get_cachedir as get_cachedir
@@ -26,6 +27,7 @@ __all__ = [
     'find_keys',
     'get_cachedir',
     'get_net_cmds',
+    'get_status',
     'get_token',
     'json_check',
     'json_pprint',

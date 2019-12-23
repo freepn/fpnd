@@ -31,9 +31,35 @@ def find_keys(cache, key_str):
         return valid_keys
 
 
-def get_node_status():
-    """Get node ID and status from cache."""
-    raise NotImplementedError
+def get_status(cache, key_str):
+    """
+    Get status for node[type] from cache.
+    * node type returns ONLINE/OFFLINE
+    * peer type returns peer ROLE
+    """
+    if len(cache):
+        node_dict = {}
+        key_list = find_keys(cache, key_str)
+        node_key = key_list[0]
+        data = cache[node_key]
+        if 'net' in key_str:
+            tgt = 'id'
+        else:
+            tgt = 'address'
+        node_id = data.get(tgt)
+        node_dict.update({'id': node_id})
+        if 'node' in key_str:
+            state = data.get('online')
+            if state:
+                status = 'ONLINE'
+            else:
+                status = 'OFFLINE'
+        elif 'peer' in key_str:
+            status = data.get('role')
+        node_dict.update({'status': status})
+        return node_dict
+    else:
+        return None, None
 
 
 def load_cache_by_type(cache, data, key_str):

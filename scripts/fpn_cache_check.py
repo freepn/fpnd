@@ -2,34 +2,30 @@
 # -*- coding: utf-8 -*-
 # Target:   Python 3.6
 
-import datetime
+import json
 
 from diskcache import Index
-from node_tools import update_state, get_cachedir
-from node_tools import ENODATA, NODE_SETTINGS
+from node_tools import get_cachedir, get_status, update_state
 
-try:
-    from datetime import timezone
-    utc = timezone.utc
-except ImportError:
-    from daemon.timezone import UTC
-    utc = UTC()
+
+def get_node_data(cache, key_str):
+    """Get data for first node[type] from cache."""
+    from node_tools import find_keys
+    if len(cache):
+        key_list = find_keys(cache, key_str)
+        node_key = key_list[0]
+        data = cache[node_key]
+        if 'net' in key_str:
+            tgt = 'id'
+        else:
+            tgt = 'address'
+        return data.get(tgt), data
+    else:
+        return None, None
 
 
 cache = Index(get_cachedir())
-max_age = NODE_SETTINGS['max_cache_age']
-utc_stamp = datetime.datetime.now(utc)  # use local time for console
-
-# reset timestamp if needed
-if 'utc-time' in cache:
-    stamp = cache['utc-time']
-    cache_age = utc_stamp - stamp  # this is a timedelta
-    print('Cache age is: {} sec'.format(cache_age.seconds))
-    print('Maximum cache age: {} sec'.format(max_age))
-    if cache_age.seconds > max_age:
-        print('Cache data is too old!!')
-        print('Stale data will be removed!!')
-        cache.clear()
+cache.clear()
 
 size = len(cache)
 print('{} items currently in cache.'.format(size))
@@ -45,18 +41,24 @@ else:
         print('No data available (live or cached)')
         exit(1)
 
+print('Get data result: {}'.format(res))
+node_id, node_data = get_node_data(cache, 'node')
+
+if node_id is not None:
+    json_dump = json.dumps(node_data, indent=2, separators=(',', ': '))
+    json_load = json.loads(json_dump)
+
+    print('Dump type is: {}'.format(type(json_dump)))
+    print('Load type is: {}'.format(type(json_load)))
+    print('ID is: {}'.format(node_id))
+    print('Payload is: {}'.format(node_data))
 
 if size > 0:
-    print('Get data result: {}'.format(res))
     size = len(cache)
     print('{} items now in cache.'.format(size))
     print('Cache items: {}'.format(list(cache)))
+    status_dict = get_status(cache, 'node')
+    print('Node status: {}'.format(status_dict))
 
-    if res is ENODATA or res is None:
-        cache.update([('utc-time', stamp)])
-        print('Old cache time is: {}'.format(stamp.isoformat(' ', 'seconds')))
-    else:
-        cache.update([('utc-time', utc_stamp)])
-        print('New cache time is: {}'.format(utc_stamp.isoformat(' ', 'seconds')))
 else:
     print('Cache empty and API returned ENODATA')
