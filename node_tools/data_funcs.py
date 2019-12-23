@@ -43,6 +43,7 @@ def with_cache_aging(func):
         * update cache timestamp based on result
         :return: result from update_runner()
         """
+        stamp = None
         utc_stamp = datetime.datetime.now(utc)
         do_logstats('Entering cache wrapper')
         if 'utc-time' in cache:
@@ -62,12 +63,12 @@ def with_cache_aging(func):
         result = func(*args, **kwargs)
         logger.info('Get data result was: {}'.format(result))
 
-        if result is ENODATA or result is None:
+        if stamp is not None and result is ENODATA or None:
             cache.update([('utc-time', stamp)])
-            logger.debug('Old cache time is: {}'.format(stamp.isoformat(' ', 'seconds')))
+            logger.debug('Old cache time is: {}'.format(stamp.isoformat(' ')))
         else:
             cache.update([('utc-time', utc_stamp)])
-            logger.debug('New cache time is: {}'.format(utc_stamp.isoformat(' ', 'seconds')))
+            logger.debug('New cache time is: {}'.format(utc_stamp.isoformat(' ')))
         return result
     return wrapper
 

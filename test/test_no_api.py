@@ -50,11 +50,13 @@ def should_be_enodata_or_ok():
 
 
 # res = update_state()
-res = update_runner()
+# res = update_runner()
 
 
 def test_should_be_enodata_or_ok():
-    assert should_be_enodata_or_ok() == ENODATA or 'OK'
+    res = should_be_enodata_or_ok()
+    assert res == ENODATA or 'OK'
+    return res
 
 
 def test_api_warning_msg():
@@ -72,6 +74,7 @@ def test_aging_not_available_warning_msg():
         warnings.warn("Cache aging not available", UserWarning)
 
 
+res = test_should_be_enodata_or_ok
 size = len(cache)
 
 if size > 0:
@@ -83,10 +86,9 @@ if size > 0:
     if has_aging:
         if res is ENODATA or res is None:
             cache.update([('utc-time', stamp)])
-            print('Old cache time is: {}'.format(stamp.isoformat(' ', 'seconds')))
         else:
             cache.update([('utc-time', utc_stamp)])
-            print('New cache time is: {}'.format(utc_stamp.isoformat(' ', 'seconds')))
+        print('Cache time is: {} sec'.format(utc_stamp.isoformat(' ')))
     else:
         print('Cache aging not available')
 else:
