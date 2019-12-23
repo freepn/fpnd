@@ -56,6 +56,8 @@ def with_cache_aging(func):
                 cache.clear()
             else:
                 logger.info('Cache is {} sec old (still valid)'.format(cache_age.seconds))
+        else:
+            cache.update([('utc-time', utc_stamp)])
 
         result = func(*args, **kwargs)
         logger.info('Get data result was: {}'.format(result))

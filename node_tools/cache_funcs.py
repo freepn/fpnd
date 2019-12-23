@@ -75,8 +75,8 @@ def load_cache_by_type(cache, data, key_str):
                 create_cache_entry(cache, item, key_str)
     else:
         if 'node' in str(key_list):
-            key, _ = cache.pull(prefix=key_str)
-            update_cache_entry(cache, data, key)
+            for key in key_list:
+                update_cache_entry(cache, data, key)
         else:
             for key, item in zip_longest(key_list, data):
                 if not key:
