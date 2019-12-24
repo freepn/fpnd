@@ -35,12 +35,12 @@ def exec_full(filepath):
         exec(compile(file.read(), filepath, 'exec'), global_namespace)
 
 
-def get_cachedir():
+def get_cachedir(dir_name='fpn_state'):
     """Get state cachedir according to OS (creates it if needed)"""
     import os
     import tempfile
     temp_dir = tempfile.gettempdir()
-    cache_dir = os.path.join(temp_dir, 'fpn_state')
+    cache_dir = os.path.join(temp_dir, dir_name)
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
     return cache_dir

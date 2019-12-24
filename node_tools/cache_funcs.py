@@ -37,29 +37,26 @@ def get_status(cache, key_str):
     * node type returns ONLINE/OFFLINE
     * peer type returns peer ROLE
     """
-    if len(cache):
-        node_dict = {}
-        key_list = find_keys(cache, key_str)
-        node_key = key_list[0]
-        data = cache[node_key]
-        if 'net' in key_str:
-            tgt = 'id'
-        else:
-            tgt = 'address'
-        node_id = data.get(tgt)
-        node_dict.update({'id': node_id})
-        if 'node' in key_str:
-            state = data.get('online')
-            if state:
-                status = 'ONLINE'
-            else:
-                status = 'OFFLINE'
-        elif 'peer' in key_str:
-            status = data.get('role')
-        node_dict.update({'status': status})
-        return node_dict
+    node_dict = {}
+    key_list = find_keys(cache, key_str)
+    node_key = key_list[0]
+    data = cache[node_key]
+    if 'net' in key_str:
+        tgt = 'id'
     else:
-        return None, None
+        tgt = 'address'
+    node_id = data.get(tgt)
+    node_dict.update({'id': node_id})
+    if 'node' in key_str:
+        state = data.get('online')
+        if state:
+            status = 'ONLINE'
+        else:
+            status = 'OFFLINE'
+    elif 'peer' in key_str:
+        status = data.get('role')
+    node_dict.update({'status': status})
+    return node_dict
 
 
 def load_cache_by_type(cache, data, key_str):
