@@ -2,6 +2,8 @@
 
 """cache-specific helper functions."""
 import logging
+from collections import namedtuple
+
 from node_tools.helper_funcs import AttrDict
 
 
@@ -54,42 +56,72 @@ def get_endpoint_data(cache, key_str):
     return (key_list, values)
 
 
-def get_node_status(cache, key_str):
+def get_net_status(cache):
     """
-    Get status for node[type] from cache.
+    Get specific data for node endpoint 'network' from cache.
     """
-    # from itertools import zip
-    status_dict = {}
-    key_list, values = get_endpoint_data(cache, key_str)
+    net_data = []  # list of network data for a given network
+    networks = []  # list of network namedTuples
+    Network = namedtuple('Network', 'id status mac ztdevice gateway')
+    key_list, values = get_endpoint_data(cache, 'net')
     if key_list:
         for key, data in zip(key_list, values):
-            if 'net' in key:
-                node_id = data.id
-            else:
-                node_id = data.address
-            status_dict.update({'id': node_id})
-            if 'node' in key:
-                if data.online:
-                    status_dict.update({'status': 'ONLINE'})
-                else:
-                    status_dict.update({'status': 'OFFLINE'})
-                status_dict.update({'tcpFallback': data.tcpFallbackActive})
-                logger.debug('node dict: {}'.format(status_dict))
-            elif 'peer' in key:
-                status_dict.update({'role': data.role})
-                status_dict.update({'active': data.paths[0]['active']})
-                addr = data.paths[0]['address'].split('/', maxsplit=1)
-                status_dict.update({'ipAddress': addr[0]})
-                status_dict.update({'ipPort': addr[1]})
-                logger.debug('peer dict: {}'.format(status_dict))
-            elif 'net' in key:
-                status_dict.update({'status': data.status})
-                status_dict.update({'mac': data.mac})
-                status_dict.update({'device': data.portDeviceName})
-                gw = data.routes[1]['via'] or None
-                status_dict.update({'gateway': gw})
-                logger.debug('net dict: {}'.format(status_dict))
-    return status_dict
+            net_data.append(data.id)
+            net_data.append(data.status)
+            net_data.append(data.mac)
+            net_data.append(data.portDeviceName)
+            net_data.append(data.routes[1]['via'])
+            logger.error('net list: {}'.format(net_data))
+            netStatus = Network._make(net_data)
+            networks.append(netStatus)
+        logger.error('netStatus list: {}'.format(networks))
+    return networks
+
+
+def get_node_status(cache):
+    """
+    Get specific data for node endpoint 'status' from cache.
+    """
+    node_data = []
+    Node = namedtuple('Node', 'id status tcpFallback worldId')
+    key_list, values = get_endpoint_data(cache, 'node')
+    if key_list:
+        data = values[0]
+        node_data.append(data.address)
+        if data.online:
+            status = 'ONLINE'
+        else:
+            status = 'OFFLINE'
+        node_data.append(status)
+        node_data.append(data.tcpFallbackActive)
+        node_data.append(data.planetWorldId)
+        logger.info('node list: {}'.format(node_data))
+        nodeStatus = Node._make(node_data)
+        logger.debug('nodeStatus: {}'.format(nodeStatus))
+    return nodeStatus
+
+
+def get_peer_status(cache):
+    """
+    Get specific data for node endpoint 'peer' from cache.
+    """
+    peers = []  # list of peer namedTuples
+    Peer = namedtuple('Peer', 'id role active address port')
+    key_list, values = get_endpoint_data(cache, 'peer')
+    if key_list:
+        for key, data in zip(key_list, values):
+            peer_data = []  # list of peer data for a given peer
+            peer_data.append(data.address)
+            peer_data.append(data.role)
+            peer_data.append(data.paths[0]['active'])
+            addr = data.paths[0]['address'].split('/', maxsplit=1)
+            peer_data.append(addr[0])
+            peer_data.append(addr[1])
+            logger.error('peer list: {}'.format(peer_data))
+            peerStatus = Peer._make(peer_data)
+            peers.append(peerStatus)
+        logger.error('peerStatus list: {}'.format(peers))
+    return peers
 
 
 def load_cache_by_type(cache, data, key_str):

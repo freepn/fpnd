@@ -11,7 +11,9 @@ from diskcache import Index
 
 from node_tools.helper_funcs import get_cachedir
 from node_tools.cache_funcs import get_endpoint_data
+from node_tools.cache_funcs import get_net_status
 from node_tools.cache_funcs import get_node_status
+from node_tools.cache_funcs import get_peer_status
 from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import ENODATA, NODE_SETTINGS
 
@@ -49,32 +51,37 @@ size = len(cache)
 
 if size:
     def test_node_get_status():
-        data = get_node_status(cache, 'node')
-        assert isinstance(data, dict)
-        if data:
-            assert len(data) == 3
-            assert 'id' in data
-            assert 'tcpFallback' in data
-            assert data.get('tcpFallback') is False
-            # print(data)
+        Node = get_node_status(cache)
+        assert isinstance(Node, tuple)
+        if Node:
+            print('Node:')
+            assert hasattr(Node, 'status')
+            assert hasattr(Node, 'tcpFallback')
+            assert Node.tcpFallback is False
+            print(Node)
 
     def test_peer_get_status():
-        data = get_node_status(cache, 'peer')
-        if data:
-            assert isinstance(data, dict)
-            # assert len(data) == 5
-            # assert 'id' in data
-            # assert 'ipAddress' in data
-            # print(data)
+        peers = get_peer_status(cache)
+        assert isinstance(peers, list)
+        if peers:
+            print('Peers:')
+            for Peer in peers:
+                assert isinstance(Peer, tuple)
+                assert hasattr(Peer, 'role')
+                assert Peer.active is True
+                assert hasattr(Peer, 'address')
+                print(Peer)
 
     def test_net_get_status():
-        data = get_node_status(cache, 'net')
-        assert isinstance(data, dict)
-        if data:
-            assert len(data) == 5
-            assert 'id' in data
-            assert 'gateway' in data
-            # print(data)
+        nets = get_net_status(cache)
+        assert isinstance(nets, list)
+        if nets:
+            print('Nets:')
+            for Net in nets:
+                assert isinstance(Net, tuple)
+                assert hasattr(Net, 'mac')
+                assert hasattr(Net, 'gateway')
+                print(nets)
 
     def test_get_endpoint_data_node():
         key_list, values = get_endpoint_data(cache, 'node')
