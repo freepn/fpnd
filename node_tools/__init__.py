@@ -2,7 +2,8 @@
 """Main fpnd node module"""
 
 from node_tools.cache_funcs import find_keys as find_keys
-from node_tools.cache_funcs import get_status as get_status
+from node_tools.cache_funcs import get_endpoint_data as get_endpoint_data
+from node_tools.cache_funcs import get_node_status as get_node_status
 from node_tools.cache_funcs import load_cache_by_type as load_cache_by_type
 from node_tools.data_funcs import update_runner as update_runner
 from node_tools.helper_funcs import get_cachedir as get_cachedir
@@ -26,8 +27,9 @@ __all__ = [
     'NODE_SETTINGS',
     'find_keys',
     'get_cachedir',
+    'get_endpoint_data',
     'get_net_cmds',
-    'get_status',
+    'get_node_status',
     'get_token',
     'json_check',
     'json_pprint',

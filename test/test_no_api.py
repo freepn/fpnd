@@ -10,7 +10,8 @@ import pytest
 from diskcache import Index
 
 from node_tools.helper_funcs import get_cachedir
-from node_tools.cache_funcs import get_status
+from node_tools.cache_funcs import get_endpoint_data
+from node_tools.cache_funcs import get_node_status
 from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import ENODATA, NODE_SETTINGS
 
@@ -48,20 +49,46 @@ size = len(cache)
 
 if size:
     def test_node_get_status():
-        data = get_status(cache, 'node')
+        data = get_node_status(cache, 'node')
         assert isinstance(data, dict)
-        assert len(data) == 2
-        assert 'id' in data
-        assert 'status' in data
-        assert data.get('status') == 'ONLINE'
+        if data:
+            assert len(data) == 3
+            assert 'id' in data
+            assert 'tcpFallback' in data
+            assert data.get('tcpFallback') is False
+            # print(data)
 
     def test_peer_get_status():
-        data = get_status(cache, 'peer')
+        data = get_node_status(cache, 'peer')
+        if data:
+            assert isinstance(data, dict)
+            # assert len(data) == 5
+            # assert 'id' in data
+            # assert 'ipAddress' in data
+            # print(data)
+
+    def test_net_get_status():
+        data = get_node_status(cache, 'net')
         assert isinstance(data, dict)
-        assert len(data) == 2
-        assert 'id' in data
-        assert 'status' in data
-        assert data.get('status') == 'PLANET' or 'MOON'
+        if data:
+            assert len(data) == 5
+            assert 'id' in data
+            assert 'gateway' in data
+            # print(data)
+
+    def test_get_endpoint_data_node():
+        key_list, values = get_endpoint_data(cache, 'node')
+        assert isinstance(key_list, list)
+        assert 'node' in str(key_list)
+        assert values[0].online
+
+    def test_get_endpoint_data_peer():
+        key_list, values = get_endpoint_data(cache, 'peer')
+        assert isinstance(key_list, list)
+        assert 'peer' in str(key_list)
+        assert values[0].role == 'PLANET'
+        # print(key_list)
+        # print(values)
 
 
 def test_api_warning_msg():
