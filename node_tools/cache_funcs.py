@@ -60,17 +60,14 @@ def get_net_status(cache):
     """
     Get specific data for node endpoint 'network' from cache.
     """
-    net_data = []  # list of network data for a given network
     networks = []  # list of network namedTuples
     Network = namedtuple('Network', 'id status mac ztdevice gateway')
     key_list, values = get_endpoint_data(cache, 'net')
     if key_list:
         for key, data in zip(key_list, values):
-            net_data.append(data.id)
-            net_data.append(data.status)
-            net_data.append(data.mac)
-            net_data.append(data.portDeviceName)
-            net_data.append(data.routes[1]['via'])
+            ztname = data.portDeviceName
+            route = data.routes[1]['via']
+            net_data = [data.id, data.status, data.mac, ztname, route]
             logger.error('net list: {}'.format(net_data))
             netStatus = Network._make(net_data)
             networks.append(netStatus)
@@ -85,19 +82,14 @@ def get_node_status(cache):
     node_data = []
     Node = namedtuple('Node', 'id status tcpFallback worldId')
     key_list, values = get_endpoint_data(cache, 'node')
-    if key_list:
-        data = values[0]
-        node_data.append(data.address)
-        if data.online:
-            status = 'ONLINE'
-        else:
-            status = 'OFFLINE'
-        node_data.append(status)
-        node_data.append(data.tcpFallbackActive)
-        node_data.append(data.planetWorldId)
-        logger.info('node list: {}'.format(node_data))
+    if values:
+        d = values[0]
+        status = 'ONLINE' if d.online else 'OFFLINE'
+        node_data = [d.address, status, d.tcpFallbackActive, d.planetWorldId]
+        logger.error('node list: {}'.format(node_data))
         nodeStatus = Node._make(node_data)
-        logger.debug('nodeStatus: {}'.format(nodeStatus))
+    else:
+        nodeStatus = ()
     return nodeStatus
 
 
@@ -110,13 +102,9 @@ def get_peer_status(cache):
     key_list, values = get_endpoint_data(cache, 'peer')
     if key_list:
         for key, data in zip(key_list, values):
-            peer_data = []  # list of peer data for a given peer
-            peer_data.append(data.address)
-            peer_data.append(data.role)
-            peer_data.append(data.paths[0]['active'])
+            ifup = data.paths[0]['active']
             addr = data.paths[0]['address'].split('/', maxsplit=1)
-            peer_data.append(addr[0])
-            peer_data.append(addr[1])
+            peer_data = [data.address, data.role, ifup, addr[0], addr[1]]
             logger.error('peer list: {}'.format(peer_data))
             peerStatus = Peer._make(peer_data)
             peers.append(peerStatus)

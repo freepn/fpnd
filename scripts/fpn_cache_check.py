@@ -5,7 +5,7 @@
 import json
 
 from diskcache import Index
-from node_tools import get_cachedir, get_status, update_state
+from node_tools import get_cachedir, get_node_status, update_state
 
 
 def get_node_data(cache, key_str):
@@ -25,7 +25,7 @@ def get_node_data(cache, key_str):
 
 
 cache = Index(get_cachedir())
-cache.clear()
+# cache.clear()
 
 size = len(cache)
 print('{} items currently in cache.'.format(size))
@@ -57,8 +57,8 @@ if size > 0:
     size = len(cache)
     print('{} items now in cache.'.format(size))
     print('Cache items: {}'.format(list(cache)))
-    status_dict = get_status(cache, 'node')
-    print('Node status: {}'.format(status_dict))
+    Node = get_node_status(cache)
+    print('Node status: {}'.format(Node))
 
 else:
     print('Cache empty and API returned ENODATA')
