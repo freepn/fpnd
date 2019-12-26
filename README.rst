@@ -11,5 +11,7 @@
 .. image:: https://travis-ci.org/sarnold/fpnd.svg?branch=master
     :target: https://travis-ci.org/sarnold/fpnd
 
+.. image:: https://img.shields.io/codeclimate/maintainability/sarnold/fpnd
+    :target: https://github.com/sarnold/fpnd/
 
 Python package for fpnd node scripts
