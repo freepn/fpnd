@@ -88,7 +88,7 @@ def setup_scheduling(max_age):
     sleep_time = max_age / 2
     stateJob = schedule.every(sleep_time).seconds
     stateJob.do(update_runner)
-    logger.debug('Leaving setup_scheduling: {}'.format(baseJob))
+    logger.debug('Leaving setup_scheduling: {}'.format(stateJob))
 
 
 def do_scheduling():
