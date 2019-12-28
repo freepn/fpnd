@@ -35,8 +35,11 @@ def exec_full(filepath):
         exec(compile(file.read(), filepath, 'exec'), global_namespace)
 
 
-def get_cachedir(dir_name='fpn_state'):
-    """Get state cachedir according to OS (creates it if needed)"""
+def get_cachedir(dir_name='fpn_cache'):
+    """
+    Get temp cachedir according to OS (create it if needed)
+    * override the dir_name arg for non-cache data
+    """
     import os
     import tempfile
     temp_dir = tempfile.gettempdir()
@@ -66,33 +69,39 @@ def get_token():
     return auth_token
 
 
-def json_check(data):
-    import json
-    print('Data type is: {}'.format(type(data)))
-
-    json_dump = json.dumps(data, indent=4, separators=(',', ': '))
-    json_load = json.loads(json_dump)
-    assert data == json_load
-    print('Dump type is: {}'.format(type(json_dump)))
-    print('Load type is: {}'.format(type(json_load)))
-    print('Format is JSON:')
-    json_pprint(json_load)
-
-
-def json_pprint(obj):
-    import json
-    print(json.dumps(obj, indent=2, separators=(',', ': ')))
-
-
-def json_to_obj(data):
+def json_dump_file(endpoint, data, dirname=None):
+    import os
     import json
 
-    try:
-        from types import SimpleNamespace as Namespace
-    except ImportError:
-        from argparse import Namespace
+    def opener(dirname, flags):
+        return os.open(dirname, flags, mode=0o600, dir_fd=dir_fd)
 
-    return json.loads(data, object_hook=lambda d: Namespace(**d))
+    if dirname:
+        dir_fd = os.open(dirname, os.O_RDONLY)
+    else:
+        opener = None
+
+    with open(endpoint + '.json', 'w', opener=opener) as fp:
+        json.dump(data, fp)
+    logger.debug('{} data in {}.json'.format(endpoint, endpoint))
+
+
+def json_load_file(endpoint, dirname=None):
+    import os
+    import json
+
+    def opener(dirname, flags):
+        return os.open(dirname, flags, dir_fd=dir_fd)
+
+    if dirname:
+        dir_fd = os.open(dirname, os.O_RDONLY)
+    else:
+        opener = None
+
+    with open(endpoint + '.json', 'r', opener=opener) as fp:
+        data = json.load(fp)
+    logger.debug('{} data read from {}.json'.format(endpoint, endpoint))
+    return data
 
 
 def update_state():

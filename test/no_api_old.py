@@ -10,6 +10,8 @@ import pytest
 from diskcache import Index
 
 from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import json_dump_file
+from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import update_state
 from node_tools.cache_funcs import get_endpoint_data
 from node_tools.cache_funcs import get_net_status
@@ -26,10 +28,41 @@ except ImportError:
     utc = UTC()
 
 
+test_dir = 'test/test_data'
+data_dir = get_cachedir()
 # has_aging = False
 cache = Index('test/test_data')
 max_age = NODE_SETTINGS['max_cache_age']
 utc_stamp = datetime.datetime.now(utc)  # use local time for console
+
+
+def json_check(data):
+    import json
+    print('Data type is: {}'.format(type(data)))
+
+    json_dump = json.dumps(data, indent=4, separators=(',', ': '))
+    json_load = json.loads(json_dump)
+    assert data == json_load
+    print('Dump type is: {}'.format(type(json_dump)))
+    print('Load type is: {}'.format(type(json_load)))
+
+
+def test_json_load_status():
+    status = json_load_file('status', test_dir)
+    json_check(status)
+    return status
+
+
+def test_json_load_peers():
+    peers = json_load_file('peer', test_dir)
+    json_check(peers)
+    return peers
+
+
+def test_json_load_nets():
+    nets = json_load_file('network', test_dir)
+    json_check(nets)
+    return nets
 
 
 def should_be_enodata_or_ok():

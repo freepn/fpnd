@@ -10,8 +10,8 @@ from node_tools.cache_funcs import load_cache_by_type as load_cache_by_type
 from node_tools.data_funcs import update_runner as update_runner
 from node_tools.helper_funcs import get_cachedir as get_cachedir
 from node_tools.helper_funcs import get_token as get_token
-from node_tools.helper_funcs import json_check as json_check
-from node_tools.helper_funcs import json_pprint as json_pprint
+from node_tools.helper_funcs import json_dump_file as json_dump_file
+from node_tools.helper_funcs import json_load_file as json_load_file
 from node_tools.helper_funcs import update_state as update_state
 from node_tools.helper_funcs import AttrDict as AttrDict
 from node_tools.helper_funcs import ENODATA as ENODATA
@@ -35,8 +35,8 @@ __all__ = [
     'get_node_status',
     'get_peer_status',
     'get_token',
-    'json_check',
-    'json_pprint',
+    'json_dump_file',
+    'json_load_file',
     'load_cache_by_type',
     'run_net_cmd',
     'update_runner',

@@ -8,8 +8,12 @@ import logging
 from diskcache import Index
 from ztcli_api import ZeroTier
 from ztcli_api import ZeroTierConnectionError
-from node_tools.cache_funcs import find_keys, load_cache_by_type
-from node_tools.helper_funcs import get_token, get_cachedir
+from node_tools.cache_funcs import find_keys
+from node_tools.cache_funcs import load_cache_by_type
+from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import get_token
+# from node_tools.helper_funcs import json_dump_file
+# from node_tools.helper_funcs import json_load_file
 
 
 logger = logging.getLogger('nodestate')
@@ -20,7 +24,7 @@ async def main():
     async with aiohttp.ClientSession() as session:
         ZT_API = get_token()
         client = ZeroTier(ZT_API, loop, session)
-        # key_types = ['node', 'peer', 'net']
+        # data_dir = get_cachedir(dir_name='fpn_data')
 
         try:
             # get status details of the local node

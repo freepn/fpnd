@@ -68,10 +68,10 @@ def get_net_status(cache):
             ztname = data.portDeviceName
             route = data.routes[1]['via']
             net_data = [data.id, data.status, data.mac, ztname, route]
-            logger.error('net list: {}'.format(net_data))
+            logger.debug('net list: {}'.format(net_data))
             netStatus = Network._make(net_data)
             networks.append(netStatus)
-        logger.error('netStatus list: {}'.format(networks))
+        logger.debug('netStatus list: {}'.format(networks))
     return networks
 
 
@@ -86,7 +86,7 @@ def get_node_status(cache):
         d = values[0]
         status = 'ONLINE' if d.online else 'OFFLINE'
         node_data = [d.address, status, d.tcpFallbackActive, d.planetWorldId]
-        logger.error('node list: {}'.format(node_data))
+        logger.debug('node list: {}'.format(node_data))
         nodeStatus = Node._make(node_data)
     else:
         nodeStatus = ()
@@ -105,10 +105,10 @@ def get_peer_status(cache):
             ifup = data.paths[0]['active']
             addr = data.paths[0]['address'].split('/', maxsplit=1)
             peer_data = [data.address, data.role, ifup, addr[0], addr[1]]
-            logger.error('peer list: {}'.format(peer_data))
+            logger.debug('peer list: {}'.format(peer_data))
             peerStatus = Peer._make(peer_data)
             peers.append(peerStatus)
-        logger.error('peerStatus list: {}'.format(peers))
+        logger.debug('peerStatus list: {}'.format(peers))
     return peers
 
 

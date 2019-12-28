@@ -86,8 +86,8 @@ def do_setup():
 def setup_scheduling(max_age):
     """Initial setup for scheduled jobs"""
     sleep_time = max_age / 2
-    baseJob = schedule.every(sleep_time).seconds
-    baseJob.do(update_runner)
+    stateJob = schedule.every(sleep_time).seconds
+    stateJob.do(update_runner)
     logger.debug('Leaving setup_scheduling: {}'.format(baseJob))
 
 
