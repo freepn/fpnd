@@ -20,7 +20,6 @@ class Constant(tuple):
 
 ENODATA = Constant('ENODATA')  # error return for async state data updates
 
-
 NODE_SETTINGS = {
     u'max_cache_age': 300,  # maximum cache age in seconds
 }

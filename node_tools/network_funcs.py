@@ -31,18 +31,3 @@ def run_net_cmd(cmd):
     if 'Success' in res.stdout:
         state = True
     return state, res
-
-
-def orbit_moon(moon_id):
-    import subprocess
-    cmd = ['zerotier-cli', 'orbit', moon_id]
-    res = subprocess.run(cmd,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT,
-                         universal_newlines=True,
-                         shell=False)
-
-    if 'OK' in res.stdout:
-        return True
-    else:
-        return False

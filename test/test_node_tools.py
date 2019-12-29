@@ -9,6 +9,7 @@ import pytest
 
 from diskcache import Index
 
+from node_tools.helper_funcs import ENODATA, NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import json_dump_file
 from node_tools.helper_funcs import json_load_file
@@ -20,7 +21,10 @@ from node_tools.cache_funcs import get_net_status
 from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import get_peer_status
 from node_tools.data_funcs import update_runner
-from node_tools.helper_funcs import ENODATA, NODE_SETTINGS
+from node_tools.node_funcs import get_moon_data
+from node_tools.node_funcs import load_moon_data
+from node_tools.node_funcs import orbit_moon
+
 
 try:
     from datetime import timezone
@@ -93,8 +97,17 @@ def test_net_client_status():
         assert status == 'OK'
 
 
+def test_get_moon_data():
+    res = get_moon_data()
+    assert isinstance(res, list)
+
+
+def test_orbit_moon():
+    res = orbit_moon('deadd738e6')
+    assert res is False
+
+
 def should_be_enodata():
-    # res = update_state()
     res = update_runner()
     return res
 
@@ -147,13 +160,15 @@ def test_cache_loading():
         node = find_keys(cache, 'node')
         assert 'node' in str(node)
         net = find_keys(cache, 'net')
-        # print(net)
         assert len(net) == 2
+
+    def test_load_moon_data():
+        res = load_moon_data(cache, timeout=0)
+        assert res is False
 
     def test_cache_size():
         size = len(cache)
         assert size == 9
-        # print(list(cache))
 
     test_cache_is_empty()
     test_load_cache_node()
@@ -161,6 +176,7 @@ def test_cache_loading():
     test_find_keys_nonet()
     test_load_cache_net()
     test_find_keys()
+    test_load_moon_data()
     test_cache_size()
 
 

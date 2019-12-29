@@ -21,7 +21,7 @@ def create_cache_entry(cache, data, key_str):
 
 def find_keys(cache, key_str):
     """Find API key(s) in cache using key type string, return list of keys."""
-    valid_keys = ['node', 'peer', 'net']
+    valid_keys = ['node', 'peer', 'net', 'moon']
     if key_str not in valid_keys:
         logger.debug('Key type {} not valid'.format(key_str))
         return None
@@ -144,7 +144,7 @@ def load_cache_by_type(cache, data, key_str):
 def update_cache_entry(cache, data, key):
     """Update single cache entry by key."""
     new_data = AttrDict.from_nested_dict(data)
-    if 'net' in str(key):
+    if 'net' or 'moon' in str(key):
         tgt = 'id'
     else:
         tgt = 'address'
