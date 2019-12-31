@@ -11,23 +11,29 @@ from node_tools.cache_funcs import load_cache_by_type
 
 logger = logging.getLogger(__name__)
 
-FPN_MOONS = ['4f4114472a']  # list of fpn moons to orbiit
-
 
 def get_moon_data():
+    import json
     import subprocess
     cmd = ['zerotier-cli', 'listmoons']
-    res = subprocess.run(cmd,
+
+    b = subprocess.Popen(cmd,
                          stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT,
-                         universal_newlines=True,
+                         stderr=subprocess.PIPE,
                          shell=False)
+
+    out, err = b.communicate()
+
     # always return a list (empty if no moons)
-    if res.returncode == 0:
-        result = res
+    if err:
+        # out = b'[]'
+        res = json.loads(b'[]'.decode().strip())
+        logger.error('get_moon_data err result: {}'.format(err.decode().strip()))
     else:
-        result = []
-    return result
+        res = json.loads(out.decode().strip())
+        logger.debug('found moon id: {}'.format(res[0]['id']))
+
+    return res
 
 
 # we need to enforce a timeout for now
@@ -48,21 +54,43 @@ def load_moon_data(cache, timeout=9):
         return False
 
 
-def orbit_moon(moon_id):
+def run_moon_cmd(moon_id, action='orbit'):
+    """
+    Run moon command via zerotier-cli and trap the output.
+
+    :param action: one of <orbit|deorbit>
+    :param moon_id: id of the moon to operate on
+    :return true|false: command success
+    """
     import subprocess
-    cmd = ['zerotier-cli', 'orbit', moon_id, moon_id]
-    if not get_moon_data():
-        res = subprocess.run(cmd,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT,
-                             universal_newlines=True,
-                             shell=False)
-        if 'OK' in res.stdout:
-            logger.debug('Orbit moon id {} result was OK'.format(moon_id))
-            return True
-        else:
-            logger.error('Could not orbit moon id {}'.format(moon_id))
-            return False
+
+    result = False
+
+    if action == 'orbit':
+        cmd = ['zerotier-cli', action, moon_id, moon_id]
+    elif action == 'deorbit':
+        cmd = ['zerotier-cli', action, moon_id]
+    else:
+        logger.error('Invalid action: {}'.format(action))
+        return result
+
+    b = subprocess.Popen(cmd,
+                         stderr=subprocess.PIPE,
+                         stdout=subprocess.PIPE,
+                         shell=False)
+
+    out, err = b.communicate()
+
+    res = out.decode().strip()
+    logger.debug('run_moon_cmd result: {}'.format(res))
+
+    if 'OK' in res:
+        result = True
+    else:
+        logger.error('run_moon_cmd err result: {}'.format(err.decode().strip()))
+
+    logger.debug('Leaving run_moon_cmd: {}'.format(result))
+    return result
 
 
 def wait_for_moon():

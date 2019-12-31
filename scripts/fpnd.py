@@ -1,9 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.6
 # -*- coding: utf-8 -*-
 # Target:   Python 3.6
 
 import os
 import sys
+import json
 import time
 import datetime
 import logging
@@ -11,10 +12,13 @@ import schedule
 
 from daemon import Daemon
 from daemon.parent_logger import setup_logging
-from node_tools.network_funcs import get_net_cmds
+
 from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import NODE_SETTINGS
-
+from node_tools.network_funcs import get_net_cmds
+from node_tools.node_funcs import get_moon_data
+from node_tools.node_funcs import load_moon_data
+from node_tools.node_funcs import run_moon_cmd
 
 try:
     from datetime import timezone
@@ -30,7 +34,9 @@ else:
 
 
 logger = logging.getLogger(__name__)
+
 max_age = NODE_SETTINGS['max_cache_age']
+moons = NODE_SETTINGS['moon_list']  # list of fpn moons to orbiit
 timestamp = datetime.datetime.now(utc)  # use local time for console
 
 
@@ -92,10 +98,18 @@ def setup_scheduling(max_age):
 
 
 def do_scheduling():
+    logger.debug('Entering do_scheduling')
     schedule.run_all(10)
     time.sleep(5)
-    logger.debug('Leaving do_scheduling')
 
+    for moon in moons:
+        res = run_moon_cmd(moon, action='orbit')
+
+    moon_list = get_moon_data()
+    logger.debug('Moon data size: {}'.format(len(moon_list)))
+    logger.debug('Moon data type is now: {}'.format(type(moon_list)))
+
+    logger.debug('Entering schedule.run_pending loop')
     while True:
         schedule.run_pending()
         time.sleep(1)

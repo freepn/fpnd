@@ -23,7 +23,7 @@ from node_tools.cache_funcs import get_peer_status
 from node_tools.data_funcs import update_runner
 from node_tools.node_funcs import get_moon_data
 from node_tools.node_funcs import load_moon_data
-from node_tools.node_funcs import orbit_moon
+from node_tools.node_funcs import run_moon_cmd
 
 
 try:
@@ -99,11 +99,12 @@ def test_net_client_status():
 
 def test_get_moon_data():
     res = get_moon_data()
+    # print(res)
     assert isinstance(res, list)
 
 
 def test_orbit_moon():
-    res = orbit_moon('deadd738e6')
+    res = run_moon_cmd('deadd738e6', action='orbit')
     assert res is False
 
 
