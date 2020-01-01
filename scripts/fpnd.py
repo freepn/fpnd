@@ -16,7 +16,6 @@ from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.network_funcs import get_net_cmds
 from node_tools.node_funcs import get_moon_data
-from node_tools.node_funcs import load_moon_data
 from node_tools.node_funcs import run_moon_cmd
 
 try:

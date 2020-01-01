@@ -12,25 +12,31 @@ logger = logging.getLogger(__name__)
 def get_moon_data():
     import json
     import subprocess
+
     cmd = ['zerotier-cli', 'listmoons']
-
-    b = subprocess.Popen(cmd,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE,
-                         shell=False)
-
-    out, err = b.communicate()
-
     # always return a list (empty if no moons)
-    if err:
-        # out = b'[]'
-        res = json.loads(b'[]'.decode().strip())
-        logger.error('get_moon_data err result: {}'.format(err.decode().strip()))
-    else:
-        res = json.loads(out.decode().strip())
-        logger.debug('found moon id: {}'.format(res[0]['id']))
+    result = json.loads(b'[]'.decode().strip())
 
-    return res
+    try:
+        b = subprocess.Popen(cmd,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             shell=False)
+
+        out, err = b.communicate()
+
+        if err:
+            logger.debug('get_moon_data err result: {}'.format(err.decode().strip()))
+        else:
+            result = json.loads(out.decode().strip())
+            logger.debug('found moon id: {}'.format(res[0]['id']))
+
+    except FileNotFoundError as exc:
+        logger.error('zerotier-cli command not found')
+        pass
+
+    logger.debug('Leaving get_moon_data: {}'.format(result))
+    return result
 
 
 def run_moon_cmd(moon_id, action='orbit'):
@@ -53,20 +59,25 @@ def run_moon_cmd(moon_id, action='orbit'):
         logger.error('Invalid action: {}'.format(action))
         return result
 
-    b = subprocess.Popen(cmd,
-                         stderr=subprocess.PIPE,
-                         stdout=subprocess.PIPE,
-                         shell=False)
+    try:
+        b = subprocess.Popen(cmd,
+                             stderr=subprocess.PIPE,
+                             stdout=subprocess.PIPE,
+                             shell=False)
 
-    out, err = b.communicate()
+        out, err = b.communicate()
 
-    res = out.decode().strip()
-    logger.debug('run_moon_cmd result: {}'.format(res))
+        res = out.decode().strip()
+        logger.debug('run_moon_cmd result: {}'.format(res))
 
-    if 'OK' in res:
-        result = True
-    else:
-        logger.error('run_moon_cmd err result: {}'.format(err.decode().strip()))
+        if 'OK' in res:
+            result = True
+        elif err:
+            logger.error('run_moon_cmd err result: {}'.format(err.decode().strip()))
+
+    except FileNotFoundError as exc:
+        logger.error('zerotier-cli command not found')
+        pass
 
     logger.debug('Leaving run_moon_cmd: {}'.format(result))
     return result
