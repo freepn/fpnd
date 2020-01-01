@@ -19,7 +19,6 @@ from node_tools.helper_funcs import NODE_SETTINGS as NODE_SETTINGS
 from node_tools.network_funcs import get_net_cmds as get_net_cmds
 from node_tools.network_funcs import run_net_cmd as run_net_cmd
 from node_tools.node_funcs import get_moon_data as get_moon_data
-from node_tools.node_funcs import load_moon_data as load_moon_data
 from node_tools.node_funcs import run_moon_cmd as run_moon_cmd
 from node_tools.exceptions import MemberNodeError as MemberNodeError
 from node_tools.exceptions import MemberNodeNoDataError as MemberNodeNoDataError
@@ -42,7 +41,6 @@ __all__ = [
     'json_dump_file',
     'json_load_file',
     'load_cache_by_type',
-    'load_moon_data',
     'run_moon_cmd',
     'run_net_cmd',
     'update_runner',

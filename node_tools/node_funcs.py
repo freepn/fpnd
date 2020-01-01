@@ -5,9 +5,6 @@ from __future__ import print_function
 
 import logging
 
-from node_tools.cache_funcs import find_keys
-from node_tools.cache_funcs import load_cache_by_type
-
 
 logger = logging.getLogger(__name__)
 
@@ -34,24 +31,6 @@ def get_moon_data():
         logger.debug('found moon id: {}'.format(res[0]['id']))
 
     return res
-
-
-# we need to enforce a timeout for now
-def load_moon_data(cache, timeout=9):
-    import time
-    moon_data = get_moon_data()
-    key_list = find_keys(cache, 'moon')
-    while not moon_data:
-        for s in range(timeout):
-            moon_data = get_moon_data()
-            time.sleep(1)
-        break
-    if moon_data:
-        load_cache_by_type(cache, moon_data, 'moon')
-        return True
-    else:
-        logger.debug('No moon data after {} seconds')
-        return False
 
 
 def run_moon_cmd(moon_id, action='orbit'):

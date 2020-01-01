@@ -8,10 +8,12 @@ import logging
 from diskcache import Index
 from ztcli_api import ZeroTier
 from ztcli_api import ZeroTierConnectionError
+
 from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import load_cache_by_type
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
+from node_tools.node_funcs import get_moon_data
 # from node_tools.helper_funcs import json_dump_file
 # from node_tools.helper_funcs import json_load_file
 
@@ -43,6 +45,11 @@ async def main():
             peer_keys = find_keys(cache, 'peer')
             logger.debug('Returned peer keys: {}'.format(peer_keys))
             load_cache_by_type(cache, peer_data, 'peer')
+
+            # check for moon data (only exists for moons we orbit)
+            moon_data = get_moon_data()
+            if moon_data:
+                load_cache_by_type(cache, moon_data, 'moon')
 
             # get all available network data
             await client.get_data('network')

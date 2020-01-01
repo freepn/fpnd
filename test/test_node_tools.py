@@ -22,7 +22,6 @@ from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import get_peer_status
 from node_tools.data_funcs import update_runner
 from node_tools.node_funcs import get_moon_data
-from node_tools.node_funcs import load_moon_data
 from node_tools.node_funcs import run_moon_cmd
 
 
@@ -163,10 +162,6 @@ def test_cache_loading():
         net = find_keys(cache, 'net')
         assert len(net) == 2
 
-    def test_load_moon_data():
-        res = load_moon_data(cache, timeout=0)
-        assert res is False
-
     def test_cache_size():
         size = len(cache)
         assert size == 8
@@ -177,7 +172,6 @@ def test_cache_loading():
     test_find_keys_nonet()
     test_load_cache_net()
     test_find_keys()
-    test_load_moon_data()
     test_cache_size()
 
 
