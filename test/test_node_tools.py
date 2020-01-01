@@ -169,7 +169,7 @@ def test_cache_loading():
 
     def test_cache_size():
         size = len(cache)
-        assert size == 9
+        assert size == 8
 
     test_cache_is_empty()
     test_load_cache_node()
