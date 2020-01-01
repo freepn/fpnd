@@ -1,3 +1,5 @@
+sudo: required
+
 language: python
 
 python:
@@ -7,14 +9,22 @@ python:
     - "3.8-dev"
     - "nightly"
 
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y software-properties-common
+  - sudo add-apt-repository -y -s ppa:nerdboy/embedded
+  - sudo apt-get -qq update
+
 # command to install dependencies
 install:
+  - sudo apt-get -y install zerotier-one
+  - sudo apt-get -y build-dep fpnd
   - pip install pytest
   - pip install pytest-pep8
   - pip install pytest-flake8
   - pip install tox-travis
 
-# command to run tests (no tests yet)
+# command to run tests
 script:
   - tox
 

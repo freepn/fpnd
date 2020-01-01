@@ -1,10 +1,9 @@
-#!/usr/bin/python3.6
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # Target:   Python 3.6
 
 import os
 import sys
-import json
 import time
 import datetime
 import logging
@@ -105,9 +104,9 @@ def do_scheduling():
     for moon in moons:
         res = run_moon_cmd(moon, action='orbit')
 
-    moon_list = get_moon_data()
-    logger.debug('Moon data size: {}'.format(len(moon_list)))
-    logger.debug('Moon data type is now: {}'.format(type(moon_list)))
+    moon_metadata = get_moon_data()
+    logger.debug('Moon data size: {}'.format(len(moon_metadata)))
+    logger.debug('Moon data type is: {}'.format(type(moon_metadata)))
 
     logger.debug('Entering schedule.run_pending loop')
     while True:

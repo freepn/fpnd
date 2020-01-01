@@ -36,10 +36,10 @@ def find_keys(cache, key_str):
 def get_endpoint_data(cache, key_str):
     """
     Get all data for key type from cache.
-    :param: <cache> object
-    :param: desired 'key_str', one of
-            ['node'|'peer'|'net']
-    :return: tuple (list of [keys], list of [values])
+    :param cache: <cache> object
+    :param key_str: desired 'key_str', one of
+                    ['node'|'peer'|'net']
+    :return tuple: (list of [keys], list of [values])
     """
     logger.debug('Entering get_endpoint_data with key_str: {}'.format(key_str))
     values = []
@@ -58,10 +58,11 @@ def get_endpoint_data(cache, key_str):
 
 def get_net_status(cache):
     """
-    Get specific data for node endpoint 'network' from cache.
+    Get status data for node endpoint 'network' from cache, return a
+    list of namedTuples.
     """
     networks = []  # list of network namedTuples
-    Network = namedtuple('Network', 'id status mac ztdevice gateway')
+    Network = namedtuple('Network', 'identity status mac ztdevice gateway')
     key_list, values = get_endpoint_data(cache, 'net')
     if key_list:
         for key, data in zip(key_list, values):
@@ -77,10 +78,11 @@ def get_net_status(cache):
 
 def get_node_status(cache):
     """
-    Get specific data for node endpoint 'status' from cache.
+    Get data for node endpoint 'status' from cache, return a
+    namedTuple.
     """
     node_data = []
-    Node = namedtuple('Node', 'id status tcpFallback worldId')
+    Node = namedtuple('Node', 'identity status tcpFallback worldId')
     key_list, values = get_endpoint_data(cache, 'node')
     if values:
         d = values[0]
@@ -95,10 +97,11 @@ def get_node_status(cache):
 
 def get_peer_status(cache):
     """
-    Get specific data for node endpoint 'peer' from cache.
+    Get status data for node endpoint 'peer' from cache, return a
+    list of namedTuples.
     """
     peers = []  # list of peer namedTuples
-    Peer = namedtuple('Peer', 'id role active address port')
+    Peer = namedtuple('Peer', 'identity role active address port')
     key_list, values = get_endpoint_data(cache, 'peer')
     if key_list:
         for key, data in zip(key_list, values):
@@ -144,11 +147,11 @@ def load_cache_by_type(cache, data, key_str):
 def update_cache_entry(cache, data, key):
     """Update single cache entry by key."""
     new_data = AttrDict.from_nested_dict(data)
-    if 'net' or 'moon' in str(key):
+    if 'net' in str(key) or 'moon' in str(key):
         tgt = 'id'
     else:
         tgt = 'address'
-    old_id = new_data.get(tgt)
+    old_id = new_data[tgt]
     logger.info('New data has id: {}'.format(old_id))
     logger.debug('Updating cache entry for key: {}'.format(key))
     with cache.transact():
