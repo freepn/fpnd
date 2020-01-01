@@ -105,7 +105,6 @@ def do_scheduling():
 
     moon_metadata = get_moon_data()
     logger.debug('Moon data size: {}'.format(len(moon_metadata)))
-    logger.debug('Moon data type is: {}'.format(type(moon_metadata)))
 
     logger.debug('Entering schedule.run_pending loop')
     while True:

@@ -29,13 +29,14 @@ def get_moon_data():
             logger.debug('get_moon_data err result: {}'.format(err.decode().strip()))
         else:
             result = json.loads(out.decode().strip())
-            logger.debug('found moon id: {}'.format(res[0]['id']))
+            logger.info('found moon id: {}'.format(result[0]['id']))
+            logger.debug('Moon data type is: {}'.format(type(moon_metadata)))
 
-    except FileNotFoundError as exc:
-        logger.error('zerotier-cli command not found')
+    except Exception as exc:
+        logger.error('zerotier-cli exception: {}'.format(exc))
         pass
 
-    logger.debug('Leaving get_moon_data: {}'.format(result))
+    logger.debug('Leaving get_moon_data with {} moon(s)'.format(len(result)))
     return result
 
 
@@ -67,16 +68,14 @@ def run_moon_cmd(moon_id, action='orbit'):
 
         out, err = b.communicate()
 
-        res = out.decode().strip()
-        logger.debug('run_moon_cmd result: {}'.format(res))
-
-        if 'OK' in res:
-            result = True
-        elif err:
+        if err:
             logger.error('run_moon_cmd err result: {}'.format(err.decode().strip()))
+        elif 'OK' in out.decode().strip():
+            result = True
+            logger.debug('run_moon_cmd result: {}'.format(out.decode().strip()))
 
-    except FileNotFoundError as exc:
-        logger.error('zerotier-cli command not found')
+    except Exception as exc:
+        logger.error('zerotier-cli exception: {}'.format(exc))
         pass
 
     logger.debug('Leaving run_moon_cmd: {}'.format(result))
