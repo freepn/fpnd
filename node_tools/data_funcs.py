@@ -61,7 +61,7 @@ def with_cache_aging(func):
             cache.update([('utc-time', utc_stamp)])
 
         result = func(*args, **kwargs)
-        logger.info('Get data result was: {}'.format(result))
+        logger.info('Get data result: {}'.format(result))
 
         if stamp is not None and result is ENODATA or None:
             cache.update([('utc-time', stamp)])
@@ -90,5 +90,5 @@ def update_runner():
             do_logstats()
         else:
             logger.debug('Cache empty and API returned ENODATA')
-    do_logstats('Leaviing update_runner')
+    do_logstats('Leaving update_runner')
     return res

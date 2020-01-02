@@ -8,13 +8,13 @@ import time
 import datetime
 import logging
 import schedule
+import functools
 
 from daemon import Daemon
 from daemon.parent_logger import setup_logging
 
 from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import NODE_SETTINGS
-from node_tools.network_funcs import get_net_cmds
 from node_tools.node_funcs import get_moon_data
 from node_tools.node_funcs import run_moon_cmd
 
@@ -36,6 +36,54 @@ logger = logging.getLogger(__name__)
 max_age = NODE_SETTINGS['max_cache_age']
 moons = NODE_SETTINGS['moon_list']  # list of fpn moons to orbiit
 timestamp = datetime.datetime.now(utc)  # use local time for console
+
+
+# use with the following to cancel a failed job function
+#   @catch_exceptions(cancel_on_failure=True)
+def catch_exceptions(cancel_on_failure=False):
+    def catch_exceptions_decorator(job_func):
+        @functools.wraps(job_func)
+        def wrapper(*args, **kwargs):
+            try:
+                return job_func(*args, **kwargs)
+            except:
+                import traceback
+                logger.error(traceback.format_exc())
+                if cancel_on_failure:
+                    return schedule.CancelJob
+        return wrapper
+    return catch_exceptions_decorator
+
+
+def show_scheduled_jobs():
+    """
+    Show job info for all currently scheduled jobs.  Normally run
+    once at startup.  Also shows tags for base jobs.
+    """
+    for job in schedule.jobs:
+        logger.debug('JOBS: {}'.format(job))
+        if 'base' in str(job.tags):
+            logger.debug('TAGS: {}'.format(job.tags))
+
+
+# run as a separate job to get accurate next_run/last_run times for logs
+# this shows the time of the next matching job in the scheduler queue, but
+# we have to wait for previous job to complete and update its properties
+# note this will sometimes inhibit this job from running; adjust the wait
+# seconds for "tuning"
+def show_next_job(tag):
+    """
+    Show next scheduled job associated with the given `tag` (`tag` is
+    currently a required argument).
+
+    :param tag: An identifier used to select one or more
+                jobs to show
+    """
+    t = schedule.idle_seconds_since()
+    wait_seconds = 10
+    if t is not None and t > wait_seconds:
+        next_job = min(job for job in schedule.jobs if tag in job.tags)
+        logger.debug('NEXT RUN: {:%Y-%m-%d %H:%M:%S %Z}, TAGS: {}'.format(next_job.next_run, next_job.tags))
 
 
 def config_from_ini():
@@ -90,15 +138,22 @@ def do_setup():
 def setup_scheduling(max_age):
     """Initial setup for scheduled jobs"""
     sleep_time = max_age / 2
-    stateJob = schedule.every(sleep_time).seconds
-    stateJob.do(update_runner)
-    logger.debug('Leaving setup_scheduling: {}'.format(stateJob))
+    info_time = 45
+
+    baseUpdateJob = schedule.every(sleep_time).seconds
+    baseUpdateJob.do(update_runner).tag('base-tasks', 'get-updates')
+
+    infoJob = schedule.every(info_time).seconds
+    infoJob.do(show_next_job, 'base-tasks').tag('info-tasks', 'show-base-jobs')
+
+    show_scheduled_jobs()
+    logger.debug('Leaving setup_scheduling: {}'.format(baseUpdateJob))
 
 
 def do_scheduling():
     logger.debug('Entering do_scheduling')
-    schedule.run_all(10)
-    time.sleep(5)
+    schedule.run_all(10, 'base-tasks')
+    time.sleep(3)
 
     for moon in moons:
         res = run_moon_cmd(moon, action='orbit')
@@ -116,8 +171,7 @@ def do_scheduling():
 class fpnDaemon(Daemon):
     # implement run method
     def run(self):
-        up0, down0, up1, down1 = get_net_cmds(self.home_dir)
-        # logger.debug('up0 is: {}'.format(up0))
+
         do_scheduling()
 
 

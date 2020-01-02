@@ -147,12 +147,12 @@ def load_cache_by_type(cache, data, key_str):
 def update_cache_entry(cache, data, key):
     """Update single cache entry by key."""
     new_data = AttrDict.from_nested_dict(data)
-    if 'net' in str(key) or 'moon' in str(key):
+    if key.rstrip('-0123456789') in ('net', 'moon'):
         tgt = 'id'
     else:
         tgt = 'address'
-    old_id = new_data[tgt]
-    logger.info('New data has id: {}'.format(old_id))
+    data_id = new_data[tgt]
+    logger.info('New data has id: {}'.format(data_id))
     logger.debug('Updating cache entry for key: {}'.format(key))
     with cache.transact():
         cache[key] = new_data

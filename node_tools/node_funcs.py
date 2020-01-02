@@ -30,7 +30,7 @@ def get_moon_data():
         else:
             result = json.loads(out.decode().strip())
             logger.info('found moon id: {}'.format(result[0]['id']))
-            logger.debug('Moon data type is: {}'.format(type(moon_metadata)))
+            logger.debug('Moon data type is: {}'.format(type(result)))
 
     except Exception as exc:
         logger.error('zerotier-cli exception: {}'.format(exc))
