@@ -107,6 +107,16 @@ def test_orbit_moon():
     assert res is False
 
 
+def test_deorbit_moon():
+    res = run_moon_cmd('deadd738e6', action='deorbit')
+    assert res is False
+
+
+def test_unorbit_moon():
+    res = run_moon_cmd('deadd738e6', action='unorbit')
+    assert res is False
+
+
 def should_be_enodata():
     res = update_runner()
     return res
@@ -141,24 +151,28 @@ def test_cache_loading():
     def test_load_cache_node():
         _, node_data = client.get_data('status')
         load_cache_by_type(cache, node_data, 'node')
+        assert len(list(cache)) == 1
 
     def test_update_cache_node():
         _, node_data = client.get_data('status')
         load_cache_by_type(cache, node_data, 'node')
+        assert len(list(cache)) == 1
 
     def test_load_cache_peer():
         _, peer_data = client.get_data('peer')
         load_cache_by_type(cache, peer_data, 'peer')
+        assert len(list(cache)) == 6
 
     def test_load_cache_net():
         _, net_data = client.get_data('network')
         load_cache_by_type(cache, net_data, 'net')
-        assert len(list(cache)) != 0
+        assert len(list(cache)) == 8
 
     def test_update_cache_net():
-        net_data = []
+        _, net_data = client.get_data('network')
+        del net_data[1]
         load_cache_by_type(cache, net_data, 'net')
-        assert len(list(cache)) != 0
+        assert len(list(cache)) == 7
 
     def test_find_keys_nonet():
         assert find_keys(cache, 'net') is None
@@ -221,6 +235,18 @@ def test_load_node_status():
     Node = get_node_status(cache)
     load_cache_by_type(cache, Node, 'nstate')
     assert len(cache) == 10
+    # print(list(cache))
+
+
+def test_load_moon_status():
+    moonStatus = []
+    peers = get_peer_status(cache)
+    for peer in peers:
+        if peer['role'] == 'MOON':
+            moonStatus.append(peer)
+            break
+    load_cache_by_type(cache, moonStatus, 'mstate')
+    assert len(cache) == 11
     # print(list(cache))
 
 
