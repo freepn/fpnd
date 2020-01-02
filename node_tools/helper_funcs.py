@@ -112,8 +112,8 @@ def update_state():
         exec_full(node_scr)
         return 'OK'
     except Exception as exc:
+        logger.error('update_state exception: {}'.format(exc))
         return ENODATA
-        logger.error(str(exc))
 
 
 class AttrDict(dict):

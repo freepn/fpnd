@@ -85,8 +85,8 @@ def test_node_client_status():
 def test_peer_client_status():
     _, peer_data = client.get_data('peer')
     for peer in peer_data:
-        active = peer['paths'][0]['active']
-        assert active
+        assert peer['paths'][0]['active']
+        # assert active
 
 
 def test_net_client_status():
@@ -142,12 +142,21 @@ def test_cache_loading():
         _, node_data = client.get_data('status')
         load_cache_by_type(cache, node_data, 'node')
 
+    def test_update_cache_node():
+        _, node_data = client.get_data('status')
+        load_cache_by_type(cache, node_data, 'node')
+
     def test_load_cache_peer():
         _, peer_data = client.get_data('peer')
         load_cache_by_type(cache, peer_data, 'peer')
 
     def test_load_cache_net():
         _, net_data = client.get_data('network')
+        load_cache_by_type(cache, net_data, 'net')
+        assert len(list(cache)) != 0
+
+    def test_update_cache_net():
+        net_data = []
         load_cache_by_type(cache, net_data, 'net')
         assert len(list(cache)) != 0
 
@@ -162,44 +171,57 @@ def test_cache_loading():
         net = find_keys(cache, 'net')
         assert len(net) == 2
 
+    def test_update_runner():
+        res = update_runner()
+
     def test_cache_size():
-        size = len(cache)
-        assert size == 8
+        assert len(cache) == 9
 
     test_cache_is_empty()
     test_load_cache_node()
+    test_update_cache_node()
     test_load_cache_peer()
     test_find_keys_nonet()
     test_load_cache_net()
+    test_update_cache_net()
+    test_load_cache_net()
     test_find_keys()
+    test_update_runner()
     test_cache_size()
 
 
 def test_get_node_status():
     Node = get_node_status(cache)
-    assert isinstance(Node, tuple)
-    assert hasattr(Node, 'status')
-    assert hasattr(Node, 'tcpFallback')
-    assert Node.tcpFallback is False
+    assert isinstance(Node, dict)
+    assert 'status' in Node
+    assert 'tcpFallback' in Node
+    assert Node['tcpFallback'] is False
 
 
 def test_get_peer_status():
     peers = get_peer_status(cache)
     assert isinstance(peers, list)
     for Peer in peers:
-        assert isinstance(Peer, tuple)
-        assert hasattr(Peer, 'role')
-        assert Peer.active is True
-        assert hasattr(Peer, 'address')
+        assert isinstance(Peer, dict)
+        assert 'role' in Peer
+        assert 'address' in Peer
+        assert Peer['active'] is True
 
 
 def test_get_net_status():
     nets = get_net_status(cache)
     assert isinstance(nets, list)
     for Net in nets:
-        assert isinstance(Net, tuple)
-        assert hasattr(Net, 'mac')
-        assert hasattr(Net, 'gateway')
+        assert isinstance(Net, dict)
+        assert 'mac' in Net
+        assert 'gateway' in Net
+
+
+def test_load_node_status():
+    Node = get_node_status(cache)
+    load_cache_by_type(cache, Node, 'nstate')
+    assert len(cache) == 10
+    # print(list(cache))
 
 
 # res = update_state()
