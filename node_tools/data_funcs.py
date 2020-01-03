@@ -37,11 +37,11 @@ def with_cache_aging(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         """
-        cache wrapper for update_runner() function
-        * get timestamp and clear cache if stale
-        * log some debug info
+        cache wrapper to manage timestamp age for update_runner()
+        * get timestamp and clear cache if greater than max_age
         * update cache timestamp based on result
-        :return: result from update_runner()
+        * log some debug info
+        :return result: result from update_runner()
         """
         stamp = None
         utc_stamp = datetime.datetime.now(utc)
