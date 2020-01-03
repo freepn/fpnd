@@ -21,7 +21,8 @@ class Constant(tuple):
 ENODATA = Constant('ENODATA')  # error return for async state data updates
 
 NODE_SETTINGS = {
-    u'max_cache_age': 300,  # maximum cache age in seconds
+    u'max_cache_age': 60,  # maximum cache age in seconds
+    u'moon_list': ['4f4114472a']  # list of fpn moons to orbiit
 }
 
 
@@ -111,8 +112,8 @@ def update_state():
         exec_full(node_scr)
         return 'OK'
     except Exception as exc:
+        logger.error('update_state exception: {}'.format(exc))
         return ENODATA
-        logger.error(str(exc))
 
 
 class AttrDict(dict):

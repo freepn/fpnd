@@ -61,27 +61,25 @@ def with_cache_aging(func):
             cache.update([('utc-time', utc_stamp)])
 
         result = func(*args, **kwargs)
-        logger.info('Get data result was: {}'.format(result))
+        logger.info('Get data result: {}'.format(result))
 
         if stamp is not None and result is ENODATA or None:
             cache.update([('utc-time', stamp)])
-            logger.debug('Old cache time is: {}'.format(stamp.isoformat(' ')))
+            logger.debug('Old cache time is: {:%Y-%m-%d %H:%M:%S %Z}'.format(stamp))
         else:
             cache.update([('utc-time', utc_stamp)])
-            logger.debug('New cache time is: {}'.format(utc_stamp.isoformat(' ')))
+            logger.debug('New cache time is: {:%Y-%m-%d %H:%M:%S %Z}'.format(utc_stamp))
         return result
     return wrapper
 
 
 @with_cache_aging
 def update_runner():
-    do_logstats('Entering update_runner')
-
     try:
         res = update_state()
         size = len(cache)
     except:  # noqa: E722
-        logger.debug('No data available, cache was NOT updated')
+        logger.error('No data available, cache was NOT updated')
         pass
     else:
         if size < 1:
@@ -90,5 +88,5 @@ def update_runner():
             do_logstats()
         else:
             logger.debug('Cache empty and API returned ENODATA')
-    do_logstats('Leaviing update_runner')
+    do_logstats('Leaving update_runner')
     return res
