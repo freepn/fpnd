@@ -75,8 +75,6 @@ def with_cache_aging(func):
 
 @with_cache_aging
 def update_runner():
-    do_logstats('Entering update_runner')
-
     try:
         res = update_state()
         size = len(cache)

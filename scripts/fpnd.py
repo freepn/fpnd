@@ -127,7 +127,6 @@ def setup_scheduling(max_age):
 
 
 def do_scheduling():
-    logger.debug('Entering do_scheduling')
     schedule.run_all(10, 'base-tasks')
     # time.sleep(3)
 
@@ -137,7 +136,6 @@ def do_scheduling():
     moon_metadata = get_moon_data()
     logger.debug('Moon data size: {}'.format(len(moon_metadata)))
 
-    logger.debug('Entering schedule.run_pending loop')
     while True:
         schedule.run_pending()
         time.sleep(1)
@@ -158,8 +156,6 @@ if __name__ == "__main__":
     setup_scheduling(max_age)
     if not home:
         home = '.'
-
-    logger.debug('Leaving main, max_age is: {}'.format(max_age))
 
     if len(sys.argv) == 2:
         arg = sys.argv[1]

@@ -36,7 +36,6 @@ def get_moon_data():
         logger.error('zerotier-cli exception: {}'.format(exc))
         pass
 
-    logger.debug('Leaving get_moon_data with {} moon(s)'.format(len(result)))
     return result
 
 
@@ -78,7 +77,6 @@ def run_moon_cmd(moon_id, action='orbit'):
         logger.error('zerotier-cli exception: {}'.format(exc))
         pass
 
-    logger.debug('Leaving run_moon_cmd: {}'.format(result))
     return result
 
 

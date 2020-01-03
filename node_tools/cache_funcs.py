@@ -60,7 +60,6 @@ def get_endpoint_data(cache, key_str):
             logger.debug('Appending data for key: {}'.format(key))
     else:
         key_list = []
-    logger.debug('Leaving get_endpoint_data')
     return (key_list, values)
 
 
@@ -126,7 +125,6 @@ def load_cache_by_type(cache, data, key_str):
     """Load or update cache by key type string (uses find_keys)."""
     from itertools import zip_longest
     key_list = find_keys(cache, key_str)
-    logger.debug('Entering load_cache with key_list: {}'.format(key_list))
     if not key_list:
         if key_str in ('node', 'nstate'):
             create_cache_entry(cache, data, key_str)
@@ -147,7 +145,6 @@ def load_cache_by_type(cache, data, key_str):
                 else:
                     update_cache_entry(cache, item, key)
     key_list = find_keys(cache, key_str)
-    logger.debug('Leaving load_cache with key_list: {}'.format(key_list))
 
 
 def update_cache_entry(cache, data, key):
@@ -167,7 +164,7 @@ def update_cache_entry(cache, data, key):
     else:
         tgt = 'address'
     data_id = new_data[tgt]
-    logger.info('New data has id: {}'.format(data_id))
+    logger.debug('New data has id: {}'.format(data_id))
     logger.debug('Updating cache entry for key: {}'.format(key))
     with cache.transact():
         cache[key] = new_data
