@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 import time
 import datetime
+import logging
 # import mock
-# import unittest
+import unittest
 
 import warnings
 import pytest
 
 from diskcache import Index
 
+from node_tools.logger_config import setup_logging
 from node_tools.helper_funcs import ENODATA, NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import json_dump_file
@@ -250,5 +252,50 @@ def test_load_moon_status():
     # print(list(cache))
 
 
-# res = update_state()
-# res = update_runner()
+class BasicConfigTest(unittest.TestCase):
+
+    """Tests for logger_config.py"""
+
+    def setUp(self):
+        super(BasicConfigTest, self).setUp()
+        self.handlers = logging.root.handlers
+        self.saved_handlers = logging._handlers.copy()
+        self.saved_handler_list = logging._handlerList[:]
+        self.original_logging_level = logging.root.level
+        self.addCleanup(self.cleanup)
+        logging.root.handlers = []
+
+    def tearDown(self):
+        for h in logging.root.handlers[:]:
+            logging.root.removeHandler(h)
+            h.close()
+        super(BasicConfigTest, self).tearDown()
+
+    def cleanup(self):
+        setattr(logging.root, 'handlers', self.handlers)
+        logging._handlers.clear()
+        logging._handlers.update(self.saved_handlers)
+        logging._handlerList[:] = self.saved_handler_list
+        logging.root.level = self.original_logging_level
+
+    def test_debug_level(self):
+        old_level = logging.root.level
+        self.addCleanup(logging.root.setLevel, old_level)
+
+        debug = True
+        setup_logging(debug, '/dev/null')
+        self.assertEqual(logging.root.level, logging.DEBUG)
+        # Test that second call has no effect
+        logging.basicConfig(level=58)
+        self.assertEqual(logging.root.level, logging.DEBUG)
+
+    def test_info_level(self):
+        old_level = logging.root.level
+        self.addCleanup(logging.root.setLevel, old_level)
+
+        debug = False
+        setup_logging(debug, '/dev/null')
+        self.assertEqual(logging.root.level, logging.INFO)
+        # Test that second call has no effect
+        logging.basicConfig(level=58)
+        self.assertEqual(logging.root.level, logging.INFO)

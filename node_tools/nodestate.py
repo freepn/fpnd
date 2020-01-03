@@ -78,7 +78,7 @@ async def main():
             logger.debug('Got net state: {}'.format(netStatus))
             load_cache_by_type(cache, netStatus, 'istate')
 
-        except ZeroTierConnectionError as exc:
+        except Exception as exc:
             logger.error(str(exc))
             raise exc
 

@@ -73,12 +73,14 @@ def get_net_status(cache):
     key_list, values = get_endpoint_data(cache, 'net')
     if key_list:
         for key, data in zip(key_list, values):
-            netStatus = {'identity': data.id,
-                         'status': data.status,
-                         'mac': data.mac,
-                         'ztdevice': data.portDeviceName,
-                         'gateway': data.routes[1]['via']}
-            networks.append(netStatus)
+            # we need to check for missing route list here
+            if data.routes:
+                netStatus = {'identity': data.id,
+                             'status': data.status,
+                             'mac': data.mac,
+                             'ztdevice': data.portDeviceName,
+                             'gateway': data.routes[1]['via']}
+                networks.append(netStatus)
         logger.debug('netStatus list: {}'.format(networks))
     return networks
 
