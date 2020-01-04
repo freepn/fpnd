@@ -2,6 +2,7 @@
 import time
 import datetime
 import logging
+import ipaddress
 # import mock
 import unittest
 
@@ -12,6 +13,7 @@ from diskcache import Index
 
 from node_tools.logger_config import setup_logging
 from node_tools.helper_funcs import ENODATA, NODE_SETTINGS
+from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import json_dump_file
 from node_tools.helper_funcs import json_load_file
@@ -230,6 +232,7 @@ def test_get_net_status():
     for Net in nets:
         assert isinstance(Net, dict)
         assert 'mac' in Net
+        assert 'ztaddress' in Net
         assert 'gateway' in Net
 
 
@@ -254,7 +257,7 @@ def test_load_moon_status():
 
 class BasicConfigTest(unittest.TestCase):
 
-    """Tests for logger_config.py"""
+    """Basic tests for logger_config.py"""
 
     def setUp(self):
         super(BasicConfigTest, self).setUp()
@@ -299,3 +302,24 @@ class BasicConfigTest(unittest.TestCase):
         # Test that second call has no effect
         logging.basicConfig(level=58)
         self.assertEqual(logging.root.level, logging.INFO)
+
+
+class TestIPv4Methods(unittest.TestCase):
+    """
+    Note the input for this test case is an ipaddress.IPv4Interface
+    object.
+    """
+    def test_strip(self):
+        """Return IPv4 addr without prefix"""
+        strip = find_ipv4_iface('192.168.1.1/24')
+        self.assertEqual(strip, '192.168.1.1')
+
+    def test_nostrip(self):
+        """Return True if IPv4 addr is valid"""
+        nostrip = find_ipv4_iface('192.168.1.1/24', False)
+        self.assertTrue(nostrip)
+
+    def test_bogus(self):
+        """Return False if IPv4 addr is not valid"""
+        bogus_addr = find_ipv4_iface('192.168.1.300/24', False)
+        self.assertFalse(bogus_addr)

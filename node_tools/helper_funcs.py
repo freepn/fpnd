@@ -26,6 +26,28 @@ NODE_SETTINGS = {
 }
 
 
+def find_ipv4_iface(addr_string, strip=True):
+    """
+    This is intended only for picking the IPv4 address from the list
+    of 'assignedAddresses' in the JSON network data payload for a
+    single ZT network.
+    :param addr_string: IPv4 address in CIDR format
+                            eg: 192.168.1.10/24
+    :param strip:
+    :return stripped addr_str: if 'strip' return IPv4 addr only, or
+    :return True: if not 'strip' or False if addr not valid
+    """
+    import ipaddress
+    try:
+        interface = ipaddress.IPv4Interface(addr_string)
+        if not strip:
+            return True
+        else:
+            return str(interface.ip)
+    except ValueError:
+        return False
+
+
 def exec_full(filepath):
     global_namespace = {
         "__file__": filepath,

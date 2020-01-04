@@ -5,6 +5,7 @@ import logging
 from collections import namedtuple
 
 from node_tools.helper_funcs import AttrDict
+from node_tools.helper_funcs import find_ipv4_iface
 
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ def find_keys(cache, key_str):
 
 def get_endpoint_data(cache, key_str):
     """
-    Get all data for key type from cache.
+    Get all data for key type from cache (can be endpoint or state).
     :param cache: <cache> object
     :param key_str: desired 'key_str', one of
                     ['node'|'peer'|'net'|'moon'] or
@@ -65,7 +66,7 @@ def get_endpoint_data(cache, key_str):
 
 def get_net_status(cache):
     """
-    Get status data for node endpoint 'network' from cache, return a
+    Get status data for 'network' endpoint from cache, return a
     list of dictionaries.
     """
     networks = []  # list of network objects
@@ -74,10 +75,15 @@ def get_net_status(cache):
         for key, data in zip(key_list, values):
             # we need to check for missing route list here
             if data.routes:
+                for addr in data.assignedAddresses:
+                    if find_ipv4_iface(addr, False):
+                        zt_addr = find_ipv4_iface(addr)
+                        break
                 netStatus = {'identity': data.id,
                              'status': data.status,
                              'mac': data.mac,
                              'ztdevice': data.portDeviceName,
+                             'ztaddress': zt_addr,
                              'gateway': data.routes[1]['via']}
                 networks.append(netStatus)
         logger.debug('netStatus list: {}'.format(networks))
@@ -86,7 +92,7 @@ def get_net_status(cache):
 
 def get_node_status(cache):
     """
-    Get data for node endpoint 'status' from cache, return a dict.
+    Get data for 'status' endpoint from cache, return a dict.
     """
     nodeStatus = {}
     key_list, values = get_endpoint_data(cache, 'node')
@@ -103,7 +109,7 @@ def get_node_status(cache):
 
 def get_peer_status(cache):
     """
-    Get status data for node endpoint 'peer' from cache, return a
+    Get status data for 'peer' endpoint from cache, return a
     list of dictionaries.
     """
     peers = []  # list of peer objects
