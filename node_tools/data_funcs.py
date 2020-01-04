@@ -8,8 +8,12 @@ import datetime
 import functools
 
 from diskcache import Index
-from node_tools.helper_funcs import update_state, get_cachedir
-from node_tools.helper_funcs import ENODATA, NODE_SETTINGS
+
+from node_tools.cache_funcs import get_state
+from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import update_state
+from node_tools.helper_funcs import ENODATA
+from node_tools.helper_funcs import NODE_SETTINGS
 
 try:
     from datetime import timezone
@@ -73,7 +77,34 @@ def with_cache_aging(func):
     return wrapper
 
 
+def with_state_check(func):
+    @functools.wraps(func)
+    def state_check(*args, **kwargs):
+        """
+        cache wrapper for checking nodeState before and after the
+        update_runner() tries to grab new data.
+
+        """
+        oldState = get_state(cache)
+        if not oldState.online:
+            logger.warning('nodeState not initialized (node not online)')
+        else:
+            logger.info('Node online with id: {}'.format(oldState.fpn_id))
+
+        result = func(*args, **kwargs)
+
+        newState = get_state(cache)
+        if not newState.online and not oldState.online:
+            logger.warning('nodeState still not initialized (node not online)')
+        elif newState.online and oldState.online:
+            if newState == oldState:
+                logger.info('No state change, all is well')
+        return result
+    return state_check
+
+
 @with_cache_aging
+@with_state_check
 def update_runner():
     try:
         res = update_state()

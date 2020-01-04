@@ -24,6 +24,7 @@ from node_tools.cache_funcs import get_endpoint_data
 from node_tools.cache_funcs import get_net_status
 from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import get_peer_status
+from node_tools.cache_funcs import get_state
 from node_tools.data_funcs import update_runner
 from node_tools.node_funcs import get_moon_data
 from node_tools.node_funcs import run_moon_cmd
@@ -164,6 +165,12 @@ def test_cache_loading():
 
     def test_load_cache_peer():
         _, peer_data = client.get_data('peer')
+        del peer_data[0]
+        load_cache_by_type(cache, peer_data, 'peer')
+        assert len(list(cache)) == 5
+
+    def test_update_cache_peer():
+        _, peer_data = client.get_data('peer')
         load_cache_by_type(cache, peer_data, 'peer')
         assert len(list(cache)) == 6
 
@@ -199,6 +206,7 @@ def test_cache_loading():
     test_load_cache_node()
     test_update_cache_node()
     test_load_cache_peer()
+    test_update_cache_peer()
     test_find_keys_nonet()
     test_load_cache_net()
     test_update_cache_net()
@@ -253,6 +261,24 @@ def test_load_moon_status():
     load_cache_by_type(cache, moonStatus, 'mstate')
     assert len(cache) == 11
     # print(list(cache))
+
+
+def test_load_net_status():
+    Node = get_net_status(cache)
+    load_cache_by_type(cache, Node, 'istate')
+    assert len(cache) == 13
+
+
+def test_get_state():
+    nodeState = get_state(cache)
+    assert isinstance(nodeState, dict)
+    assert nodeState['online']
+    assert nodeState['fpn_id'] == 'ddfd7368e6'
+    assert not nodeState['fpn_bad']
+    assert nodeState['fpn0']
+    assert nodeState['fpn1']
+    assert nodeState['moon_id'] == 'deadd738e6'
+    # print(nodeState)
 
 
 class BasicConfigTest(unittest.TestCase):

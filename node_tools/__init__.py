@@ -6,6 +6,7 @@ from node_tools.cache_funcs import get_endpoint_data as get_endpoint_data
 from node_tools.cache_funcs import get_net_status as get_net_status
 from node_tools.cache_funcs import get_node_status as get_node_status
 from node_tools.cache_funcs import get_peer_status as get_peer_status
+from node_tools.cache_funcs import get_state as get_state
 from node_tools.cache_funcs import load_cache_by_type as load_cache_by_type
 from node_tools.data_funcs import update_runner as update_runner
 from node_tools.helper_funcs import find_ipv4_iface as find_ipv4_iface
@@ -38,6 +39,7 @@ __all__ = [
     'get_net_status',
     'get_node_status',
     'get_peer_status',
+    'get_state',
     'get_token',
     'json_dump_file',
     'json_load_file',

@@ -29,16 +29,17 @@ def create_cache_entry(cache, data, key_str):
 
 def find_keys(cache, key_str):
     """Find API key(s) in cache using key type string, return list of keys."""
-    valid_keys = ['node', 'peer', 'net', 'moon', 'nstate', 'mstate', 'istate']
-    if key_str not in valid_keys:
+    valid_strings = ['node', 'peer', 'net', 'moon', 'nstate', 'mstate', 'istate']
+    match_list = [key for key in valid_strings if key_str in key]
+    if not match_list:
         logger.debug('Key type {} not valid'.format(key_str))
         return None
-    key_types = [key for key in list(cache) if key_str in key]
-    if not key_types:
+    key_list = [key for key in list(cache) if key_str in key]
+    if not key_list:
         logger.debug('Key type {} not in cache'.format(key_str))
         return None
     else:
-        return key_types
+        return key_list
 
 
 def get_endpoint_data(cache, key_str):
@@ -125,6 +126,39 @@ def get_peer_status(cache):
             peers.append(peerStatus)
         logger.debug('peerStatus list: {}'.format(peers))
     return peers
+
+
+def get_state(cache):
+    """
+    Get state data from cache to build node state, return an AttrDict.
+    """
+    key_list, values = get_endpoint_data(cache, 'state')
+    fpnState = {'online': False,
+                'fpn_id': None,
+                'fpn_bad': True,
+                'moon_id': None,
+                'moon_addr': None,
+                'fpn0': False,
+                'fpn1': False}
+    if key_list:
+        d = {}
+        for key, data in zip(key_list, values):
+            if 'nstate' in str(key):
+                if 'ONLINE' in data.status:
+                    d['online'] = True
+                d['fpn_id'] = data.identity
+                d['fpn_bad'] = data.tcpFallback
+            if 'mstate' in str(key):
+                d['moon_id'] = data.identity
+                d['moon_addr'] = data.address
+            if 'istate' in str(key) and 'OK' in data.status:
+                if data.ztaddress == data.gateway:
+                    d['fpn1'] = True
+                else:
+                    d['fpn0'] = True
+        fpnState.update(d)
+        logger.debug('fpnState: {}'.format(fpnState))
+    return AttrDict.from_nested_dict(fpnState)
 
 
 def load_cache_by_type(cache, data, key_str):
