@@ -37,6 +37,31 @@ def do_logstats(msg=None):
     logger.debug('Cache items: {}'.format(list(cache)))
 
 
+def get_state_values(old, new, pairs=False):
+    """
+    Get ordered changes for two state item views
+    :param old: old state dict
+    :param new: new state dict
+    :param pairs: if true, each tuple in the return list will contain a
+                  tuple of pairs for each change (old, new).  otherwise
+                  return a tuple with only the new value for each change.
+    :return: list of change tuples
+    """
+    if isinstance(old, dict) and isinstance(new, dict):
+        if not pairs:
+            return [j for i, j in zip(old.items(), new.items()) if i != j]
+        diff = []
+        if old == new:
+            logger.debug('State is unchanged')
+            return diff
+        for i, j in zip(old.items(), new.items()):
+            if i != j:
+                item = (i, j)
+                diff.append(item)
+        logger.debug('State changed: {}'.format(diff))
+        return diff
+
+
 def with_cache_aging(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -85,20 +110,21 @@ def with_state_check(func):
         update_runner() tries to grab new data.
 
         """
-        oldState = get_state(cache)
-        if not oldState.online:
+        prev_state = get_state(cache)
+        if not prev_state.online:
             logger.warning('nodeState not initialized (node not online)')
         else:
-            logger.info('Node online with id: {}'.format(oldState.fpn_id))
+            logger.info('Node online with id: {}'.format(prev_state.fpn_id))
 
         result = func(*args, **kwargs)
 
-        newState = get_state(cache)
-        if not newState.online and not oldState.online:
+        next_state = get_state(cache)
+        if not next_state.online and not prev_state.online:
             logger.warning('nodeState still not initialized (node not online)')
-        elif newState.online and oldState.online:
-            if newState == oldState:
-                logger.info('No state change, all is well')
+        elif next_state.online and prev_state.online:
+            chg_list = get_state_values(prev_state, next_state)
+            logger.debug('Got change list: {}'.format(chg_list))
+
         return result
     return state_check
 

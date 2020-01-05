@@ -25,6 +25,7 @@ from node_tools.cache_funcs import get_net_status
 from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import get_state
+from node_tools.data_funcs import get_state_values
 from node_tools.data_funcs import update_runner
 from node_tools.node_funcs import get_moon_data
 from node_tools.node_funcs import run_moon_cmd
@@ -216,6 +217,18 @@ def test_cache_loading():
     test_cache_size()
 
 
+def test_no_state():
+    nodeState = get_state(cache)
+    assert isinstance(nodeState, dict)
+    assert not nodeState['online']
+    assert nodeState['fpn_id'] is None
+    assert nodeState['fpn_bad']
+    assert not nodeState['fpn0']
+    assert not nodeState['fpn1']
+    assert nodeState['moon_id'] is None
+    # print(nodeState)
+
+
 def test_get_node_status():
     Node = get_node_status(cache)
     assert isinstance(Node, dict)
@@ -349,3 +362,35 @@ class TestIPv4Methods(unittest.TestCase):
         """Return False if IPv4 addr is not valid"""
         bogus_addr = find_ipv4_iface('192.168.1.300/24', False)
         self.assertFalse(bogus_addr)
+
+
+class TestStateChange(unittest.TestCase):
+    """
+    Note the input for this test case is a pair of node fpnState
+    objects (type is AttrDict).
+    """
+    def setUp(self):
+        self.old = {'online': True,
+                    'fpn0': False,
+                    'fpn1': False}
+        self.nw0 = {'online': True,
+                    'fpn0': True,
+                    'fpn1': False}
+        self.nw1 = {'online': True,
+                    'fpn0': False,
+                    'fpn1': True}
+        self.nw2 = {'online': True,
+                    'fpn0': True,
+                    'fpn1': True}
+
+    def test_return_default(self):
+        diff = get_state_values(self.old, self.nw2)
+        self.assertIsInstance(diff, list)
+        self.assertEqual(len(diff), 2)
+        self.assertEqual(len(diff[0]), 2)
+
+    def test_return_pairs(self):
+        diff = get_state_values(self.old, self.nw1, True)
+        self.assertIsInstance(diff, list)
+        self.assertEqual(len(diff), 1)
+        self.assertEqual(len(diff[0]), 2)
