@@ -4,6 +4,7 @@
 import logging
 from collections import namedtuple
 
+from node_tools import state_data as st
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import find_ipv4_iface
 
@@ -130,16 +131,10 @@ def get_peer_status(cache):
 
 def get_state(cache):
     """
-    Get state data from cache to build node state, return an AttrDict.
+    Get state data from cache to build node state and update it.
+
     """
     key_list, values = get_endpoint_data(cache, 'state')
-    fpnState = {'online': False,
-                'fpn_id': None,
-                'fpn_bad': True,
-                'moon_id': None,
-                'moon_addr': None,
-                'fpn0': False,
-                'fpn1': False}
     if key_list:
         d = {}
         for key, data in zip(key_list, values):
@@ -156,9 +151,9 @@ def get_state(cache):
                     d['fpn1'] = True
                 else:
                     d['fpn0'] = True
-        fpnState.update(d)
-        logger.debug('fpnState: {}'.format(fpnState))
-    return AttrDict.from_nested_dict(fpnState)
+        st.fpnState.update(d)
+        logger.debug('fpnState: {}'.format(st.fpnState))
+    return AttrDict.from_nested_dict(st.fpnState)
 
 
 def load_cache_by_type(cache, data, key_str):

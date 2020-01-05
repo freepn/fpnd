@@ -11,6 +11,7 @@ import pytest
 
 from diskcache import Index
 
+# from node_tools import state_data as stest
 from node_tools.logger_config import setup_logging
 from node_tools.helper_funcs import ENODATA, NODE_SETTINGS
 from node_tools.helper_funcs import find_ipv4_iface
@@ -37,6 +38,119 @@ try:
 except ImportError:
     from daemon.timezone import UTC
     utc = UTC()
+
+
+class BasicConfigTest(unittest.TestCase):
+
+    """Basic tests for logger_config.py"""
+
+    def setUp(self):
+        super(BasicConfigTest, self).setUp()
+        self.handlers = logging.root.handlers
+        self.saved_handlers = logging._handlers.copy()
+        self.saved_handler_list = logging._handlerList[:]
+        self.original_logging_level = logging.root.level
+        self.addCleanup(self.cleanup)
+        logging.root.handlers = []
+
+    def tearDown(self):
+        for h in logging.root.handlers[:]:
+            logging.root.removeHandler(h)
+            h.close()
+        super(BasicConfigTest, self).tearDown()
+
+    def cleanup(self):
+        setattr(logging.root, 'handlers', self.handlers)
+        logging._handlers.clear()
+        logging._handlers.update(self.saved_handlers)
+        logging._handlerList[:] = self.saved_handler_list
+        logging.root.level = self.original_logging_level
+
+    def test_debug_level(self):
+        old_level = logging.root.level
+        self.addCleanup(logging.root.setLevel, old_level)
+
+        debug = True
+        setup_logging(debug, '/dev/null')
+        self.assertEqual(logging.root.level, logging.DEBUG)
+        # Test that second call has no effect
+        logging.basicConfig(level=58)
+        self.assertEqual(logging.root.level, logging.DEBUG)
+
+    def test_info_level(self):
+        old_level = logging.root.level
+        self.addCleanup(logging.root.setLevel, old_level)
+
+        debug = False
+        setup_logging(debug, '/dev/null')
+        self.assertEqual(logging.root.level, logging.INFO)
+        # Test that second call has no effect
+        logging.basicConfig(level=58)
+        self.assertEqual(logging.root.level, logging.INFO)
+
+
+class IPv4MethodsTest(unittest.TestCase):
+    """
+    Note the input for this test case is an ipaddress.IPv4Interface
+    object.
+    """
+    def test_strip(self):
+        """Return IPv4 addr without prefix"""
+        strip = find_ipv4_iface('192.168.1.1/24')
+        self.assertEqual(strip, '192.168.1.1')
+
+    def test_nostrip(self):
+        """Return True if IPv4 addr is valid"""
+        nostrip = find_ipv4_iface('192.168.1.1/24', False)
+        self.assertTrue(nostrip)
+
+    def test_bogus(self):
+        """Return False if IPv4 addr is not valid"""
+        bogus_addr = find_ipv4_iface('192.168.1.300/24', False)
+        self.assertFalse(bogus_addr)
+
+
+class StateChangeTest(unittest.TestCase):
+    """
+    Note the input for this test case is a pair of node fpnState
+    objects (type is AttrDict).
+    """
+    def setUp(self):
+        super(StateChangeTest, self).setUp()
+        from node_tools import state_data as stest
+
+        self.default_state = stest.fpnState
+
+    def tearDown(self):
+        from node_tools import state_data as s
+
+        defState = dict.fromkeys(['online',
+                                  'fpn_id',
+                                  'fpn_bad',
+                                  'moon_id',
+                                  'moon_addr',
+                                  'fpn0',
+                                  'fpn1'])
+
+        s.fpnState = defState
+        super(StateChangeTest, self).tearDown()
+
+    def test_change_none(self):
+        self.assertIsInstance(self.default_state, dict)
+        self.assertFalse(self.default_state['online'])
+        self.assertFalse(self.default_state['fpn1'])
+
+    def test_change_online(self):
+        from node_tools import state_data as stest
+        stest.fpnState.update(online=True)
+        self.assertTrue(self.default_state['online'])
+        self.assertFalse(self.default_state['fpn1'])
+
+    def test_change_upfpn1(self):
+        from node_tools import state_data as stest
+        stest.fpnState.update(online=True, fpn1=True)
+        self.assertTrue(self.default_state['online'])
+        self.assertTrue(self.default_state['fpn1'])
 
 
 class mock_zt_api_client(object):
@@ -217,18 +331,6 @@ def test_cache_loading():
     test_cache_size()
 
 
-def test_no_state():
-    nodeState = get_state(cache)
-    assert isinstance(nodeState, dict)
-    assert not nodeState['online']
-    assert nodeState['fpn_id'] is None
-    assert nodeState['fpn_bad']
-    assert not nodeState['fpn0']
-    assert not nodeState['fpn1']
-    assert nodeState['moon_id'] is None
-    # print(nodeState)
-
-
 def test_get_node_status():
     Node = get_node_status(cache)
     assert isinstance(Node, dict)
@@ -292,105 +394,3 @@ def test_get_state():
     assert nodeState['fpn1']
     assert nodeState['moon_id'] == 'deadd738e6'
     # print(nodeState)
-
-
-class BasicConfigTest(unittest.TestCase):
-
-    """Basic tests for logger_config.py"""
-
-    def setUp(self):
-        super(BasicConfigTest, self).setUp()
-        self.handlers = logging.root.handlers
-        self.saved_handlers = logging._handlers.copy()
-        self.saved_handler_list = logging._handlerList[:]
-        self.original_logging_level = logging.root.level
-        self.addCleanup(self.cleanup)
-        logging.root.handlers = []
-
-    def tearDown(self):
-        for h in logging.root.handlers[:]:
-            logging.root.removeHandler(h)
-            h.close()
-        super(BasicConfigTest, self).tearDown()
-
-    def cleanup(self):
-        setattr(logging.root, 'handlers', self.handlers)
-        logging._handlers.clear()
-        logging._handlers.update(self.saved_handlers)
-        logging._handlerList[:] = self.saved_handler_list
-        logging.root.level = self.original_logging_level
-
-    def test_debug_level(self):
-        old_level = logging.root.level
-        self.addCleanup(logging.root.setLevel, old_level)
-
-        debug = True
-        setup_logging(debug, '/dev/null')
-        self.assertEqual(logging.root.level, logging.DEBUG)
-        # Test that second call has no effect
-        logging.basicConfig(level=58)
-        self.assertEqual(logging.root.level, logging.DEBUG)
-
-    def test_info_level(self):
-        old_level = logging.root.level
-        self.addCleanup(logging.root.setLevel, old_level)
-
-        debug = False
-        setup_logging(debug, '/dev/null')
-        self.assertEqual(logging.root.level, logging.INFO)
-        # Test that second call has no effect
-        logging.basicConfig(level=58)
-        self.assertEqual(logging.root.level, logging.INFO)
-
-
-class TestIPv4Methods(unittest.TestCase):
-    """
-    Note the input for this test case is an ipaddress.IPv4Interface
-    object.
-    """
-    def test_strip(self):
-        """Return IPv4 addr without prefix"""
-        strip = find_ipv4_iface('192.168.1.1/24')
-        self.assertEqual(strip, '192.168.1.1')
-
-    def test_nostrip(self):
-        """Return True if IPv4 addr is valid"""
-        nostrip = find_ipv4_iface('192.168.1.1/24', False)
-        self.assertTrue(nostrip)
-
-    def test_bogus(self):
-        """Return False if IPv4 addr is not valid"""
-        bogus_addr = find_ipv4_iface('192.168.1.300/24', False)
-        self.assertFalse(bogus_addr)
-
-
-class TestStateChange(unittest.TestCase):
-    """
-    Note the input for this test case is a pair of node fpnState
-    objects (type is AttrDict).
-    """
-    def setUp(self):
-        self.old = {'online': True,
-                    'fpn0': False,
-                    'fpn1': False}
-        self.nw0 = {'online': True,
-                    'fpn0': True,
-                    'fpn1': False}
-        self.nw1 = {'online': True,
-                    'fpn0': False,
-                    'fpn1': True}
-        self.nw2 = {'online': True,
-                    'fpn0': True,
-                    'fpn1': True}
-
-    def test_return_default(self):
-        diff = get_state_values(self.old, self.nw2)
-        self.assertIsInstance(diff, list)
-        self.assertEqual(len(diff), 2)
-        self.assertEqual(len(diff[0]), 2)
-
-    def test_return_pairs(self):
-        diff = get_state_values(self.old, self.nw1, True)
-        self.assertIsInstance(diff, list)
-        self.assertEqual(len(diff), 1)
-        self.assertEqual(len(diff[0]), 2)

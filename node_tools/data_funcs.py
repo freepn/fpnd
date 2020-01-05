@@ -9,6 +9,7 @@ import functools
 
 from diskcache import Index
 
+from node_tools import state_data as st
 from node_tools.cache_funcs import get_state
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import update_state
@@ -45,21 +46,21 @@ def get_state_values(old, new, pairs=False):
     :param pairs: if true, each tuple in the return list will contain a
                   tuple of pairs for each change (old, new).  otherwise
                   return a tuple with only the new value for each change.
-    :return: list of change tuples
+    :return: None (updates state_data.changes)
     """
     if isinstance(old, dict) and isinstance(new, dict):
         if not pairs:
-            return [j for i, j in zip(old.items(), new.items()) if i != j]
-        diff = []
+            diff = [j for i, j in zip(old.items(), new.items()) if i != j]
+            st.changes = diff
         if old == new:
             logger.debug('State is unchanged')
-            return diff
+        diff = []
         for i, j in zip(old.items(), new.items()):
             if i != j:
                 item = (i, j)
                 diff.append(item)
+        st.changes = diff
         logger.debug('State changed: {}'.format(diff))
-        return diff
 
 
 def with_cache_aging(func):
@@ -122,8 +123,8 @@ def with_state_check(func):
         if not next_state.online and not prev_state.online:
             logger.warning('nodeState still not initialized (node not online)')
         elif next_state.online and prev_state.online:
-            chg_list = get_state_values(prev_state, next_state)
-            logger.debug('Got change list: {}'.format(chg_list))
+            get_state_values(prev_state, next_state)
+            logger.debug('state_data.changes: {}'.format(st.changes))
 
         return result
     return state_check
