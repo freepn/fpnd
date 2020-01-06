@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import time
 import datetime
 import logging
@@ -13,7 +14,9 @@ from diskcache import Index
 
 # from node_tools import state_data as stest
 from node_tools.logger_config import setup_logging
-from node_tools.helper_funcs import ENODATA, NODE_SETTINGS
+from node_tools.helper_funcs import AttrDict
+from node_tools.helper_funcs import ENODATA
+from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import json_dump_file
@@ -28,6 +31,8 @@ from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import get_state
 from node_tools.data_funcs import get_state_values
 from node_tools.data_funcs import update_runner
+from node_tools.network_funcs import get_net_cmds
+from node_tools.network_funcs import run_net_cmd
 from node_tools.node_funcs import get_moon_data
 from node_tools.node_funcs import run_moon_cmd
 
@@ -110,47 +115,83 @@ class IPv4MethodsTest(unittest.TestCase):
         self.assertFalse(bogus_addr)
 
 
+class NetCmdTest(unittest.TestCase):
+    """
+    Simple test of find_the_net_script.
+    """
+    def setUp(self):
+        super(NetCmdTest, self).setUp()
+        self.bin_dir = os.getcwd() + '/bin'
+
+    def test_bin_path(self):
+        self.assertTrue(os.path.isdir(self.bin_dir))
+        # print(self.bin_dir)
+
+    def test_get_net_cmds(self):
+        bin_path = self.bin_dir
+        up0, down0, up1, down1 = get_net_cmds(bin_path)
+        # print(type(up0))
+        # print(up0)
+        self.assertTrue(os.path.isfile(up0[0]))
+        self.assertTrue(os.path.isfile(down0))
+        self.assertTrue(os.path.isfile(up1))
+        self.assertTrue(os.path.isfile(down1))
+
+    def test_run_net_cmd(self):
+        # bin_path = self.bin_dir
+        # up0, _, _, _ = get_net_cmds(bin_path)
+        state, res = run_net_cmd(['/bin/false'])
+        self.assertFalse(state)
+        # print(state)
+        # print(res)
+
+
 class StateChangeTest(unittest.TestCase):
     """
     Note the input for this test case is a pair of node fpnState
-    objects (type is AttrDict).
+    objects (type is dict).
     """
     def setUp(self):
         super(StateChangeTest, self).setUp()
         from node_tools import state_data as stest
 
-        self.default_state = stest.fpnState
+        self.default_state = stest.defState
+        self.state = stest.fpnState
 
     def tearDown(self):
         from node_tools import state_data as s
 
-        defState = dict.fromkeys(['online',
-                                  'fpn_id',
-                                  'fpn_bad',
-                                  'moon_id',
-                                  'moon_addr',
-                                  'fpn0',
-                                  'fpn1'])
+        # defState = s.defState
 
-        s.fpnState = defState
+        s.fpnState = self.default_state
         super(StateChangeTest, self).tearDown()
 
     def test_change_none(self):
-        self.assertIsInstance(self.default_state, dict)
-        self.assertFalse(self.default_state['online'])
-        self.assertFalse(self.default_state['fpn1'])
+        self.state = self.default_state
+        self.assertIsInstance(self.state, dict)
+        self.assertFalse(self.state['online'])
+        self.assertFalse(self.state['fpn1'])
 
     def test_change_online(self):
         from node_tools import state_data as stest
-        stest.fpnState.update(online=True)
-        self.assertTrue(self.default_state['online'])
-        self.assertFalse(self.default_state['fpn1'])
+        self.state.update(online=True)
+        self.assertTrue(self.state['online'])
+        self.assertFalse(self.state['fpn0'])
+        self.assertFalse(self.state['fpn1'])
 
-    def test_change_upfpn1(self):
+    def test_change_upfpn0(self):
         from node_tools import state_data as stest
-        stest.fpnState.update(online=True, fpn1=True)
-        self.assertTrue(self.default_state['online'])
-        self.assertTrue(self.default_state['fpn1'])
+        self.state.update(fpn0=True)
+        self.assertTrue(self.state['online'])
+        self.assertTrue(self.state['fpn0'])
+        self.assertFalse(self.state['fpn1'])
+
+    def test_change_upfpn1_downfpn0(self):
+        from node_tools import state_data as stest
+        self.state.update(fpn0=False, fpn1=True)
+        self.assertTrue(self.state['online'])
+        self.assertTrue(self.state['fpn1'])
+        self.assertFalse(self.state['fpn0'])
 
 
 class mock_zt_api_client(object):
@@ -190,8 +231,11 @@ def load_data():
 
 
 def test_dump_and_load_json():
+    data_dir = get_cachedir(dir_name='fpn_data')
     (node_data, peer_data, net_data) = load_data()
-    json_check(node_data)
+    json_dump_file('node', node_data, data_dir)
+    node_dump = json_load_file('node', data_dir)
+    json_check(node_dump)
     json_check(peer_data)
     json_check(net_data)
 
@@ -359,14 +403,14 @@ def test_get_net_status():
         assert 'gateway' in Net
 
 
-def test_load_node_status():
+def test_load_node_state():
     Node = get_node_status(cache)
     load_cache_by_type(cache, Node, 'nstate')
     assert len(cache) == 10
     # print(list(cache))
 
 
-def test_load_moon_status():
+def test_load_moon_state():
     moonStatus = []
     peers = get_peer_status(cache)
     for peer in peers:
@@ -378,19 +422,85 @@ def test_load_moon_status():
     # print(list(cache))
 
 
-def test_load_net_status():
+def test_load_net_state():
     Node = get_net_status(cache)
     load_cache_by_type(cache, Node, 'istate')
     assert len(cache) == 13
 
 
+def test_load_new_state():
+    Node = get_net_status(cache)
+    load_cache_by_type(cache, Node, 'istate')
+    assert len(cache) == 13
+
+
+def test_find_state_keys():
+    data = find_keys(cache, 'state')
+    assert len(data) == 4
+    s = str(data)
+    assert 'nstate' in s
+    assert 'mstate' in s
+    assert 'istate' in s
+    # print(data)
+
+
 def test_get_state():
-    nodeState = get_state(cache)
+    from node_tools import state_data as stest
+
+    get_state(cache)
+    nodeState = AttrDict.from_nested_dict(stest.fpnState)
     assert isinstance(nodeState, dict)
     assert nodeState['online']
     assert nodeState['fpn_id'] == 'ddfd7368e6'
-    assert not nodeState['fpn_bad']
+    assert not nodeState['fallback']
     assert nodeState['fpn0']
     assert nodeState['fpn1']
-    assert nodeState['moon_id'] == 'deadd738e6'
+    assert nodeState['moon_id0'] == 'deadd738e6'
+    assert nodeState['fpn_id0'] == 'b6079f73c63cea29'
+    assert nodeState['fpn_id1'] == '3efa5cb78a8129ad'
     # print(nodeState)
+
+
+def test_get_state_values():
+    from node_tools import state_data as stest
+
+    assert isinstance(stest.changes, list)
+    assert not stest.changes
+
+    get_state(cache)
+    prev_state = AttrDict.from_nested_dict(stest.fpnState)
+    assert prev_state['online']
+    assert prev_state['fpn0']
+    assert prev_state['fpn1']
+
+    # induce a change
+    stest.fpnState.update(fpn1=False)
+    next_state = AttrDict.from_nested_dict(stest.fpnState)
+    assert not next_state['fpn1']
+    assert not stest.changes
+
+    # now we should see old/new values in the state diff
+    get_state_values(prev_state, next_state, True)
+    assert isinstance(stest.changes, list)
+    assert len(stest.changes) == 1
+    assert len(stest.changes[0]) == 2
+    # print(stest.changes)
+
+    # reset shared state vars
+    stest.changes = []
+    stest.fpnState.update(fpn1=True)
+    assert stest.fpnState == prev_state
+
+    # induce two changes
+    stest.fpnState.update(fpn0=False, fpn1=False)
+    next_state = AttrDict.from_nested_dict(stest.fpnState)
+    assert not next_state['fpn0']
+    assert not next_state['fpn1']
+    assert not stest.changes
+
+    # now we should see only new values for both changes in the state diff
+    get_state_values(prev_state, next_state)
+    assert isinstance(stest.changes, list)
+    assert len(stest.changes) == 2
+    assert len(stest.changes[0]) == 2
+    # print(stest.changes)

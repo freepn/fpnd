@@ -11,11 +11,11 @@ logger = logging.getLogger(__name__)
 
 def get_net_cmds(home_dir):
     import os
-    net_cmd_up0 = os.path.join(home_dir, 'fpn0-setup.sh')
-    net_cmd_down0 = os.path.join(home_dir, 'fpn0-down.sh')
-    net_cmd_up1 = os.path.join(home_dir, 'fpn1-setup.sh')
-    net_cmd_down1 = os.path.join(home_dir, 'fpn1-down.sh')
-    return net_cmd_up0, net_cmd_down0, net_cmd_up1, net_cmd_down1
+    up0 = os.path.join(home_dir, 'fpn0-setup.sh')
+    down0 = os.path.join(home_dir, 'fpn0-down.sh')
+    up1 = os.path.join(home_dir, 'fpn1-setup.sh')
+    down1 = os.path.join(home_dir, 'fpn1-down.sh')
+    return [up0], down0, up1, down1
 
 
 def run_net_cmd(cmd):

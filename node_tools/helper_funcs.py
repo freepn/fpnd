@@ -126,12 +126,24 @@ def json_load_file(endpoint, dirname=None):
     return data
 
 
+def log_fpn_state():
+    from node_tools import state_data as st
+    if st.changes:
+        for iface, state in st.changes:
+            if iface in ['fpn0', 'fpn1']:
+                if state:
+                    logger.info('{} is UP'.format(iface))
+                else:
+                    logger.info('{} is DOWN'.format(iface))
+
+
 def update_state():
     import pathlib
     here = pathlib.Path(__file__).parent
     node_scr = here.joinpath("nodestate.py")
     try:
         exec_full(node_scr)
+        log_fpn_state()
         return 'OK'
     except Exception as exc:
         logger.error('update_state exception: {}'.format(exc))

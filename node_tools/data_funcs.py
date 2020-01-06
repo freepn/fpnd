@@ -9,10 +9,10 @@ import functools
 
 from diskcache import Index
 
-from node_tools import state_data as st
 from node_tools.cache_funcs import get_state
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import update_state
+from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
 
@@ -48,19 +48,23 @@ def get_state_values(old, new, pairs=False):
                   return a tuple with only the new value for each change.
     :return: None (updates state_data.changes)
     """
+    from node_tools import state_data as st
+
     if isinstance(old, dict) and isinstance(new, dict):
-        if not pairs:
-            diff = [j for i, j in zip(old.items(), new.items()) if i != j]
-            st.changes = diff
+        diff = []
         if old == new:
             logger.debug('State is unchanged')
-        diff = []
-        for i, j in zip(old.items(), new.items()):
-            if i != j:
-                item = (i, j)
-                diff.append(item)
+        else:
+            if not pairs:
+                diff = [j for i, j in zip(old.items(), new.items()) if i != j]
+            else:
+                diff = []
+                for i, j in zip(old.items(), new.items()):
+                    if i != j:
+                        item = (i, j)
+                        diff.append(item)
+                logger.debug('State changed: {}'.format(diff))
         st.changes = diff
-        logger.debug('State changed: {}'.format(diff))
 
 
 def with_cache_aging(func):
@@ -111,7 +115,11 @@ def with_state_check(func):
         update_runner() tries to grab new data.
 
         """
-        prev_state = get_state(cache)
+        from node_tools import state_data as st
+
+        get_state(cache)
+        prev_state = AttrDict.from_nested_dict(st.fpnState)
+
         if not prev_state.online:
             logger.warning('nodeState not initialized (node not online)')
         else:
@@ -119,12 +127,14 @@ def with_state_check(func):
 
         result = func(*args, **kwargs)
 
-        next_state = get_state(cache)
+        get_state(cache)
+        next_state = AttrDict.from_nested_dict(st.fpnState)
+        get_state_values(prev_state, next_state)
+
         if not next_state.online and not prev_state.online:
             logger.warning('nodeState still not initialized (node not online)')
         elif next_state.online and prev_state.online:
-            get_state_values(prev_state, next_state)
-            logger.debug('state_data.changes: {}'.format(st.changes))
+            logger.debug('State diff is: {}'.format(st.changes))
 
         return result
     return state_check

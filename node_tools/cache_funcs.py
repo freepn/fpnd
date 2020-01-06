@@ -4,7 +4,6 @@
 import logging
 from collections import namedtuple
 
-from node_tools import state_data as st
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import find_ipv4_iface
 
@@ -134,6 +133,8 @@ def get_state(cache):
     Get state data from cache to build node state and update it.
 
     """
+    from node_tools import state_data as st
+
     key_list, values = get_endpoint_data(cache, 'state')
     if key_list:
         d = {}
@@ -142,18 +143,22 @@ def get_state(cache):
                 if 'ONLINE' in data.status:
                     d['online'] = True
                 d['fpn_id'] = data.identity
-                d['fpn_bad'] = data.tcpFallback
+                d['fallback'] = data.tcpFallback
             if 'mstate' in str(key):
-                d['moon_id'] = data.identity
+                d['moon_id0'] = data.identity
                 d['moon_addr'] = data.address
             if 'istate' in str(key) and 'OK' in data.status:
                 if data.ztaddress == data.gateway:
                     d['fpn1'] = True
+                    d['fpn_id1'] = data.identity
                 else:
                     d['fpn0'] = True
+                    d['fpn_id0'] = data.identity
+            else:
+                d.update(fpn0=None, fpn1=None, fpn_id0=None, fpn_id1=None)
         st.fpnState.update(d)
         logger.debug('fpnState: {}'.format(st.fpnState))
-    return AttrDict.from_nested_dict(st.fpnState)
+    # return AttrDict.from_nested_dict(d)
 
 
 def load_cache_by_type(cache, data, key_str):
