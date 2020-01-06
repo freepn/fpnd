@@ -11,6 +11,7 @@ from diskcache import Index
 
 from node_tools.cache_funcs import get_state
 from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import log_fpn_state
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
@@ -103,6 +104,7 @@ def with_cache_aging(func):
         else:
             cache.update([('utc-time', utc_stamp)])
             logger.debug('New cache time is: {:%Y-%m-%d %H:%M:%S %Z}'.format(utc_stamp))
+        log_fpn_state()
         return result
     return wrapper
 

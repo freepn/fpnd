@@ -143,7 +143,6 @@ def update_state():
     node_scr = here.joinpath("nodestate.py")
     try:
         exec_full(node_scr)
-        log_fpn_state()
         return 'OK'
     except Exception as exc:
         logger.error('update_state exception: {}'.format(exc))
