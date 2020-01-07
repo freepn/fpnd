@@ -3,7 +3,13 @@
 """Miscellaneous helper functions."""
 from __future__ import print_function
 
+import sys
 import logging
+
+if sys.hexversion >= 0x3020000:
+    from configparser import ConfigParser as SafeConfigParser
+else:
+    from configparser import SafeConfigParser
 
 
 logger = logging.getLogger(__name__)
@@ -22,8 +28,74 @@ ENODATA = Constant('ENODATA')  # error return for async state data updates
 
 NODE_SETTINGS = {
     u'max_cache_age': 60,  # maximum cache age in seconds
-    u'moon_list': ['4f4114472a']  # list of fpn moons to orbiit
+    u'moon_list': ['4f4114472a'],  # list of fpn moons to orbiit
+    u'home_dir': None,
+    u'debug': False
 }
+
+
+def config_from_ini(file_path=None):
+    config = SafeConfigParser()
+    candidates = ['/etc/fpnd.ini',
+                  '/etc/fpnd/fpnd.ini',
+                  '/usr/lib/fpnd/fpnd.ini',
+                  'member_settings.ini',
+                  ]
+    if file_path:
+        candidates.append(file_path)
+    found = config.read(candidates)
+
+    if not found:
+        message = 'No usable cfg found, files in /tmp/ dir.'
+        return False, message
+
+    for tgt_ini in found:
+        if 'fpnd' in tgt_ini:
+            message = 'Found system settings...'
+            return config, message
+        if 'member' in tgt_ini and config.has_option('Options', 'prefix'):
+            message = 'Found local settings...'
+            config['Paths']['log_path'] = ''
+            config['Paths']['pid_path'] = ''
+            config['Options']['prefix'] = 'local_'
+            return config, message
+
+
+def do_setup():
+    import os
+
+    my_conf, msg = config_from_ini()
+    if my_conf:
+        debug = my_conf.getboolean('Options', 'debug')
+        home = my_conf['Paths']['home_dir']
+        NODE_SETTINGS['debug'] = debug
+        NODE_SETTINGS['home_dir'] = home
+        if 'system' not in msg:
+            prefix = my_conf['Options']['prefix']
+        else:
+            prefix = ''
+        pid_path = my_conf['Paths']['pid_path']
+        log_path = my_conf['Paths']['log_path']
+        pid_file = my_conf['Options']['pid_name']
+        log_file = my_conf['Options']['log_name']
+        pid = os.path.join(pid_path, prefix, pid_file)
+        log = os.path.join(log_path, prefix, log_file)
+
+    else:
+        home = None
+        debug = False
+        pid = '/tmp/fpnd.pid'
+        log = '/tmp/fpnd.log'
+    return home, pid, log, debug, msg
+
+
+def exec_full(filepath):
+    global_namespace = {
+        "__file__": filepath,
+        "__name__": "__main__",
+    }
+    with open(filepath, 'rb') as file:
+        exec(compile(file.read(), filepath, 'exec'), global_namespace)
 
 
 def find_ipv4_iface(addr_string, strip=True):
@@ -46,15 +118,6 @@ def find_ipv4_iface(addr_string, strip=True):
             return str(interface.ip)
     except ValueError:
         return False
-
-
-def exec_full(filepath):
-    global_namespace = {
-        "__file__": filepath,
-        "__name__": "__main__",
-    }
-    with open(filepath, 'rb') as file:
-        exec(compile(file.read(), filepath, 'exec'), global_namespace)
 
 
 def get_cachedir(dir_name='fpn_cache'):

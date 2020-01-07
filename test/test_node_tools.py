@@ -121,29 +121,55 @@ class NetCmdTest(unittest.TestCase):
     """
     def setUp(self):
         super(NetCmdTest, self).setUp()
-        self.bin_dir = os.getcwd() + '/bin'
+        self.bin_dir = os.path.join(os.getcwd(), 'bin')
 
     def test_bin_path(self):
-        self.assertTrue(os.path.isdir(self.bin_dir))
         # print(self.bin_dir)
+        self.assertTrue(os.path.isdir(self.bin_dir))
 
-    def test_get_net_cmds(self):
-        bin_path = self.bin_dir
-        up0, down0, up1, down1 = get_net_cmds(bin_path)
-        # print(type(up0))
+    def test_get_net_cmds_false(self):
+        bin_path = '/bin'
+        self.assertIsNone(get_net_cmds(bin_path))
+
+    def test_get_net_cmds_true(self):
+        up0, down0, up1, down1 = get_net_cmds(self.bin_dir)
         # print(up0)
         self.assertTrue(os.path.isfile(up0[0]))
-        self.assertTrue(os.path.isfile(down0))
-        self.assertTrue(os.path.isfile(up1))
-        self.assertTrue(os.path.isfile(down1))
+        self.assertTrue(os.path.isfile(down0[0]))
+        self.assertTrue(os.path.isfile(up1[0]))
+        self.assertTrue(os.path.isfile(down1[0]))
 
-    def test_run_net_cmd(self):
-        # bin_path = self.bin_dir
-        # up0, _, _, _ = get_net_cmds(bin_path)
-        state, res = run_net_cmd(['/bin/false'])
+    def test_get_net_cmds_single(self):
+        cmd = get_net_cmds(self.bin_dir, 'fpn0')
+        path, name = os.path.split(cmd)
+        self.assertEqual(name, 'fpn0-down.sh')
+
+    def test_get_net_cmds_single_up(self):
+        cmd = get_net_cmds(self.bin_dir, 'fpn1', True)
+        path, name = os.path.split(cmd)
+        self.assertEqual(name, 'fpn1-setup.sh')
+
+    def test_run_net_cmd_false(self):
+        cmd = ['/bin/false']
+        state, res, ret = run_net_cmd(cmd)
         self.assertFalse(state)
-        # print(state)
-        # print(res)
+        self.assertEqual(res, b'')
+        # print(ret)
+
+    def test_run_net_cmd_not_found(self):
+        cmd = ['/bin/tuna']
+        state, res, ret = run_net_cmd(cmd)
+        self.assertFalse(state)
+        self.assertRaises(FileNotFoundError)
+        # print(ret)
+
+    def test_run_net_cmd_full(self):
+        cmd, down0, up1, down1 = get_net_cmds(self.bin_dir)
+
+        state, res, ret = run_net_cmd(cmd)
+        self.assertFalse(state)
+        self.assertEqual(res, b'')
+        self.assertEqual(ret, 1)
 
 
 class StateChangeTest(unittest.TestCase):
