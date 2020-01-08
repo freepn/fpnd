@@ -26,7 +26,7 @@ def get_moon_data():
         out, err = b.communicate()
 
         if err:
-            logger.debug('get_moon_data err result: {}'.format(err.decode().strip()))
+            logger.error('get_moon_data err result: {}'.format(err.decode().strip()))
         else:
             result = json.loads(out.decode().strip())
             logger.info('found moon id: {}'.format(result[0]['id']))
