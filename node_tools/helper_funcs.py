@@ -217,8 +217,8 @@ def xform_state_diff(diff):
     Function to extract and transform state diff type to a new
     dictionary (this means the input must be non-empty). Note the
     object returned is mutable!
-    :caveats: returned k,v are tuples of (old, new) state values
-              if get_state_values() is called with pairs=True
+    :caveats: if returned k,v are tuples of (old, new) state values
+              the returned keys are prefixed with `old_` and `new_`
     :param state_data.changes obj: list of tuples with state changes
     :return AttrDict: dict with state changes (with attribute access)
     """
@@ -227,8 +227,17 @@ def xform_state_diff(diff):
     if not diff:
         return d
 
-    # if isinstance(diff[0][0], str):
-    d = dict(diff)
+    for item in diff:
+        if isinstance(item, tuple) or isinstance(item, list):
+            if isinstance(item[0], str):
+                d[item[0]] = item[1]
+            elif isinstance(item[0], tuple):
+                # we know we have duplicate keys so make new ones
+                # using 'old_' and 'new_' prefix
+                old_key = 'old_' + item[0][0]
+                d[old_key] = item[0][1]
+                new_key = 'new_' + item[1][0]
+                d[new_key] = item[1][1]
 
     return AttrDict.from_nested_dict(d)
 

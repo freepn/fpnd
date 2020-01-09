@@ -246,20 +246,21 @@ class XformStateDataTest(unittest.TestCase):
 
     def test_return_old_new(self):
         diff = xform_state_diff(self.old_new)
-        # self.assertIsInstance(diff[0], tuple)
-        self.assertIn(False, diff[('fpn1', True)])
-        print(diff)
+        self.assertIsInstance(diff, dict)
+        self.assertTrue(diff.old_fpn1)
+        self.assertFalse(diff.new_fpn1)
+        # print(diff)
 
-    def test_return_new(self):
+    def test_return_one_new(self):
         diff = xform_state_diff(self.one_new)
         self.assertFalse(diff.fpn1)
-        print(diff)
+        # print(diff)
 
-    def test_return_two(self):
+    def test_return_two_new(self):
         diff = xform_state_diff(self.two_new)
         self.assertTrue(diff.fpn0)
         self.assertEqual(diff.fpn_id0, 'bb8dead3c63cea29')
-        print(diff)
+        # print(diff)
 
 
 class mock_zt_api_client(object):
