@@ -14,6 +14,7 @@ from daemon import Daemon
 
 from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import NODE_SETTINGS
+from node_tools.helper_funcs import do_setup
 from node_tools.logger_config import setup_logging
 from node_tools.node_funcs import get_moon_data
 from node_tools.node_funcs import run_moon_cmd
@@ -24,11 +25,6 @@ try:
 except ImportError:
     from daemon.timezone import UTC
     utc = UTC()
-
-if sys.hexversion >= 0x3020000:
-    from configparser import ConfigParser as SafeConfigParser
-else:
-    from configparser import SafeConfigParser
 
 
 logger = logging.getLogger(__name__)
@@ -64,55 +60,6 @@ def show_scheduled_jobs():
         logger.debug('JOBS: {}'.format(job))
         if 'base' in str(job.tags):
             logger.debug('TAGS: {}'.format(job.tags))
-
-
-def config_from_ini():
-    config = SafeConfigParser()
-    candidates = ['/etc/fpnd.ini',
-                  '/etc/fpnd/fpnd.ini',
-                  '/usr/lib/fpnd/fpnd.ini',
-                  'member_settings.ini',
-                  ]
-    found = config.read(candidates)
-
-    if not found:
-        message = 'No usable cfg found, files in /tmp/ dir.'
-        return False, message
-
-    for tgt_ini in found:
-        if 'fpnd' in tgt_ini:
-            message = 'Found system settings...'
-            return config, message
-        if 'member' in tgt_ini and config.has_option('Options', 'prefix'):
-            message = 'Found local settings...'
-            config['Paths']['log_path'] = ''
-            config['Paths']['pid_path'] = ''
-            config['Options']['prefix'] = 'local_'
-            return config, message
-
-
-def do_setup():
-    my_conf, msg = config_from_ini()
-    if my_conf:
-        debug = my_conf.getboolean('Options', 'debug')
-        home = my_conf['Paths']['home_dir']
-        if 'system' not in msg:
-            prefix = my_conf['Options']['prefix']
-        else:
-            prefix = ''
-        pid_path = my_conf['Paths']['pid_path']
-        log_path = my_conf['Paths']['log_path']
-        pid_file = my_conf['Options']['pid_name']
-        log_file = my_conf['Options']['log_name']
-        pid = os.path.join(pid_path, prefix, pid_file)
-        log = os.path.join(log_path, prefix, log_file)
-
-    else:
-        debug = False
-        home = False
-        pid = '/tmp/fpnd.pid'
-        log = '/tmp/fpnd.log'
-    return home, pid, log, debug, msg
 
 
 def setup_scheduling(max_age):
@@ -153,6 +100,7 @@ if __name__ == "__main__":
     home, pid_file, log_file, debug, msg = do_setup()
     setup_logging(debug, log_file)
     logger = logging.getLogger("fpnd")
+    logger.debug('do_setup returned Home: {} and debug: {}'.format(home, debug))
     setup_scheduling(max_age)
     if not home:
         home = '.'

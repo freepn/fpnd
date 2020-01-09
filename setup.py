@@ -48,6 +48,7 @@ setup(
         'ztcli-async @ git+https://github.com/sarnold/ztcli-async@0.0.3',
         'daemon @ git+https://github.com/sarnold/python-daemon@0.2.1',
         'diskcache @ git+https://github.com/grantjenks/python-diskcache@v4.1.0',
+        'schedule @ git+https://github.com/sarnold/schedule@0.6.0p1',
     ],
     classifiers=[
         'Environment :: Console',

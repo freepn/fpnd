@@ -130,16 +130,12 @@ def get_peer_status(cache):
 
 def get_state(cache):
     """
-    Get state data from cache to build node state, return an AttrDict.
+    Get state data from cache to build node state and update it.
+
     """
+    from node_tools import state_data as st
+
     key_list, values = get_endpoint_data(cache, 'state')
-    fpnState = {'online': False,
-                'fpn_id': None,
-                'fpn_bad': True,
-                'moon_id': None,
-                'moon_addr': None,
-                'fpn0': False,
-                'fpn1': False}
     if key_list:
         d = {}
         for key, data in zip(key_list, values):
@@ -147,18 +143,21 @@ def get_state(cache):
                 if 'ONLINE' in data.status:
                     d['online'] = True
                 d['fpn_id'] = data.identity
-                d['fpn_bad'] = data.tcpFallback
+                d['fallback'] = data.tcpFallback
             if 'mstate' in str(key):
-                d['moon_id'] = data.identity
+                d['moon_id0'] = data.identity
                 d['moon_addr'] = data.address
             if 'istate' in str(key) and 'OK' in data.status:
                 if data.ztaddress == data.gateway:
                     d['fpn1'] = True
+                    d['fpn_id1'] = data.identity
                 else:
                     d['fpn0'] = True
-        fpnState.update(d)
-        logger.debug('fpnState: {}'.format(fpnState))
-    return AttrDict.from_nested_dict(fpnState)
+                    d['fpn_id0'] = data.identity
+            else:
+                d.update(fpn0=None, fpn1=None, fpn_id0=None, fpn_id1=None)
+        st.fpnState.update(d)
+        logger.debug('fpnState: {}'.format(st.fpnState))
 
 
 def load_cache_by_type(cache, data, key_str):

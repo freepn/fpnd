@@ -3,7 +3,13 @@
 """Miscellaneous helper functions."""
 from __future__ import print_function
 
+import sys
 import logging
+
+if sys.hexversion >= 0x3020000:
+    from configparser import ConfigParser as SafeConfigParser
+else:
+    from configparser import SafeConfigParser
 
 
 logger = logging.getLogger(__name__)
@@ -22,8 +28,74 @@ ENODATA = Constant('ENODATA')  # error return for async state data updates
 
 NODE_SETTINGS = {
     u'max_cache_age': 60,  # maximum cache age in seconds
-    u'moon_list': ['4f4114472a']  # list of fpn moons to orbiit
+    u'moon_list': ['4f4114472a'],  # list of fpn moons to orbiit
+    u'home_dir': None,
+    u'debug': False
 }
+
+
+def config_from_ini(file_path=None):
+    config = SafeConfigParser()
+    candidates = ['/etc/fpnd.ini',
+                  '/etc/fpnd/fpnd.ini',
+                  '/usr/lib/fpnd/fpnd.ini',
+                  'member_settings.ini',
+                  ]
+    if file_path:
+        candidates.append(file_path)
+    found = config.read(candidates)
+
+    if not found:
+        message = 'No usable cfg found, files in /tmp/ dir.'
+        return False, message
+
+    for tgt_ini in found:
+        if 'fpnd' in tgt_ini:
+            message = 'Found system settings...'
+            return config, message
+        if 'member' in tgt_ini and config.has_option('Options', 'prefix'):
+            message = 'Found local settings...'
+            config['Paths']['log_path'] = ''
+            config['Paths']['pid_path'] = ''
+            config['Options']['prefix'] = 'local_'
+            return config, message
+
+
+def do_setup():
+    import os
+
+    my_conf, msg = config_from_ini()
+    if my_conf:
+        debug = my_conf.getboolean('Options', 'debug')
+        home = my_conf['Paths']['home_dir']
+        NODE_SETTINGS['debug'] = debug
+        NODE_SETTINGS['home_dir'] = home
+        if 'system' not in msg:
+            prefix = my_conf['Options']['prefix']
+        else:
+            prefix = ''
+        pid_path = my_conf['Paths']['pid_path']
+        log_path = my_conf['Paths']['log_path']
+        pid_file = my_conf['Options']['pid_name']
+        log_file = my_conf['Options']['log_name']
+        pid = os.path.join(pid_path, prefix, pid_file)
+        log = os.path.join(log_path, prefix, log_file)
+
+    else:
+        home = None
+        debug = False
+        pid = '/tmp/fpnd.pid'
+        log = '/tmp/fpnd.log'
+    return home, pid, log, debug, msg
+
+
+def exec_full(filepath):
+    global_namespace = {
+        "__file__": filepath,
+        "__name__": "__main__",
+    }
+    with open(filepath, 'rb') as file:
+        exec(compile(file.read(), filepath, 'exec'), global_namespace)
 
 
 def find_ipv4_iface(addr_string, strip=True):
@@ -46,15 +118,6 @@ def find_ipv4_iface(addr_string, strip=True):
             return str(interface.ip)
     except ValueError:
         return False
-
-
-def exec_full(filepath):
-    global_namespace = {
-        "__file__": filepath,
-        "__name__": "__main__",
-    }
-    with open(filepath, 'rb') as file:
-        exec(compile(file.read(), filepath, 'exec'), global_namespace)
 
 
 def get_cachedir(dir_name='fpn_cache'):
@@ -126,6 +189,17 @@ def json_load_file(endpoint, dirname=None):
     return data
 
 
+def log_fpn_state():
+    from node_tools import state_data as st
+    if st.changes:
+        for iface, state in st.changes:
+            if iface in ['fpn0', 'fpn1']:
+                if state:
+                    logger.info('{} is UP'.format(iface))
+                else:
+                    logger.info('{} is DOWN'.format(iface))
+
+
 def update_state():
     import pathlib
     here = pathlib.Path(__file__).parent
@@ -136,6 +210,36 @@ def update_state():
     except Exception as exc:
         logger.error('update_state exception: {}'.format(exc))
         return ENODATA
+
+
+def xform_state_diff(diff):
+    """
+    Function to extract and transform state diff type to a new
+    dictionary (this means the input must be non-empty). Note the
+    object returned is mutable!
+    :caveats: if returned k,v are tuples of (old, new) state values
+              the returned keys are prefixed with `old_` and `new_`
+    :param state_data.changes obj: list of tuples with state changes
+    :return AttrDict: dict with state changes (with attribute access)
+    """
+
+    d = {}
+    if not diff:
+        return d
+
+    for item in diff:
+        if isinstance(item, tuple) or isinstance(item, list):
+            if isinstance(item[0], str):
+                d[item[0]] = item[1]
+            elif isinstance(item[0], tuple):
+                # we know we have duplicate keys so make new ones
+                # using 'old_' and 'new_' prefix
+                old_key = 'old_' + item[0][0]
+                d[old_key] = item[0][1]
+                new_key = 'new_' + item[1][0]
+                d[new_key] = item[1][1]
+
+    return AttrDict.from_nested_dict(d)
 
 
 class AttrDict(dict):
