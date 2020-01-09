@@ -27,28 +27,10 @@ except ImportError:
     utc = UTC()
 
 
-logger = logging.getLogger(__name__)
-
+logger = logging.getLogger('fpnd')
 max_age = NODE_SETTINGS['max_cache_age']
 moons = NODE_SETTINGS['moon_list']  # list of fpn moons to orbiit
 timestamp = datetime.datetime.now(utc)  # use local time for console
-
-
-# use with the following to cancel a failed job function
-#   @catch_exceptions(cancel_on_failure=True)
-def catch_exceptions(cancel_on_failure=False):
-    def catch_exceptions_decorator(job_func):
-        @functools.wraps(job_func)
-        def wrapper(*args, **kwargs):
-            try:
-                return job_func(*args, **kwargs)
-            except:
-                import traceback
-                logger.error(traceback.format_exc())
-                if cancel_on_failure:
-                    return schedule.CancelJob
-        return wrapper
-    return catch_exceptions_decorator
 
 
 def show_scheduled_jobs():
@@ -99,7 +81,6 @@ class fpnDaemon(Daemon):
 if __name__ == "__main__":
     home, pid_file, log_file, debug, msg = do_setup()
     setup_logging(debug, log_file)
-    logger = logging.getLogger("fpnd")
     logger.debug('do_setup returned Home: {} and debug: {}'.format(home, debug))
     setup_scheduling(max_age)
     if not home:
