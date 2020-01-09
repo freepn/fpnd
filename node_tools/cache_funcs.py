@@ -158,7 +158,6 @@ def get_state(cache):
                 d.update(fpn0=None, fpn1=None, fpn_id0=None, fpn_id1=None)
         st.fpnState.update(d)
         logger.debug('fpnState: {}'.format(st.fpnState))
-    # return AttrDict.from_nested_dict(d)
 
 
 def load_cache_by_type(cache, data, key_str):

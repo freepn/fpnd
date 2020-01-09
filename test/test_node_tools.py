@@ -22,6 +22,7 @@ from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import json_dump_file
 from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import update_state
+from node_tools.helper_funcs import xform_state_diff
 from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import load_cache_by_type
 from node_tools.cache_funcs import get_endpoint_data
@@ -227,6 +228,40 @@ class StateChangeTest(unittest.TestCase):
         self.assertFalse(self.state['fpn0'])
 
 
+class XformStateDataTest(unittest.TestCase):
+    """
+    Tests for state data transformation: xform_state_diff()
+    """
+    def setUp(self):
+        super(XformStateDataTest, self).setUp()
+        self.one_new = [('fpn1', False)]
+        self.old_new = [(('fpn1', True), ('fpn1', False))]
+        self.two_new = [('fpn0', True), ('fpn1', True),
+                        ('fpn_id0', 'bb8dead3c63cea29'),
+                        ('fpn_id1', '7ac4235ec5d3d938')]
+        self.none = []
+
+    def test_return_none(self):
+        self.assertIsInstance(xform_state_diff(self.none), dict)
+
+    def test_return_old_new(self):
+        diff = xform_state_diff(self.old_new)
+        # self.assertIsInstance(diff[0], tuple)
+        self.assertIn(False, diff[('fpn1', True)])
+        print(diff)
+
+    def test_return_new(self):
+        diff = xform_state_diff(self.one_new)
+        self.assertFalse(diff.fpn1)
+        print(diff)
+
+    def test_return_two(self):
+        diff = xform_state_diff(self.two_new)
+        self.assertTrue(diff.fpn0)
+        self.assertEqual(diff.fpn_id0, 'bb8dead3c63cea29')
+        print(diff)
+
+
 class mock_zt_api_client(object):
     """
     Client API to serve test data endpoints
@@ -376,17 +411,12 @@ def test_cache_loading():
         del net_data[1]
         load_cache_by_type(cache, net_data, 'net')
         assert len(list(cache)) == 7
+        _, net_data = client.get_data('network')
+        load_cache_by_type(cache, net_data, 'net')
+        assert len(list(cache)) == 8
 
     def test_find_keys_nonet():
         assert find_keys(cache, 'net') is None
-
-    def test_find_keys():
-        tuna = find_keys(cache, 'tuna')
-        assert tuna is None
-        node = find_keys(cache, 'node')
-        assert 'node' in str(node)
-        net = find_keys(cache, 'net')
-        assert len(net) == 2
 
     def test_update_runner():
         res = update_runner()
@@ -402,8 +432,6 @@ def test_cache_loading():
     test_find_keys_nonet()
     test_load_cache_net()
     test_update_cache_net()
-    test_load_cache_net()
-    test_find_keys()
     test_update_runner()
     test_cache_size()
 
@@ -467,6 +495,15 @@ def test_load_new_state():
     assert len(cache) == 13
 
 
+def test_find_keys():
+    tuna = find_keys(cache, 'tuna')
+    assert tuna is None
+    node = find_keys(cache, 'node')
+    assert 'node' in str(node)
+    net = find_keys(cache, 'net')
+    assert len(net) == 2
+
+
 def test_find_state_keys():
     data = find_keys(cache, 'state')
     assert len(data) == 4
@@ -502,20 +539,26 @@ def test_get_state_values():
 
     get_state(cache)
     prev_state = AttrDict.from_nested_dict(stest.fpnState)
-    assert prev_state['online']
-    assert prev_state['fpn0']
-    assert prev_state['fpn1']
+    assert prev_state.online
+    assert prev_state.fpn0
+    assert prev_state.fpn1
 
     # induce a change
     stest.fpnState.update(fpn1=False)
     next_state = AttrDict.from_nested_dict(stest.fpnState)
-    assert not next_state['fpn1']
+    assert not next_state.fpn1
     assert not stest.changes
 
     # now we should see old/new values in the state diff
     get_state_values(prev_state, next_state, True)
     assert isinstance(stest.changes, list)
     assert len(stest.changes) == 1
+    assert len(stest.changes[0]) == 2
+    # for new_val, old_val in stest.changes[0]:
+    # print(type(new_val))
+    # print(old_val)
+    # print(stest.changes)
+    get_state_values(prev_state, next_state)
     assert len(stest.changes[0]) == 2
     # print(stest.changes)
 
@@ -527,8 +570,8 @@ def test_get_state_values():
     # induce two changes
     stest.fpnState.update(fpn0=False, fpn1=False)
     next_state = AttrDict.from_nested_dict(stest.fpnState)
-    assert not next_state['fpn0']
-    assert not next_state['fpn1']
+    assert not next_state.fpn0
+    assert not next_state.fpn1
     assert not stest.changes
 
     # now we should see only new values for both changes in the state diff
