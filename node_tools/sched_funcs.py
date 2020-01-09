@@ -11,16 +11,20 @@ logger = logging.getLogger(__name__)
 
 
 def check_return_status(obj):
-    # we want to accept '0' as Success, otherwise 'not' is False
-    if obj == 0:
-        return True
-    elif not obj:
+    # ordering is important here (silly ad-hoc function)
+    if obj is False:
         return False
-    # now handle a (small) list of everything
+    # we want to accept '0' as Success, otherwise 'not' is False
+    if isinstance(obj, (bool, int)):
+        if obj == 0 or obj is True:
+            return True
+        elif obj != 0:
+            return False
+    if not obj:
+        return False
+    # now handle a (small) list of everything else
     good_list = ['OK', 'Success', 'UP', 'good']
-    if isinstance(obj, bool) and obj is True:
-        return True
-    elif isinstance(obj, str):
+    if isinstance(obj, str):
         for thing in good_list:
             if thing in obj:
                 return True

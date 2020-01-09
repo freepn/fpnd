@@ -6,6 +6,7 @@ from __future__ import print_function
 import logging
 
 from node_tools.helper_funcs import NODE_SETTINGS
+from node_tools.sched_funcs import run_until_success
 
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,7 @@ def get_net_cmds(bin_dir, iface=None, state=False):
     return res
 
 
+@run_until_success()
 def run_net_cmd(cmd):
     import os
     import subprocess

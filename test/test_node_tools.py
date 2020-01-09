@@ -32,9 +32,9 @@ from node_tools.cache_funcs import get_state
 from node_tools.data_funcs import get_state_values
 from node_tools.data_funcs import update_runner
 from node_tools.network_funcs import get_net_cmds
-from node_tools.network_funcs import run_net_cmd
 from node_tools.node_funcs import get_moon_data
 from node_tools.node_funcs import run_moon_cmd
+from node_tools.sched_funcs import check_return_status
 
 
 try:
@@ -115,6 +115,35 @@ class IPv4MethodsTest(unittest.TestCase):
         self.assertFalse(bogus_addr)
 
 
+class CheckReturnsTest(unittest.TestCase):
+    """
+    Tests for check_return_status().
+    """
+    def test_bad_returns(self):
+        naughty_list = [1, (), '', [], {}, {'blarg': False}, False, None]
+        for thing in naughty_list:
+            # print(thing)
+            self.assertFalse(check_return_status(thing))
+
+    def test_int_return(self):
+        self.assertTrue(check_return_status(0))
+        self.assertFalse(check_return_status(1))
+
+    def test_bool_return(self):
+        self.assertTrue(check_return_status(True))
+        self.assertFalse(check_return_status(False))
+
+    def test_string_return(self):
+        self.assertFalse(check_return_status('blurt'))
+        good_list = ['OK', 'Success', 'UP', 'good']
+        for thing in good_list:
+            self.assertTrue(check_return_status(thing))
+
+    def test_multiple_returns(self):
+        self.assertTrue(check_return_status((False, 'Success', 0)))
+        self.assertFalse(check_return_status((False, 'blah', 1)))
+
+
 class NetCmdTest(unittest.TestCase):
     """
     Simple test of find_the_net_script.
@@ -148,28 +177,6 @@ class NetCmdTest(unittest.TestCase):
         cmd = get_net_cmds(self.bin_dir, 'fpn1', True)
         path, name = os.path.split(cmd)
         self.assertEqual(name, 'fpn1-setup.sh')
-
-    def test_run_net_cmd_false(self):
-        cmd = ['/bin/false']
-        state, res, ret = run_net_cmd(cmd)
-        self.assertFalse(state)
-        self.assertEqual(res, b'')
-        # print(ret)
-
-    def test_run_net_cmd_not_found(self):
-        cmd = ['/bin/tuna']
-        state, res, ret = run_net_cmd(cmd)
-        self.assertFalse(state)
-        self.assertRaises(FileNotFoundError)
-        # print(ret)
-
-    def test_run_net_cmd_full(self):
-        cmd, down0, up1, down1 = get_net_cmds(self.bin_dir)
-
-        state, res, ret = run_net_cmd(cmd)
-        self.assertFalse(state)
-        self.assertEqual(res, b'')
-        self.assertEqual(ret, 1)
 
 
 class StateChangeTest(unittest.TestCase):
