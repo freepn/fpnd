@@ -214,7 +214,6 @@ def net_change_handler(iface, state):
     from node_tools.network_funcs import run_net_cmd
 
     fpn_home = NODE_SETTINGS['home_dir']
-    logger.debug('net_change_handler() path: {}'.format(fpn_home))
 
     cmd = get_net_cmds(fpn_home, iface, state)
     if cmd:
@@ -232,7 +231,6 @@ def run_event_handlers():
     from node_tools import state_data as st
 
     if st.changes:
-        logger.debug('run_event_handlers got diff: {}'.format(st.changes))
         for iface, state in st.changes:
             if iface in ['fpn0', 'fpn1']:
                 logger.debug('running net_change_handler for iface {} and state {}'.format(iface, state))
