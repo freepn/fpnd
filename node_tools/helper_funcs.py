@@ -191,6 +191,7 @@ def json_load_file(endpoint, dirname=None):
 
 def log_fpn_state():
     from node_tools import state_data as st
+
     if st.changes:
         for iface, state in st.changes:
             if iface in ['fpn0', 'fpn1']:
@@ -198,6 +199,42 @@ def log_fpn_state():
                     logger.info('{} is UP'.format(iface))
                 else:
                     logger.info('{} is DOWN'.format(iface))
+
+
+def net_change_handler(iface, state):
+    """
+    Net change event handler for configuring fpn network devices
+    (calls net cmds for a given interface/state).  Schedules a new
+    run_net_cmd() job for each change event.
+    :param iface: <'fpn0'|'fpn1'> fpn interface to act on
+    :param state: <True|False> new iface state, ie, up|down
+    """
+    import schedule
+    from node_tools.network_funcs import get_net_cmds
+    from node_tools.network_funcs import run_net_cmd
+
+    fpn_home = NODE_SETTINGS['home_dir']
+
+    cmd = get_net_cmds(fpn_home, iface, state)
+    if cmd:
+        logger.debug('get_net_cmds returned: {}'.format(cmd))
+        schedule.every(1).seconds.do(run_net_cmd, cmd).tag('net-change')
+    else:
+        logger.error('get_net_cmds returned None')
+        # raise Exception('Missing command return from get_net_cmds()!')
+
+
+def run_event_handlers():
+    """
+    Run state change event handlers (currently just the net handler)
+    """
+    from node_tools import state_data as st
+
+    if st.changes:
+        for iface, state in st.changes:
+            if iface in ['fpn0', 'fpn1']:
+                logger.debug('running net_change_handler for iface {} and state {}'.format(iface, state))
+                net_change_handler(iface, state)
 
 
 def update_state():

@@ -14,6 +14,7 @@ from node_tools.helper_funcs import get_cachedir as get_cachedir
 from node_tools.helper_funcs import get_token as get_token
 from node_tools.helper_funcs import json_dump_file as json_dump_file
 from node_tools.helper_funcs import json_load_file as json_load_file
+from node_tools.helper_funcs import run_event_handlers as run_event_handlers
 from node_tools.helper_funcs import update_state as update_state
 from node_tools.helper_funcs import AttrDict as AttrDict
 from node_tools.helper_funcs import ENODATA as ENODATA
@@ -44,6 +45,7 @@ __all__ = [
     'json_dump_file',
     'json_load_file',
     'load_cache_by_type',
+    'run_event_handlers',
     'run_moon_cmd',
     'run_net_cmd',
     'update_runner',

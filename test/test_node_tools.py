@@ -164,19 +164,19 @@ class NetCmdTest(unittest.TestCase):
     def test_get_net_cmds_true(self):
         up0, down0, up1, down1 = get_net_cmds(self.bin_dir)
         # print(up0)
-        self.assertTrue(os.path.isfile(up0[0]))
-        self.assertTrue(os.path.isfile(down0[0]))
-        self.assertTrue(os.path.isfile(up1[0]))
-        self.assertTrue(os.path.isfile(down1[0]))
+        self.assertTrue(os.path.isfile(up0))
+        self.assertTrue(os.path.isfile(down0))
+        self.assertTrue(os.path.isfile(up1))
+        self.assertTrue(os.path.isfile(down1))
 
     def test_get_net_cmds_single(self):
         cmd = get_net_cmds(self.bin_dir, 'fpn0')
-        path, name = os.path.split(cmd)
+        path, name = os.path.split(cmd[0])
         self.assertEqual(name, 'fpn0-down.sh')
 
     def test_get_net_cmds_single_up(self):
         cmd = get_net_cmds(self.bin_dir, 'fpn1', True)
-        path, name = os.path.split(cmd)
+        path, name = os.path.split(cmd[0])
         self.assertEqual(name, 'fpn1-setup.sh')
 
 

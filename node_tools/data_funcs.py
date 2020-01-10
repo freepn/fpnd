@@ -12,6 +12,7 @@ from diskcache import Index
 from node_tools.cache_funcs import get_state
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import log_fpn_state
+from node_tools.helper_funcs import run_event_handlers
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
@@ -105,6 +106,7 @@ def with_cache_aging(func):
             cache.update([('utc-time', utc_stamp)])
             logger.debug('New cache time is: {:%Y-%m-%d %H:%M:%S %Z}'.format(utc_stamp))
         log_fpn_state()
+        run_event_handlers()
         return result
     return wrapper
 
@@ -131,11 +133,11 @@ def with_state_check(func):
 
         get_state(cache)
         next_state = AttrDict.from_nested_dict(st.fpnState)
-        get_state_values(prev_state, next_state)
 
         if not next_state.online and not prev_state.online:
             logger.warning('nodeState still not initialized (node not online)')
         elif next_state.online and prev_state.online:
+            get_state_values(prev_state, next_state)
             logger.debug('State diff is: {}'.format(st.changes))
 
         return result
@@ -148,6 +150,7 @@ def update_runner():
     try:
         res = update_state()
         size = len(cache)
+        logger.debug('API result: {}'.format(res))
     except:  # noqa: E722
         logger.error('No data available, cache was NOT updated')
         pass

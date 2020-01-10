@@ -4,7 +4,6 @@
 
 import logging
 import functools
-import schedule
 
 
 logger = logging.getLogger(__name__)
@@ -44,6 +43,8 @@ def catch_exceptions(cancel_on_failure=False):
     """
     decorator for running a suspect job with cancel_on_failure option
     """
+    import schedule
+
     def catch_exceptions_decorator(job_func):
         @functools.wraps(job_func)
         def wrapper(*args, **kwargs):
@@ -69,6 +70,8 @@ def run_until_success(max_retry=2):
     :param max_retry: max number of times to reschedule the job on failure,
                       balance this with the job interval for best results
     """
+    import schedule
+
     def run_until_success_decorator(job_func):
         @functools.wraps(job_func)
         def wrapper(*args, **kwargs):
@@ -107,6 +110,8 @@ def show_job_tags():
     """
     decorator to show job name and tags for current job
     """
+    import schedule
+
     def show_job_tags_decorator(job_func):
         @functools.wraps(job_func)
         def wrapper(*args, **kwargs):

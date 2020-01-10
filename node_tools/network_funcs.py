@@ -15,8 +15,10 @@ logger = logging.getLogger(__name__)
 def get_net_cmds(bin_dir, iface=None, state=False):
     import os
 
+    res = None
     if not os.path.isdir(bin_dir):
-        res = None
+        logger.error('No such path: {}'.format(bin_dir))
+        return res
 
     if iface:
         cmds = ['fpn0-setup.sh', 'fpn0-down.sh', 'fpn1-setup.sh', 'fpn1-down.sh']
@@ -25,18 +27,22 @@ def get_net_cmds(bin_dir, iface=None, state=False):
             cmd_str = 'setup'
         for cmd in cmds:
             if iface in cmd and cmd_str in cmd:
-                res = os.path.join(bin_dir, cmd)
-        if not os.path.isfile(res):
-            res = None
+                cmd_file = os.path.join(bin_dir, cmd)
+                if os.path.isfile(cmd_file):
+                    res = [cmd_file]
+                return res
+
     else:
         up0 = os.path.join(bin_dir, 'fpn0-setup.sh')
         down0 = os.path.join(bin_dir, 'fpn0-down.sh')
         up1 = os.path.join(bin_dir, 'fpn1-setup.sh')
         down1 = os.path.join(bin_dir, 'fpn1-down.sh')
-        res = [up0], [down0], [up1], [down1]
 
-        if not os.path.isfile(res[0][0]):
-            res = None
+        cmds = [up0, down0, up1, down1]
+        for thing in cmds:
+            if not os.path.isfile(thing):
+                return res
+        res = cmds
 
     return res
 
@@ -68,7 +74,7 @@ def run_net_cmd(cmd):
         elif 'Success' in out.decode().strip():
             state = True
             res = out
-            logger.debug('net cmd {} result: {}'.format(tail, out.decode().strip()))
+            logger.info('net cmd {} result: {}'.format(tail, out.decode().strip()))
 
     except Exception as exc:
         logger.error('net cmd {} exception: {}'.format(tail, exc))
