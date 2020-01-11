@@ -53,7 +53,7 @@ def config_from_ini(file_path=None):
         if 'fpnd' in tgt_ini:
             message = 'Found system settings...'
             return config, message
-        if 'member' in tgt_ini and config.has_option('Options', 'prefix'):
+        if 'settings' in tgt_ini and config.has_option('Options', 'prefix'):
             message = 'Found local settings...'
             config['Paths']['log_path'] = ''
             config['Paths']['pid_path'] = ''
@@ -189,11 +189,13 @@ def json_load_file(endpoint, dirname=None):
     return data
 
 
-def log_fpn_state():
-    from node_tools import state_data as st
+def log_fpn_state(diff=None):
+    if diff is None:
+        from node_tools import state_data as st
+        diff = st.changes
 
-    if st.changes:
-        for iface, state in st.changes:
+    if diff:
+        for iface, state in diff:
             if iface in ['fpn0', 'fpn1']:
                 if state:
                     logger.info('{} is UP'.format(iface))
@@ -229,7 +231,7 @@ def run_event_handlers(diff=None):
     Run state change event handlers (currently just the net handler)
     :param diff: State change diff, ie, st.changes
     """
-    if not diff:
+    if diff is None:
         from node_tools import state_data as st
         diff = st.changes
 

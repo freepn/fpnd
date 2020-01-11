@@ -66,7 +66,7 @@ def get_state_values(old, new, pairs=False):
                         item = (i, j)
                         diff.append(item)
                 logger.debug('State changed: {}'.format(diff))
-        st.changes = diff
+        st.changes = tuple(diff)
 
 
 def with_cache_aging(func):
