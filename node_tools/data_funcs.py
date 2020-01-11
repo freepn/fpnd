@@ -79,6 +79,8 @@ def with_cache_aging(func):
         * log some debug info
         :return result: result from update_runner()
         """
+        from node_tools import state_data as st
+
         stamp = None
         utc_stamp = datetime.datetime.now(utc)
         do_logstats('Entering cache wrapper')

@@ -64,7 +64,7 @@ class mock_datetime(object):
 
 class SchedulerTests(unittest.TestCase):
     def setUp(self):
-        self.bin_dir = os.path.join(os.getcwd(), 'bin')
+        self.bin_dir = os.path.join(os.getcwd(), 'test/fpnd/')
         schedule.clear()
 
     def test_run_tag(self):
@@ -138,25 +138,71 @@ class SchedulerTests(unittest.TestCase):
         schedule.clear()
         assert len(schedule.jobs) == 0
 
-    @pytest.mark.xfail(raises=ValueError)
+    def test_run_net_cmd_sched_up(self):
+        cmd_up0 = get_net_cmds(self.bin_dir, 'fpn0', True)
+        cmd_up1 = get_net_cmds(self.bin_dir, 'fpn1', True)
+        every().second.do(run_net_cmd, cmd_up0).tag('net-change')
+        every().second.do(run_net_cmd, cmd_up1).tag('net-change')
+        self.assertEqual(len(schedule.jobs), 2)
+        schedule.run_all(0, 'net-change')
+        self.assertEqual(len(schedule.jobs), 0)
+
+    def test_run_net_cmd_sched_down(self):
+        cmd_up0 = get_net_cmds(self.bin_dir, 'fpn0', False)
+        cmd_up1 = get_net_cmds(self.bin_dir, 'fpn1', False)
+        every().second.do(run_net_cmd, cmd_up0).tag('net-change')
+        every().second.do(run_net_cmd, cmd_up1).tag('net-change')
+        self.assertEqual(len(schedule.jobs), 2)
+        schedule.run_all(0, 'net-change')
+        self.assertEqual(len(schedule.jobs), 2)
+        schedule.run_all(0, 'net-change')
+        schedule.run_all(0, 'net-change')
+        self.assertEqual(len(schedule.jobs), 0)
+
+
+class RunNetCmdTest(unittest.TestCase):
+    """
+    Slightly better tests (than NetCmdTest) using schedule.
+    """
+    def setUp(self):
+        self.bin_dir = os.path.join(os.getcwd(), 'test/fpnd/')
+        schedule.clear()
+
     def test_run_net_cmd_false(self):
+        mock_job = make_mock_job()
+        tj = every().second.do(mock_job)
+
         cmd = ['/bin/false']
         state, res, ret = run_net_cmd(cmd)
         self.assertFalse(state)
         self.assertEqual(res, b'')
-        # print(ret)
 
-    @pytest.mark.xfail(raises=ValueError)
     def test_run_net_cmd_not_found(self):
+        mock_job = make_mock_job()
+        tj = every().second.do(mock_job)
+
         cmd = ['/bin/tuna']
         state, res, ret = run_net_cmd(cmd)
         self.assertFalse(state)
         self.assertRaises(FileNotFoundError)
-        # print(ret)
 
-    @pytest.mark.xfail(raises=ValueError)
-    def test_run_net_cmd_full(self):
-        cmd, down0, up1, down1 = get_net_cmds(self.bin_dir)
+    def test_run_net_cmd_up0(self):
+        # expected command result is 'Success' so the return
+        # result is actually <schedule.CancelJob>
+        mock_job = make_mock_job()
+        cmd = get_net_cmds(self.bin_dir, 'fpn0', True)
+        tj = every().second.do(mock_job)
+
+        result = run_net_cmd(cmd)
+        self.assertIsInstance(result, type)
+        self.assertIn('CancelJob', str(result))
+
+    def test_run_net_cmd_down0(self):
+        # expected command result is 'Fail' so the return
+        # result is the output of run_net_cmd()
+        mock_job = make_mock_job()
+        cmd = get_net_cmds(self.bin_dir, 'fpn0', False)
+        tj = every().second.do(mock_job)
 
         state, res, ret = run_net_cmd(cmd)
         self.assertFalse(state)

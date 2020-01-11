@@ -39,7 +39,7 @@ def config_from_ini(file_path=None):
     candidates = ['/etc/fpnd.ini',
                   '/etc/fpnd/fpnd.ini',
                   '/usr/lib/fpnd/fpnd.ini',
-                  'member_settings.ini',
+                  'test/test_data/settings.ini',
                   ]
     if file_path:
         candidates.append(file_path)
@@ -224,14 +224,17 @@ def net_change_handler(iface, state):
         # raise Exception('Missing command return from get_net_cmds()!')
 
 
-def run_event_handlers():
+def run_event_handlers(diff=None):
     """
     Run state change event handlers (currently just the net handler)
+    :param diff: State change diff, ie, st.changes
     """
-    from node_tools import state_data as st
+    if not diff:
+        from node_tools import state_data as st
+        diff = st.changes
 
-    if st.changes:
-        for iface, state in st.changes:
+    if diff:
+        for iface, state in diff:
             if iface in ['fpn0', 'fpn1']:
                 logger.debug('running net_change_handler for iface {} and state {}'.format(iface, state))
                 net_change_handler(iface, state)
