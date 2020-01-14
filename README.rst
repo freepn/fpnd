@@ -2,16 +2,17 @@
  fpnd tools and scripts
 ========================
 
-.. image:: https://img.shields.io/github/license/sarnold/fpnd
-    :target: https://github.com/sarnold/fpnd/blob/master/LICENSE
+.. image:: https://img.shields.io/github/license/freepn/fpnd
+    :target: https://github.com/freepn/fpnd/blob/master/LICENSE
 
-.. image:: https://badge.fury.io/gh/sarnold%2Ffpnd.svg
-    :target: https://badge.fury.io/gh/sarnold%2Ffpnd
+.. image:: https://img.shields.io/github/v/tag/freepn/fpnd?color=green&include_prereleases&label=latest%20release
+    :target: https://github.com/freepn/fpnd/releases
+    :alt: GitHub tag (latest SemVer pre-release)
 
-.. image:: https://travis-ci.org/sarnold/fpnd.svg?branch=master
-    :target: https://travis-ci.org/sarnold/fpnd
+.. image:: https://travis-ci.org/freepn/fpnd.svg?branch=master
+    :target: https://travis-ci.org/freepn/fpnd
 
-.. image:: https://img.shields.io/codeclimate/maintainability/sarnold/fpnd
-    :target: https://github.com/sarnold/fpnd/
+.. image:: https://img.shields.io/codeclimate/maintainability/freepn/fpnd
+    :target: https://github.com/freepn/fpnd/
 
 Python package for fpnd node scripts
