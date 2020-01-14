@@ -62,7 +62,7 @@ class mock_datetime(object):
         datetime.datetime = self.original_datetime
 
 
-class SchedulerTests(unittest.TestCase):
+class ScheduleTests(unittest.TestCase):
     def setUp(self):
         self.bin_dir = os.path.join(os.getcwd(), 'test/fpnd/')
         schedule.clear()
@@ -104,7 +104,7 @@ class SchedulerTests(unittest.TestCase):
         schedule.cancel_job(mj)
         assert len(schedule.jobs) == 0
 
-    def test_run_net_cmd_sched_up(self):
+    def test_run_net_cmd_sup(self):
         cmd_up0 = get_net_cmds(self.bin_dir, 'fpn0', True)
         cmd_up1 = get_net_cmds(self.bin_dir, 'fpn1', True)
 
@@ -116,7 +116,7 @@ class SchedulerTests(unittest.TestCase):
         schedule.run_all(0, 'net-change')
         self.assertEqual(len(schedule.jobs), 0)
 
-    def test_run_net_cmd_sched_down(self):
+    def test_run_net_cmd_sdown(self):
         cmd_down0 = get_net_cmds(self.bin_dir, 'fpn0', False)
         cmd_down1 = get_net_cmds(self.bin_dir, 'fpn1', False)
 

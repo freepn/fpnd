@@ -1,6 +1,11 @@
 # coding: utf-8
 
-"""Default fpn node state data and changes."""
+"""
+    Default fpn node state data and changes.
+    :var fpnState: built from cache data on each cache update
+    :var changes: state diff tuple of fpnState changes
+    :var fpnRegState: set on startup on successful node registration
+"""
 
 defState = dict.fromkeys(['online',
                           'fpn_id',
@@ -21,5 +26,9 @@ fpnState = {'online': False,
             'fpn1': False,
             'fpn_id0': None,
             'fpn_id1': None}
+
+fpnRegState = {'registered': False,
+               'moon_result': None,
+               'moon_ref': None}
 
 changes = []

@@ -12,6 +12,24 @@ from node_tools.sched_funcs import run_until_success
 logger = logging.getLogger(__name__)
 
 
+@run_until_success()
+def echo_client(fpn_id):
+    from nanoservice import Requester
+
+    reply_list = []
+    reciept = False
+    c = Requester('ipc:///run/service.sock', timeouts=(3000, 3000))
+
+    try:
+        reply_list = c.call('echo', fpn_id)
+        reciept = True
+        logger.debug('Echo result is {}'.format(reply_list))
+    except Exception as exc:
+        logger.error('Echo exc is {}'.format(exc))
+        raise Exception('NanoMsgAPIError: Connection timed out')
+
+    return reply_list, reciept
+
 def get_net_cmds(bin_dir, iface=None, state=False):
     import os
 

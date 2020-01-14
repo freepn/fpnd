@@ -517,12 +517,12 @@ def test_get_state():
     get_state(cache)
     nodeState = AttrDict.from_nested_dict(stest.fpnState)
     assert isinstance(nodeState, dict)
-    assert nodeState['online']
-    assert nodeState['fpn_id'] == 'ddfd7368e6'
-    assert not nodeState['fallback']
-    assert nodeState['fpn0']
-    assert nodeState['fpn1']
-    assert nodeState['moon_id0'] == 'deadd738e6'
+    assert nodeState.online
+    assert nodeState.fpn_id == 'ddfd7368e6'
+    assert not nodeState.fallback
+    assert nodeState.fpn0
+    assert nodeState.fpn1
+    assert nodeState.moon_id0 == 'deadd738e6'
     assert nodeState['fpn_id0'] == 'b6079f73c63cea29'
     assert nodeState['fpn_id1'] == '3efa5cb78a8129ad'
 

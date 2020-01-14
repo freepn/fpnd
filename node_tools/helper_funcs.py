@@ -226,6 +226,18 @@ def net_change_handler(iface, state):
         # raise Exception('Missing command return from get_net_cmds()!')
 
 
+def send_announce_msg(fpn_id):
+    """
+    Send node announcement message (hey, this is my id).
+    """
+    import schedule
+    from node_tools.network_funcs import echo_client
+
+    if fpn_id:
+        logger.debug('Sending msg with: {}'.format(fpn_id))
+        schedule.every(1).seconds.do(echo_client, fpn_id).tag('hey-moon')
+
+
 def run_event_handlers(diff=None):
     """
     Run state change event handlers (currently just the net handler)
@@ -240,6 +252,18 @@ def run_event_handlers(diff=None):
             if iface in ['fpn0', 'fpn1']:
                 logger.debug('running net_change_handler for iface {} and state {}'.format(iface, state))
                 net_change_handler(iface, state)
+
+
+def startup_handlers():
+    """
+    Event handlers that need to run at, well, startup (currently only
+    the moon announcement message).
+    """
+    from node_tools import state_data as st
+    nodeState = AttrDict.from_nested_dict(st.fpnState)
+
+    if nodeState.moon_id0 in NODE_SETTINGS['moon_list']:
+        send_announce_msg(nodeState.fpn_id)
 
 
 def update_state():
