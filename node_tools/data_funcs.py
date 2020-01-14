@@ -66,7 +66,7 @@ def get_state_values(old, new, pairs=False):
                         item = (i, j)
                         diff.append(item)
                 logger.debug('State changed: {}'.format(diff))
-        st.changes = diff
+        st.changes = tuple(diff)
 
 
 def with_cache_aging(func):
@@ -79,6 +79,8 @@ def with_cache_aging(func):
         * log some debug info
         :return result: result from update_runner()
         """
+        from node_tools import state_data as st
+
         stamp = None
         utc_stamp = datetime.datetime.now(utc)
         do_logstats('Entering cache wrapper')

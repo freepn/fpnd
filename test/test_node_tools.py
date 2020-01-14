@@ -17,10 +17,14 @@ from node_tools.logger_config import setup_logging
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
+from node_tools.helper_funcs import config_from_ini
+from node_tools.helper_funcs import do_setup
 from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import json_dump_file
 from node_tools.helper_funcs import json_load_file
+from node_tools.helper_funcs import log_fpn_state
+from node_tools.helper_funcs import run_event_handlers
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import xform_state_diff
 from node_tools.cache_funcs import find_keys
@@ -95,6 +99,35 @@ class BasicConfigTest(unittest.TestCase):
         self.assertEqual(logging.root.level, logging.INFO)
 
 
+class CheckReturnsTest(unittest.TestCase):
+    """
+    Tests for check_return_status().
+    """
+    def test_bad_returns(self):
+        naughty_list = [1, (), '', [], {}, {False: 'blarg'}, False, None]
+        for thing in naughty_list:
+            print(thing)
+            self.assertFalse(check_return_status(thing))
+
+    def test_int_return(self):
+        self.assertTrue(check_return_status(0))
+        self.assertFalse(check_return_status(1))
+
+    def test_bool_return(self):
+        self.assertTrue(check_return_status(True))
+        self.assertFalse(check_return_status(False))
+
+    def test_string_return(self):
+        self.assertFalse(check_return_status('blurt'))
+        good_list = ['OK', 'Success', 'UP', 'good']
+        for thing in good_list:
+            self.assertTrue(check_return_status(thing))
+
+    def test_multiple_returns(self):
+        self.assertTrue(check_return_status((True, 'Success', 0)))
+        self.assertFalse(check_return_status((False, 'blarg', 1)))
+
+
 class IPv4MethodsTest(unittest.TestCase):
     """
     Note the input for this test case is an ipaddress.IPv4Interface
@@ -114,35 +147,6 @@ class IPv4MethodsTest(unittest.TestCase):
         """Return False if IPv4 addr is not valid"""
         bogus_addr = find_ipv4_iface('192.168.1.300/24', False)
         self.assertFalse(bogus_addr)
-
-
-class CheckReturnsTest(unittest.TestCase):
-    """
-    Tests for check_return_status().
-    """
-    def test_bad_returns(self):
-        naughty_list = [1, (), '', [], {}, {'blarg': False}, False, None]
-        for thing in naughty_list:
-            # print(thing)
-            self.assertFalse(check_return_status(thing))
-
-    def test_int_return(self):
-        self.assertTrue(check_return_status(0))
-        self.assertFalse(check_return_status(1))
-
-    def test_bool_return(self):
-        self.assertTrue(check_return_status(True))
-        self.assertFalse(check_return_status(False))
-
-    def test_string_return(self):
-        self.assertFalse(check_return_status('blurt'))
-        good_list = ['OK', 'Success', 'UP', 'good']
-        for thing in good_list:
-            self.assertTrue(check_return_status(thing))
-
-    def test_multiple_returns(self):
-        self.assertTrue(check_return_status((False, 'Success', 0)))
-        self.assertFalse(check_return_status((False, 'blah', 1)))
 
 
 class NetCmdTest(unittest.TestCase):
@@ -187,17 +191,17 @@ class StateChangeTest(unittest.TestCase):
     """
     def setUp(self):
         super(StateChangeTest, self).setUp()
-        from node_tools import state_data as stest
+        from node_tools import state_data as st
 
-        self.default_state = stest.defState
-        self.state = stest.fpnState
+        self.default_state = st.defState
+        self.state = st.fpnState
 
     def tearDown(self):
-        from node_tools import state_data as s
+        from node_tools import state_data as st
 
         # defState = s.defState
 
-        s.fpnState = self.default_state
+        st.fpnState = self.default_state
         super(StateChangeTest, self).tearDown()
 
     def test_change_none(self):
@@ -207,21 +211,18 @@ class StateChangeTest(unittest.TestCase):
         self.assertFalse(self.state['fpn1'])
 
     def test_change_online(self):
-        from node_tools import state_data as stest
         self.state.update(online=True)
         self.assertTrue(self.state['online'])
         self.assertFalse(self.state['fpn0'])
         self.assertFalse(self.state['fpn1'])
 
     def test_change_upfpn0(self):
-        from node_tools import state_data as stest
         self.state.update(fpn0=True)
         self.assertTrue(self.state['online'])
         self.assertTrue(self.state['fpn0'])
         self.assertFalse(self.state['fpn1'])
 
     def test_change_upfpn1_downfpn0(self):
-        from node_tools import state_data as stest
         self.state.update(fpn0=False, fpn1=True)
         self.assertTrue(self.state['online'])
         self.assertTrue(self.state['fpn1'])
@@ -249,18 +250,15 @@ class XformStateDataTest(unittest.TestCase):
         self.assertIsInstance(diff, dict)
         self.assertTrue(diff.old_fpn1)
         self.assertFalse(diff.new_fpn1)
-        # print(diff)
 
     def test_return_one_new(self):
         diff = xform_state_diff(self.one_new)
         self.assertFalse(diff.fpn1)
-        # print(diff)
 
     def test_return_two_new(self):
         diff = xform_state_diff(self.two_new)
         self.assertTrue(diff.fpn0)
         self.assertEqual(diff.fpn_id0, 'bb8dead3c63cea29')
-        # print(diff)
 
 
 class mock_zt_api_client(object):
@@ -481,7 +479,6 @@ def test_load_moon_state():
             break
     load_cache_by_type(cache, moonStatus, 'mstate')
     assert len(cache) == 11
-    # print(list(cache))
 
 
 def test_load_net_state():
@@ -512,7 +509,6 @@ def test_find_state_keys():
     assert 'nstate' in s
     assert 'mstate' in s
     assert 'istate' in s
-    # print(data)
 
 
 def test_get_state():
@@ -529,13 +525,12 @@ def test_get_state():
     assert nodeState['moon_id0'] == 'deadd738e6'
     assert nodeState['fpn_id0'] == 'b6079f73c63cea29'
     assert nodeState['fpn_id1'] == '3efa5cb78a8129ad'
-    # print(nodeState)
 
 
 def test_get_state_values():
     from node_tools import state_data as stest
 
-    assert isinstance(stest.changes, list)
+    assert isinstance(stest.changes, tuple)
     assert not stest.changes
 
     get_state(cache)
@@ -552,16 +547,11 @@ def test_get_state_values():
 
     # now we should see old/new values in the state diff
     get_state_values(prev_state, next_state, True)
-    assert isinstance(stest.changes, list)
+    assert isinstance(stest.changes, tuple)
     assert len(stest.changes) == 1
     assert len(stest.changes[0]) == 2
-    # for new_val, old_val in stest.changes[0]:
-    # print(type(new_val))
-    # print(old_val)
-    # print(stest.changes)
     get_state_values(prev_state, next_state)
     assert len(stest.changes[0]) == 2
-    # print(stest.changes)
 
     # reset shared state vars
     stest.changes = []
@@ -577,7 +567,26 @@ def test_get_state_values():
 
     # now we should see only new values for both changes in the state diff
     get_state_values(prev_state, next_state)
-    assert isinstance(stest.changes, list)
+    assert isinstance(stest.changes, tuple)
     assert len(stest.changes) == 2
     assert len(stest.changes[0]) == 2
-    # print(stest.changes)
+
+
+def test_run_event_handler():
+    from node_tools import state_data as st
+
+    home, pid_file, log_file, debug, msg = do_setup()
+
+    prev_state = AttrDict.from_nested_dict(st.defState)
+    st.changes = []
+    st.fpnState.update(fpn0=True, fpn1=True)
+    next_state = AttrDict.from_nested_dict(st.fpnState)
+    assert not st.changes
+
+    run_event_handlers(st.changes)
+    get_state_values(prev_state, next_state)
+    assert len(st.changes) == 2
+    # print(prev_state)
+    # print(st.changes)
+    log_fpn_state(st.changes)
+    run_event_handlers(st.changes)
