@@ -51,13 +51,15 @@ setup(
         'schedule @ git+https://github.com/sarnold/schedule@0.6.0p1',
     ],
     classifiers=[
+        'Development Status :: 2 - Pre-Alpha',
         'Environment :: Console',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: LGPL-3.0 License',
+        'Intended Audience :: End Users/Desktop',
+        'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
-        'Operating System :: POSIX',
+        'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
         'Natural Language :: English',
+        'Topic :: Security',
     ],
 )

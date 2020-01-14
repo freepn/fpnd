@@ -1,0 +1,5 @@
+## files and dirs excluded from analysis
+exclude_patterns:
+- "test/"
+- "spec/"
+- "**/vendor/"
