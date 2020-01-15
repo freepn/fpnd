@@ -22,7 +22,7 @@ install:
   - pip install pytest
   - pip install pytest-pep8
   - pip install pytest-flake8
-  - pip install tox-travis
+  - pip install tox-travis codecov
 
 # command to run tests
 script:
