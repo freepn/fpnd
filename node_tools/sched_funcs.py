@@ -85,9 +85,11 @@ def run_until_success(max_retry=2):
 
             except Exception as exc:
                 # import traceback
+                import warnings
                 result = None
-                logger.error('JOB: {} failed on try number: {}'.format(current, num_try))
-                logger.error('JOB: exception is: {}'.format(exc))
+                logger.debug('JOB: {} failed on try number: {}'.format(current, num_try))
+                warnings.warn('{}'.format(exc), RuntimeWarning, stacklevel=2)
+                # logger.error('JOB: exception is: {}'.format(exc))
                 # logger.error(traceback.format_exc())
 
             finally:

@@ -106,7 +106,7 @@ class CheckReturnsTest(unittest.TestCase):
     def test_bad_returns(self):
         naughty_list = [1, (), '', [], {}, {False: 'blarg'}, False, None]
         for thing in naughty_list:
-            print(thing)
+            # print(thing)
             self.assertFalse(check_return_status(thing))
 
     def test_int_return(self):
@@ -275,7 +275,7 @@ class mock_zt_api_client(object):
 
 
 # has_aging = False
-cache = Index(get_cachedir())
+cache = Index(get_cachedir(dir_name='fpn_test'))
 max_age = NODE_SETTINGS['max_cache_age']
 utc_stamp = datetime.datetime.now(utc)  # use local time for console
 
@@ -298,7 +298,7 @@ def load_data():
 
 
 def test_dump_and_load_json():
-    data_dir = get_cachedir(dir_name='fpn_data')
+    data_dir = get_cachedir(dir_name='fpn_test')
     (node_data, peer_data, net_data) = load_data()
     json_dump_file('node', node_data, data_dir)
     node_dump = json_load_file('node', data_dir)
@@ -421,7 +421,7 @@ def test_cache_loading():
         res = update_runner()
 
     def test_cache_size():
-        assert len(cache) == 9
+        assert len(cache) == 8
 
     test_cache_is_empty()
     test_load_cache_node()
@@ -466,7 +466,7 @@ def test_get_net_status():
 def test_load_node_state():
     Node = get_node_status(cache)
     load_cache_by_type(cache, Node, 'nstate')
-    assert len(cache) == 10
+    assert len(cache) == 9
     # print(list(cache))
 
 
@@ -478,19 +478,19 @@ def test_load_moon_state():
             moonStatus.append(peer)
             break
     load_cache_by_type(cache, moonStatus, 'mstate')
-    assert len(cache) == 11
+    assert len(cache) == 10
 
 
 def test_load_net_state():
     Node = get_net_status(cache)
     load_cache_by_type(cache, Node, 'istate')
-    assert len(cache) == 13
+    assert len(cache) == 12
 
 
 def test_load_new_state():
     Node = get_net_status(cache)
     load_cache_by_type(cache, Node, 'istate')
-    assert len(cache) == 13
+    assert len(cache) == 12
 
 
 def test_find_keys():
@@ -517,12 +517,12 @@ def test_get_state():
     get_state(cache)
     nodeState = AttrDict.from_nested_dict(stest.fpnState)
     assert isinstance(nodeState, dict)
-    assert nodeState['online']
-    assert nodeState['fpn_id'] == 'ddfd7368e6'
-    assert not nodeState['fallback']
-    assert nodeState['fpn0']
-    assert nodeState['fpn1']
-    assert nodeState['moon_id0'] == 'deadd738e6'
+    assert nodeState.online
+    assert nodeState.fpn_id == 'ddfd7368e6'
+    assert not nodeState.fallback
+    assert nodeState.fpn0
+    assert nodeState.fpn1
+    assert nodeState.moon_id0 == 'deadd738e6'
     assert nodeState['fpn_id0'] == 'b6079f73c63cea29'
     assert nodeState['fpn_id1'] == '3efa5cb78a8129ad'
 

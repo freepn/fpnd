@@ -12,6 +12,25 @@ from node_tools.sched_funcs import run_until_success
 logger = logging.getLogger(__name__)
 
 
+@run_until_success()
+def echo_client(fpn_id):
+    from nanoservice import Requester
+
+    reply_list = []
+    reciept = False
+    c = Requester('ipc:///tmp/service.sock', timeouts=(1000, 1000))
+
+    try:
+        reply_list = c.call('echo', fpn_id)
+        reciept = True
+        logger.debug('Send result is {}'.format(reply_list))
+    except Exception as exc:
+        logger.warning('Send error is {}'.format(exc))
+        raise exc
+
+    return reply_list, reciept
+
+
 def get_net_cmds(bin_dir, iface=None, state=False):
     import os
 

@@ -15,6 +15,7 @@ from daemon import Daemon
 from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import do_setup
+from node_tools.helper_funcs import startup_handlers
 from node_tools.logger_config import setup_logging
 from node_tools.node_funcs import get_moon_data
 from node_tools.node_funcs import run_moon_cmd
@@ -57,13 +58,15 @@ def setup_scheduling(max_age):
 
 def do_scheduling():
     schedule.run_all(10, 'base-tasks')
-    # time.sleep(3)
+    time.sleep(1)
 
     for moon in moons:
         res = run_moon_cmd(moon, action='orbit')
 
     moon_metadata = get_moon_data()
     logger.debug('Moon data size: {}'.format(len(moon_metadata)))
+
+    startup_handlers()
 
     while True:
         schedule.run_pending()

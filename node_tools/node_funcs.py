@@ -81,5 +81,7 @@ def run_moon_cmd(moon_id, action='orbit'):
 
 
 def wait_for_moon():
-    """Wait for moon data on startup before sending any messages."""
-    raise NotImplementedError
+    """
+    Wait for moon data on startup before sending any messages.
+    """
+    pass
