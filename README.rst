@@ -12,6 +12,10 @@
 .. image:: https://travis-ci.org/freepn/fpnd.svg?branch=master
     :target: https://travis-ci.org/freepn/fpnd
 
+.. image:: https://img.shields.io/codecov/c/github/freepn/fpnd
+    :target: https://codecov.io/gh/freepn/fpnd
+    :alt: Codecov
+
 .. image:: https://img.shields.io/codeclimate/maintainability/freepn/fpnd
     :target: https://codeclimate.com/github/freepn/fpnd
 

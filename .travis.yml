@@ -28,6 +28,9 @@ install:
 script:
   - tox
 
+after_success:
+    - codecov
+
 matrix:
   fast_finish: true
   allow_failures:
