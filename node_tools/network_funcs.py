@@ -18,17 +18,18 @@ def echo_client(fpn_id):
 
     reply_list = []
     reciept = False
-    c = Requester('ipc:///run/service.sock', timeouts=(3000, 3000))
+    c = Requester('ipc:///tmp/service.sock', timeouts=(1000, 1000))
 
     try:
         reply_list = c.call('echo', fpn_id)
         reciept = True
-        logger.debug('Echo result is {}'.format(reply_list))
+        logger.debug('Send result is {}'.format(reply_list))
     except Exception as exc:
-        logger.error('Echo exc is {}'.format(exc))
-        raise Exception('NanoMsgAPIError: Connection timed out')
+        logger.warning('Send error is {}'.format(exc))
+        raise exc
 
     return reply_list, reciept
+
 
 def get_net_cmds(bin_dir, iface=None, state=False):
     import os

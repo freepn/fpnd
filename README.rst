@@ -13,6 +13,6 @@
     :target: https://travis-ci.org/freepn/fpnd
 
 .. image:: https://img.shields.io/codeclimate/maintainability/freepn/fpnd
-    :target: https://github.com/freepn/fpnd/
+    :target: https://codeclimate.com/github/freepn/fpnd
 
 Python package for fpnd node scripts

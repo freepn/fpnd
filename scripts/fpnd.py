@@ -66,7 +66,6 @@ def do_scheduling():
     moon_metadata = get_moon_data()
     logger.debug('Moon data size: {}'.format(len(moon_metadata)))
 
-    schedule.run_all(10, 'base-tasks')
     startup_handlers()
 
     while True:
