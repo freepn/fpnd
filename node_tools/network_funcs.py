@@ -74,7 +74,7 @@ def run_net_cmd(cmd):
     res = b''
     state = False
     head, tail = os.path.split(cmd[0])
-    if not tail:
+    if not head or not tail:
         logger.error('Bad cmd or path: {}'.format(cmd[0]))
 
     # with shell=false cmd must be a sequence not a string

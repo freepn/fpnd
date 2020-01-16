@@ -188,6 +188,21 @@ class NetCmdTests(unittest.TestCase):
         self.assertFalse(state)
         self.assertEqual(res, b'')
 
+    def test_get_net_cmds_bad_path(self):
+        mock_job = make_mock_job()
+        tj = every().second.do(mock_job)
+
+        bad_dir = '/tmp/foobar/'
+        cmd = ['/tmp/foo0-down.sh']
+        self.assertFalse(os.path.isdir(bad_dir))
+        res = get_net_cmds(bad_dir, 'fpn0', True)
+        # print(cmd)
+        self.assertIsNone(res)
+        state, result, ret = run_net_cmd(cmd)
+        self.assertFalse(state)
+        self.assertRaises(FileNotFoundError)
+        # print(result)
+
     def test_run_net_cmd_not_found(self):
         mock_job = make_mock_job()
         tj = every().second.do(mock_job)
