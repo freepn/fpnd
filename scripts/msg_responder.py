@@ -33,8 +33,6 @@ class rspDaemon(Daemon):
         s = Responder(self.tcp_addr, timeouts=(None, None))
         s.register('echo', echo)
         s.start()
-        # Wait
-        #time.sleep(60)
 
 
 if __name__ == "__main__":
