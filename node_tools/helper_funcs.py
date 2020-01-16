@@ -6,10 +6,7 @@ from __future__ import print_function
 import sys
 import logging
 
-if sys.hexversion >= 0x3020000:
-    from configparser import ConfigParser as SafeConfigParser
-else:
-    from configparser import SafeConfigParser
+from configparser import ConfigParser as SafeConfigParser
 
 
 logger = logging.getLogger(__name__)

@@ -18,14 +18,10 @@ from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
 
-try:
-    from datetime import timezone
-    utc = timezone.utc
-except ImportError:
-    from daemon.timezone import UTC
-    utc = UTC()
+from datetime import timezone
 
 
+utc = timezone.utc
 logger = logging.getLogger(__name__)
 cache = Index(get_cachedir())
 max_age = NODE_SETTINGS['max_cache_age']
