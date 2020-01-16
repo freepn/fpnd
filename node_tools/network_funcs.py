@@ -13,12 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 @run_until_success()
-def echo_client(fpn_id):
+def echo_client(fpn_id, addr):
     from nanoservice import Requester
+
+    if NODE_SETTINGS['use_localhost'] or not addr:
+        addr = '127.0.0.1'
 
     reply_list = []
     reciept = False
-    c = Requester('ipc:///tmp/service.sock', timeouts=(1000, 1000))
+    c = Requester('tcp://{}:5051'.format(addr), timeouts=(1000, 1000))
 
     try:
         reply_list = c.call('echo', fpn_id)

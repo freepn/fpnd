@@ -348,14 +348,13 @@ def test_unorbit_moon():
     assert res is False
 
 
-def should_be_enodata():
-    res = update_runner()
-    return res
-
-
 def test_should_be_enodata():
+    def should_be_enodata():
+        res = update_state()
+        return res
+
     res = should_be_enodata()
-    assert res == ENODATA
+    assert res is ENODATA
 
 
 def test_api_warning_msg():
@@ -378,6 +377,9 @@ def test_cache_loading():
     def test_cache_is_empty():
         cache.clear()
         assert list(cache) == []
+        res = update_runner()
+        assert res is ENODATA
+        # print(res)
 
     def test_load_cache_node():
         _, node_data = client.get_data('status')
@@ -419,6 +421,8 @@ def test_cache_loading():
 
     def test_update_runner():
         res = update_runner()
+        assert res is ENODATA
+        # print(res)
 
     def test_cache_size():
         assert len(cache) == 8

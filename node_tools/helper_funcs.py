@@ -25,6 +25,7 @@ ENODATA = Constant('ENODATA')  # error return for async state data updates
 
 NODE_SETTINGS = {
     u'max_cache_age': 60,  # maximum cache age in seconds
+    u'use_localhost': True,  # messaging interface to use
     u'moon_list': ['4f4114472a'],  # list of fpn moons to orbiit
     u'home_dir': None,
     u'debug': False
@@ -223,7 +224,7 @@ def net_change_handler(iface, state):
         # raise Exception('Missing command return from get_net_cmds()!')
 
 
-def send_announce_msg(fpn_id):
+def send_announce_msg(fpn_id, addr):
     """
     Send node announcement message (hey, this is my id).
     """
@@ -231,8 +232,8 @@ def send_announce_msg(fpn_id):
     from node_tools.network_funcs import echo_client
 
     if fpn_id:
-        logger.debug('Sending msg with: {}'.format(fpn_id))
-        schedule.every(1).seconds.do(echo_client, fpn_id).tag('hey-moon')
+        logger.debug('Sending msg: {} to addr {}'.format(fpn_id, addr))
+        schedule.every(1).seconds.do(echo_client, fpn_id, addr).tag('hey-moon')
 
 
 def run_event_handlers(diff=None):
@@ -260,7 +261,11 @@ def startup_handlers():
     nodeState = AttrDict.from_nested_dict(st.fpnState)
 
     if nodeState.moon_id0 in NODE_SETTINGS['moon_list']:
-        send_announce_msg(nodeState.fpn_id)
+        addr = nodeState.moon_addr
+    if NODE_SETTINGS['use_localhost'] or not addr:
+        addr = '127.0.0.1'
+
+    send_announce_msg(nodeState.fpn_id, addr)
 
 
 def update_state():
@@ -271,7 +276,7 @@ def update_state():
         exec_full(node_scr)
         return 'OK'
     except Exception as exc:
-        logger.error('update_state exception: {}'.format(exc))
+        logger.warning('update_state exception: {}'.format(exc))
         return ENODATA
 
 
