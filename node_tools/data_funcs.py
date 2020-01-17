@@ -145,9 +145,9 @@ def with_state_check(func):
 @with_cache_aging
 @with_state_check
 def update_runner():
-    size = len(cache)
     try:
         res = update_state()
+        size = len(cache)
         logger.debug('API result: {}'.format(res))
     except:  # noqa: E722
         logger.warning('No data available, cache was NOT updated')

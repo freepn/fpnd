@@ -35,9 +35,9 @@ NODE_SETTINGS = {
 
 def check_and_set_role(role, path=None):
     """
-    Check for role-specific paths to set initial fpn role, one of
-    <user|moon|controller>.  Once the cache is populated the initial
-    role is verified and updated if needed.
+    Check for role-specific paths to set tentative initial fpn role,
+    one of <None|moon|controller>.  Once the cache is populated the
+    initial role is verified and updated if needed.
     :param role: the non-default role to query for <moon|ctlr>
     :return <True|False>: True if role query is a match
     """
@@ -61,8 +61,8 @@ def check_and_set_role(role, path=None):
             role_file = fnmatch.fnmatch(file, '*.' + role)
             # print(role_file)
             if role_file:
-                NODE_SETTINGS['node_role'] = role
-                new_role = True
+                NODE_SETTINGS['node_role'] = None
+                new_role = False
 
     return new_role
 
@@ -313,6 +313,20 @@ def update_state():
     except Exception as exc:
         logger.warning('update_state exception: {}'.format(exc))
         return ENODATA
+
+
+def validate_role():
+    """
+    Validate and set initial role with state data from the cache.
+    """
+    from node_tools import state_data as st
+    nodeState = AttrDict.from_nested_dict(st.fpnState)
+
+    if nodeState.fpn_id in NODE_SETTINGS['moon_list']:
+        NODE_SETTINGS['node_role'] = 'moon'
+    else:
+        NODE_SETTINGS['node_role'] = None
+    logger.debug('ROLE: validated role is {}'.format(NODE_SETTINGS['node_role']))
 
 
 def xform_state_diff(diff):

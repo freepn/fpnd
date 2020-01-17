@@ -16,6 +16,7 @@ from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import do_setup
 from node_tools.helper_funcs import startup_handlers
+from node_tools.helper_funcs import validate_role
 from node_tools.logger_config import setup_logging
 from node_tools.node_funcs import get_moon_data
 from node_tools.node_funcs import run_moon_cmd
@@ -31,16 +32,19 @@ except ImportError:
 logger = logging.getLogger('fpnd')
 max_age = NODE_SETTINGS['max_cache_age']
 moons = NODE_SETTINGS['moon_list']  # list of fpn moons to orbiit
+role = NODE_SETTINGS['node_role']  # baseline role we run as
 timestamp = datetime.datetime.now(utc)  # use local time for console
 
 
-def assign_initial_role():
+def assign_initial_role(role):
     """
     Assign initial role on startup, confirm after cache is available
     (eg, check node_id against moon_list).  No params or returns, all
     we do is set the role in NODE_SETTINGS.
     """
-    pass
+    res = check_and_set_role(role)
+    if res:
+        logger.debug('ROLE: tentative new role is {}'.format(role))
 
 
 def show_scheduled_jobs():
@@ -68,14 +72,16 @@ def setup_scheduling(max_age):
 def do_scheduling():
     schedule.run_all(10, 'base-tasks')
     time.sleep(1)
+    validate_role()
 
-    for moon in moons:
-        res = run_moon_cmd(moon, action='orbit')
+    if not role:
+        for moon in moons:
+            res = run_moon_cmd(moon, action='orbit')
 
-    moon_metadata = get_moon_data()
-    logger.debug('Moon data size: {}'.format(len(moon_metadata)))
+        moon_metadata = get_moon_data()
+        logger.debug('Moon data size: {}'.format(len(moon_metadata)))
 
-    startup_handlers()
+    startup_handlers()  # this only know default role for now
 
     while True:
         schedule.run_pending()

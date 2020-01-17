@@ -28,6 +28,7 @@ from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import log_fpn_state
 from node_tools.helper_funcs import run_event_handlers
 from node_tools.helper_funcs import update_state
+from node_tools.helper_funcs import validate_role
 from node_tools.helper_funcs import xform_state_diff
 from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import load_cache_by_type
@@ -130,22 +131,35 @@ class CheckReturnsTest(unittest.TestCase):
         self.assertFalse(check_return_status((False, 'blarg', 1)))
 
 
-class CheckRoleTest(unittest.TestCase):
+class CheckRoleTests(unittest.TestCase):
     """
     Tests for check_and_set_role().
     """
     def setUp(self):
-        super(CheckRoleTest, self).setUp()
+        super(CheckRoleTests, self).setUp()
+        from node_tools import state_data as st
+
+        self.default_state = st.defState
+        self.state = st.fpnState
         self.role = NODE_SETTINGS['node_role']
         self.moon = '000000' + NODE_SETTINGS['moon_list'][0] + '.moon'
         self.parent_dir = os.path.join(os.getcwd(), 'test/role_test')
-        os.makedirs(self.parent_dir, exist_ok=False)
         self.moon_dir = os.path.join(self.parent_dir, 'moons.d')
         self.moon_file = os.path.join(self.moon_dir, self.moon)
+        self.createDirs()
+        self.addCleanup(self.cleanDirs)
 
     def tearDown(self):
+        from node_tools import state_data as st
+
+        st.fpnState = self.default_state
+        super(CheckRoleTests, self).tearDown()
+
+    def createDirs(self):
+        os.makedirs(self.parent_dir, exist_ok=False)
+
+    def cleanDirs(self):
         shutil.rmtree(self.parent_dir)
-        super(CheckRoleTest, self).tearDown()
 
     def test_moon_role(self):
         self.assertIsNone(self.role)
@@ -154,14 +168,23 @@ class CheckRoleTest(unittest.TestCase):
         with open(self.moon_file, "w") as file:
             file.write('')
         result = check_and_set_role('moon', path=self.parent_dir)
-        self.assertTrue(result)
+        self.assertFalse(result)
+        self.assertIsNone(NODE_SETTINGS['node_role'])
+
+        self.state.update(online=True,
+                          fpn_id='ddfd7368e6',
+                          moon_id0='deadd738e6')
+        NODE_SETTINGS['node_role'] = 'moon'
+        validate_role()
+        self.assertIsNone(NODE_SETTINGS['node_role'])
+        NODE_SETTINGS['moon_list'].append(self.state['fpn_id'])
+        validate_role()
         self.assertEqual(NODE_SETTINGS['node_role'], 'moon')
 
     def test_passing_path(self):
         self.assertTrue(os.path.isdir(self.parent_dir))
         result = check_and_set_role('foobar', path=self.parent_dir)
         self.assertFalse(result)
-        # print(self.parent_dir)
 
     def test_passing_none(self):
         result = check_and_set_role('foobar')
