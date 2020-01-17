@@ -34,6 +34,15 @@ moons = NODE_SETTINGS['moon_list']  # list of fpn moons to orbiit
 timestamp = datetime.datetime.now(utc)  # use local time for console
 
 
+def assign_initial_role():
+    """
+    Assign initial role on startup, confirm after cache is available
+    (eg, check node_id against moon_list).  No params or returns, all
+    we do is set the role in NODE_SETTINGS.
+    """
+    pass
+
+
 def show_scheduled_jobs():
     """
     Show job info for all currently scheduled jobs.  Normally run

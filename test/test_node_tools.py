@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import time
+import shutil
 import datetime
 import logging
 import ipaddress
@@ -17,6 +18,7 @@ from node_tools.logger_config import setup_logging
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
+from node_tools.helper_funcs import check_and_set_role
 from node_tools.helper_funcs import config_from_ini
 from node_tools.helper_funcs import do_setup
 from node_tools.helper_funcs import find_ipv4_iface
@@ -128,6 +130,44 @@ class CheckReturnsTest(unittest.TestCase):
         self.assertFalse(check_return_status((False, 'blarg', 1)))
 
 
+class CheckRoleTest(unittest.TestCase):
+    """
+    Tests for check_and_set_role().
+    """
+    def setUp(self):
+        super(CheckRoleTest, self).setUp()
+        self.role = NODE_SETTINGS['node_role']
+        self.moon = '000000' + NODE_SETTINGS['moon_list'][0] + '.moon'
+        self.parent_dir = os.path.join(os.getcwd(), 'test/role_test')
+        os.makedirs(self.parent_dir, exist_ok=False)
+        self.moon_dir = os.path.join(self.parent_dir, 'moons.d')
+        self.moon_file = os.path.join(self.moon_dir, self.moon)
+
+    def tearDown(self):
+        shutil.rmtree(self.parent_dir)
+        super(CheckRoleTest, self).tearDown()
+
+    def test_moon_role(self):
+        self.assertIsNone(self.role)
+        os.makedirs(self.moon_dir, exist_ok=False)
+
+        with open(self.moon_file, "w") as file:
+            file.write('')
+        result = check_and_set_role('moon', path=self.parent_dir)
+        self.assertTrue(result)
+        self.assertEqual(NODE_SETTINGS['node_role'], 'moon')
+
+    def test_passing_path(self):
+        self.assertTrue(os.path.isdir(self.parent_dir))
+        result = check_and_set_role('foobar', path=self.parent_dir)
+        self.assertFalse(result)
+        # print(self.parent_dir)
+
+    def test_passing_none(self):
+        result = check_and_set_role('foobar')
+        self.assertFalse(result)
+
+
 class IPv4MethodsTest(unittest.TestCase):
     """
     Note the input for this test case is an ipaddress.IPv4Interface
@@ -225,8 +265,8 @@ class StateChangeTest(unittest.TestCase):
     def test_change_upfpn1_downfpn0(self):
         self.state.update(fpn0=False, fpn1=True)
         self.assertTrue(self.state['online'])
-        self.assertTrue(self.state['fpn1'])
         self.assertFalse(self.state['fpn0'])
+        self.assertTrue(self.state['fpn1'])
 
 
 class XformStateDataTest(unittest.TestCase):

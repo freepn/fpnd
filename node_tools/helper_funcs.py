@@ -26,10 +26,45 @@ ENODATA = Constant('ENODATA')  # error return for async state data updates
 NODE_SETTINGS = {
     u'max_cache_age': 60,  # maximum cache age in seconds
     u'use_localhost': True,  # messaging interface to use
+    u'node_role': None,  # role this node will run as
     u'moon_list': ['4f4114472a'],  # list of fpn moons to orbiit
     u'home_dir': None,
     u'debug': False
 }
+
+
+def check_and_set_role(role, path=None):
+    """
+    Check for role-specific paths to set initial fpn role, one of
+    <user|moon|controller>.  Once the cache is populated the initial
+    role is verified and updated if needed.
+    :param role: the non-default role to query for <moon|ctlr>
+    :return <True|False>: True if role query is a match
+    """
+    import os
+    import fnmatch
+
+    new_role = False
+    if not path:
+        path = get_filepath()
+
+    if role == 'moon':
+        role_path = os.path.join(path, 'moons.d')
+        # print(role_path)
+    elif role == 'controller':
+        role_path = os.path.join(path, 'controller.d')
+    else:
+        return new_role
+
+    if os.path.exists(role_path):
+        for file in os.listdir(role_path):
+            role_file = fnmatch.fnmatch(file, '*.' + role)
+            # print(role_file)
+            if role_file:
+                NODE_SETTINGS['node_role'] = role
+                new_role = True
+
+    return new_role
 
 
 def config_from_ini(file_path=None):
@@ -224,18 +259,6 @@ def net_change_handler(iface, state):
         # raise Exception('Missing command return from get_net_cmds()!')
 
 
-def send_announce_msg(fpn_id, addr):
-    """
-    Send node announcement message (hey, this is my id).
-    """
-    import schedule
-    from node_tools.network_funcs import echo_client
-
-    if fpn_id:
-        logger.debug('Sending msg: {} to addr {}'.format(fpn_id, addr))
-        schedule.every(1).seconds.do(echo_client, fpn_id, addr).tag('hey-moon')
-
-
 def run_event_handlers(diff=None):
     """
     Run state change event handlers (currently just the net handler)
@@ -250,6 +273,18 @@ def run_event_handlers(diff=None):
             if iface in ['fpn0', 'fpn1']:
                 logger.debug('running net_change_handler for iface {} and state {}'.format(iface, state))
                 net_change_handler(iface, state)
+
+
+def send_announce_msg(fpn_id, addr):
+    """
+    Send node announcement message (hey, this is my id).
+    """
+    import schedule
+    from node_tools.network_funcs import echo_client
+
+    if fpn_id:
+        logger.debug('Sending msg: {} to addr {}'.format(fpn_id, addr))
+        schedule.every(1).seconds.do(echo_client, fpn_id, addr).tag('hey-moon')
 
 
 def startup_handlers():
