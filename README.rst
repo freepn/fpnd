@@ -20,9 +20,3 @@
     :target: https://codeclimate.com/github/freepn/fpnd
 
 Python package for fpnd node scripts
-
-
-Current test coverage:
-
-.. image:: https://codecov.io/gh/freepn/fpnd/branch/master/graphs/sunburst.svg
-    
