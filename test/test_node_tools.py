@@ -55,43 +55,6 @@ except ImportError:
     utc = UTC()
 
 
-# pytest-based test cases using capture
-# NOTE these tests cannot be run using unittest.TestCase since the
-# function under test is actually calling a separate daemon with its
-# own context (thus capsys will not work either, so we use capfd)
-def test_file_is_found(capfd):
-    """
-    Test if we can find the msg_responder daemon.
-    """
-    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
-    res = control_daemon('fart')
-    captured = capfd.readouterr()
-    assert res is True
-    assert 'Unknown command' in captured.out
-
-
-def test_daemon_can_start(capfd):
-    """
-    Test if we can start the msg_responder daemon.
-    """
-    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
-    res = control_daemon('start')
-    captured = capfd.readouterr()
-    assert res is True
-    assert 'Starting' in captured.out
-
-
-def test_daemon_can_stop(capfd):
-    """
-    Test if we can stop the msg_responder daemon.
-    """
-    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
-    res = control_daemon('stop')
-    captured = capfd.readouterr()
-    assert res is True
-    assert 'Stopped' in captured.out
-
-
 # unittest-based test cases
 class BasicConfigTest(unittest.TestCase):
 
@@ -385,6 +348,44 @@ utc_stamp = datetime.datetime.now(utc)  # use local time for console
 client = mock_zt_api_client()
 
 
+# pytest-based test cases using capture
+# NOTE these tests cannot be run using unittest.TestCase since the
+# function under test is actually calling a separate daemon with its
+# own context (thus capsys will not work either, so we use capfd)
+def test_file_is_found(capfd):
+    """
+    Test if we can find the msg_responder daemon.
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
+    res = control_daemon('fart')
+    captured = capfd.readouterr()
+    assert res is True
+    assert 'Unknown command' in captured.out
+
+
+def test_daemon_can_start(capfd):
+    """
+    Test if we can start the msg_responder daemon.
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
+    res = control_daemon('start')
+    captured = capfd.readouterr()
+    assert res is True
+    assert 'Starting' in captured.out
+
+
+def test_daemon_can_stop(capfd):
+    """
+    Test if we can stop the msg_responder daemon.
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
+    res = control_daemon('stop')
+    captured = capfd.readouterr()
+    assert res is True
+    assert 'Stopped' in captured.out
+
+
+# special test cases
 def json_check(data):
     import json
 

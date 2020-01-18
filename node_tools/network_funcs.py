@@ -15,10 +15,12 @@ logger = logging.getLogger(__name__)
 @run_until_success()
 def echo_client(fpn_id, addr):
     from nanoservice import Requester
+    from node_tools import state_data as st
 
     if NODE_SETTINGS['use_localhost'] or not addr:
         addr = '127.0.0.1'
 
+    reg_data = st.fpnRegState
     reply_list = []
     reciept = False
     c = Requester('tcp://{}:5051'.format(addr), timeouts=(1000, 1000))
@@ -26,6 +28,9 @@ def echo_client(fpn_id, addr):
     try:
         reply_list = c.call('echo', fpn_id)
         reciept = True
+        reg_data[0]['registered'] = True
+        reg_data[0]['moon_result'] = reply_list[0]['result']
+        reg_data[0]['moon_ref'] = reply_list[0]['ref']
         logger.debug('Send result is {}'.format(reply_list))
     except Exception as exc:
         logger.warning('Send error is {}'.format(exc))
