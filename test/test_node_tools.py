@@ -24,6 +24,7 @@ from node_tools.helper_funcs import config_from_ini
 from node_tools.helper_funcs import do_setup
 from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import get_filepath
 from node_tools.helper_funcs import json_dump_file
 from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import log_fpn_state
@@ -205,8 +206,8 @@ class SetRolesTest(unittest.TestCase):
 
         self.role = NODE_SETTINGS['node_role']
         self.parent_dir = os.path.join(os.getcwd(), 'test/role_test')
-        self.ctlr = '848c7c9ad92f90ee.json'
-        self.ctlr_dir = os.path.join(self.parent_dir, 'controller.d/network')
+        self.ctlr = 'bb8dead3c63cea29.json'
+        self.ctlr_dir = os.path.join(self.parent_dir, 'controller.d', 'network')
         self.ctlr_file = os.path.join(self.ctlr_dir, self.ctlr)
         self.moon = '000000' + NODE_SETTINGS['moon_list'][0] + '.moon'
         self.moon_dir = os.path.join(self.parent_dir, 'moons.d')
@@ -270,10 +271,10 @@ class SetRolesTest(unittest.TestCase):
         result = check_and_set_role('foobar', path=self.parent_dir)
         self.assertFalse(result)
 
-    def test_passing_none(self):
-        with self.assertRaises(PermissionError):
-            result = check_and_set_role('foobar')
-            print(result)
+    @pytest.mark.xfail(raises=PermissionError)
+    def test_passing_nothing(self):
+        result = check_and_set_role('foobar')
+        self.assertFalse(result)
 
 
 class StateChangeTest(unittest.TestCase):
@@ -394,7 +395,7 @@ def test_file_is_found(capfd):
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = control_daemon('fart')
     captured = capfd.readouterr()
-    assert res is True
+    assert res == 2
     assert 'Unknown command' in captured.out
 
 
@@ -405,7 +406,8 @@ def test_daemon_can_start(capfd):
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = control_daemon('start')
     captured = capfd.readouterr()
-    assert res is True
+    # print(res)
+    assert res == 0
     assert 'Starting' in captured.out
 
 
@@ -416,8 +418,21 @@ def test_daemon_can_stop(capfd):
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = control_daemon('stop')
     captured = capfd.readouterr()
-    assert res is True
+    assert res == 0
     assert 'Stopped' in captured.out
+
+
+# @pytest.mark.xfail(raises=PermissionError)
+def test_path_ecxeption(capfd):
+    """
+    Test if we can generate an exception (yes we can, so now we don't
+    need to raise it).
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), '/root')
+    res = control_daemon('restart')
+    captured = capfd.readouterr()
+    assert not res
+    assert not captured.out
 
 
 # special test cases
@@ -726,14 +741,12 @@ def test_run_event_handler():
     next_state = AttrDict.from_nested_dict(st.defState)
     assert not st.changes
 
-    run_event_handlers(st.changes)
     get_state_values(prev_state, next_state)
+    run_event_handlers(st.changes)
     assert len(st.changes) == 0
 
     next_state.update(fpn0=True, fpn1=True)
-    # print(prev_state)
-    # print(st.changes)
-    log_fpn_state(st.changes)
-    run_event_handlers(st.changes)
     get_state_values(prev_state, next_state)
+    run_event_handlers(st.changes)
+    log_fpn_state(st.changes)
     assert len(st.changes) == 2

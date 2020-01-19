@@ -17,7 +17,7 @@ def control_daemon(action):
     :param action: one of <start|stop|restart>
     """
     import os
-    import sys
+    import subprocess
 
     result = ''
     home = NODE_SETTINGS['home_dir']
@@ -30,11 +30,13 @@ def control_daemon(action):
         result = False
 
     try:
-        os.system(" ".join((sys.executable, daemon_file, action)))
-        result = True
-    except Exception as exc:
-        logger.error('msg_responder exception: {}'.format(exc))
-        pass
+        result = subprocess.call([daemon_file, action], shell=False)
+        if result < 0:
+            logger.error('cmd terminated by signal: {}'.format(result))
+        else:
+            logger.debug('cmd returned: {}'.format(result))
+    except OSError as exc:
+        logger.error('cmd exception: {}'.format(exc))
     return result
 
 

@@ -49,19 +49,11 @@ def check_and_set_role(role, path=None):
     if not path:
         path = get_filepath()
 
-    none_path = os.path.join(path, 'controller.d')
-    if os.path.exists(none_path):
-        for file in os.listdir(none_path):
-            none_file = fnmatch.fnmatch(file, '*.conf')
-            if none_file:
-                return new_role
-
     if role == 'moon':
         role_path = os.path.join(path, 'moons.d')
         role_ext = role
-        # print(role_path)
     elif role == 'controller':
-        role_path = os.path.join(path, 'controller.d/network')
+        role_path = os.path.join(path, 'controller.d', 'network')
         role_ext = 'json'
     else:
         return new_role
@@ -69,7 +61,6 @@ def check_and_set_role(role, path=None):
     if os.path.exists(role_path):
         for file in os.listdir(role_path):
             role_file = fnmatch.fnmatch(file, '*.' + role_ext)
-            # print(role_file)
             if role_file and role == 'controller':
                 NODE_SETTINGS['node_role'] = role
                 new_role = True
