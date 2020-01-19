@@ -134,66 +134,6 @@ class CheckReturnsTest(unittest.TestCase):
         self.assertFalse(check_return_status((False, 'blarg', 1)))
 
 
-class CheckRoleTests(unittest.TestCase):
-    """
-    Tests for check_and_set_role().
-    """
-    def setUp(self):
-        super(CheckRoleTests, self).setUp()
-        from node_tools import state_data as st
-
-        self.default_state = st.defState
-        self.state = st.fpnState
-        self.role = NODE_SETTINGS['node_role']
-        self.moon = '000000' + NODE_SETTINGS['moon_list'][0] + '.moon'
-        self.parent_dir = os.path.join(os.getcwd(), 'test/role_test')
-        self.moon_dir = os.path.join(self.parent_dir, 'moons.d')
-        self.moon_file = os.path.join(self.moon_dir, self.moon)
-        self.createDirs()
-        self.addCleanup(self.cleanDirs)
-
-    def tearDown(self):
-        from node_tools import state_data as st
-
-        st.fpnState = self.default_state
-        super(CheckRoleTests, self).tearDown()
-
-    def createDirs(self):
-        os.makedirs(self.parent_dir, exist_ok=False)
-
-    def cleanDirs(self):
-        shutil.rmtree(self.parent_dir)
-
-    def test_moon_role(self):
-        self.assertIsNone(self.role)
-        os.makedirs(self.moon_dir, exist_ok=False)
-
-        with open(self.moon_file, "w") as file:
-            file.write('')
-        result = check_and_set_role('moon', path=self.parent_dir)
-        self.assertFalse(result)
-        self.assertIsNone(NODE_SETTINGS['node_role'])
-
-        self.state.update(online=True,
-                          fpn_id='ddfd7368e6',
-                          moon_id0='deadd738e6')
-        NODE_SETTINGS['node_role'] = 'moon'
-        validate_role()
-        self.assertIsNone(NODE_SETTINGS['node_role'])
-        NODE_SETTINGS['moon_list'].append(self.state['fpn_id'])
-        validate_role()
-        self.assertEqual(NODE_SETTINGS['node_role'], 'moon')
-
-    def test_passing_path(self):
-        self.assertTrue(os.path.isdir(self.parent_dir))
-        result = check_and_set_role('foobar', path=self.parent_dir)
-        self.assertFalse(result)
-
-    def test_passing_none(self):
-        result = check_and_set_role('foobar')
-        self.assertFalse(result)
-
-
 class IPv4MethodsTest(unittest.TestCase):
     """
     Note the input for this test case is an ipaddress.IPv4Interface
@@ -250,6 +190,92 @@ class NetCmdTest(unittest.TestCase):
         self.assertEqual(name, 'fpn1-setup.sh')
 
 
+class SetRolesTest(unittest.TestCase):
+    """
+    Tests for check_and_set_role() and validate_role().
+    """
+    def setUp(self):
+        super(SetRolesTest, self).setUp()
+        from node_tools import state_data as st
+
+        self.saved_state = AttrDict.from_nested_dict(st.fpnState)
+        self.default_state = AttrDict.from_nested_dict(st.defState)
+        self.state = st.fpnState
+        # self.state.update(online=False)
+
+        self.role = NODE_SETTINGS['node_role']
+        self.parent_dir = os.path.join(os.getcwd(), 'test/role_test')
+        self.ctlr = '848c7c9ad92f90ee.json'
+        self.ctlr_dir = os.path.join(self.parent_dir, 'controller.d/network')
+        self.ctlr_file = os.path.join(self.ctlr_dir, self.ctlr)
+        self.moon = '000000' + NODE_SETTINGS['moon_list'][0] + '.moon'
+        self.moon_dir = os.path.join(self.parent_dir, 'moons.d')
+        self.moon_file = os.path.join(self.moon_dir, self.moon)
+        self.createDirs()
+        self.addCleanup(self.cleanDirs)
+
+    def tearDown(self):
+        from node_tools import state_data as st
+
+        st.fpnState = self.saved_state
+        NODE_SETTINGS['node_role'] = None
+        super(SetRolesTest, self).tearDown()
+
+    def createDirs(self):
+        os.makedirs(self.parent_dir, exist_ok=False)
+
+    def cleanDirs(self):
+        shutil.rmtree(self.parent_dir)
+
+    def test_ctlr_role(self):
+        self.assertIsNone(self.role)
+        os.makedirs(self.ctlr_dir, exist_ok=False)
+
+        with open(self.ctlr_file, "w") as file:
+            file.write('')
+        result = check_and_set_role('controller', path=self.parent_dir)
+        self.assertTrue(result)
+        self.assertEqual(NODE_SETTINGS['node_role'], 'controller')
+
+        validate_role()
+        self.assertIsNone(NODE_SETTINGS['node_role'])
+
+        # print(NODE_SETTINGS)
+        NODE_SETTINGS['ctlr_list'].append(self.state['fpn_id'])
+        validate_role()
+        self.assertEqual(NODE_SETTINGS['node_role'], 'controller')
+
+    def test_moon_role(self):
+        self.assertIsNone(self.role)
+        os.makedirs(self.moon_dir, exist_ok=False)
+
+        with open(self.moon_file, "w") as file:
+            file.write('')
+        result = check_and_set_role('moon', path=self.parent_dir)
+        self.assertFalse(result)
+        self.assertIsNone(NODE_SETTINGS['node_role'])
+
+        self.state.update(online=True,
+                          fpn_id='ddfd7368e6',
+                          moon_id0='deadd738e6')
+        NODE_SETTINGS['node_role'] = 'moon'
+        validate_role()
+        self.assertIsNone(NODE_SETTINGS['node_role'])
+        NODE_SETTINGS['moon_list'].append(self.state['fpn_id'])
+        validate_role()
+        self.assertEqual(NODE_SETTINGS['node_role'], 'moon')
+
+    def test_passing_path(self):
+        self.assertTrue(os.path.isdir(self.parent_dir))
+        result = check_and_set_role('foobar', path=self.parent_dir)
+        self.assertFalse(result)
+
+    def test_passing_none(self):
+        with self.assertRaises(PermissionError):
+            result = check_and_set_role('foobar')
+            print(result)
+
+
 class StateChangeTest(unittest.TestCase):
     """
     Note the input for this test case is a pair of node fpnState
@@ -259,7 +285,8 @@ class StateChangeTest(unittest.TestCase):
         super(StateChangeTest, self).setUp()
         from node_tools import state_data as st
 
-        self.default_state = st.defState
+        self.saved_state = AttrDict.from_nested_dict(st.fpnState)
+        self.default_state = AttrDict.from_nested_dict(st.defState)
         self.state = st.fpnState
 
     def tearDown(self):
@@ -267,11 +294,19 @@ class StateChangeTest(unittest.TestCase):
 
         # defState = s.defState
 
-        st.fpnState = self.default_state
+        st.fpnState = self.saved_state
         super(StateChangeTest, self).tearDown()
 
+    def show_state(self):
+        from node_tools import state_data as st
+
+        print('')
+        print(self.default_state)
+        print(self.state)
+
     def test_change_none(self):
-        self.state = self.default_state
+        # self.show_state()
+        # self.state = self.default_state
         self.assertIsInstance(self.state, dict)
         self.assertFalse(self.state['online'])
         self.assertFalse(self.state['fpn1'])
@@ -283,13 +318,13 @@ class StateChangeTest(unittest.TestCase):
         self.assertFalse(self.state['fpn1'])
 
     def test_change_upfpn0(self):
-        self.state.update(fpn0=True)
+        self.state.update(online=True, fpn0=True)
         self.assertTrue(self.state['online'])
         self.assertTrue(self.state['fpn0'])
         self.assertFalse(self.state['fpn1'])
 
     def test_change_upfpn1_downfpn0(self):
-        self.state.update(fpn0=False, fpn1=True)
+        self.state.update(online=True, fpn0=False, fpn1=True)
         self.assertTrue(self.state['online'])
         self.assertFalse(self.state['fpn0'])
         self.assertTrue(self.state['fpn1'])
@@ -638,7 +673,7 @@ def test_get_state():
 def test_get_state_values():
     from node_tools import state_data as stest
 
-    assert isinstance(stest.changes, tuple)
+    assert isinstance(stest.changes, list)
     assert not stest.changes
 
     get_state(cache)
@@ -678,6 +713,8 @@ def test_get_state_values():
     assert isinstance(stest.changes, tuple)
     assert len(stest.changes) == 2
     assert len(stest.changes[0]) == 2
+    # reset shared state vars
+    stest.changes = []
 
 
 def test_run_event_handler():
@@ -686,15 +723,17 @@ def test_run_event_handler():
     home, pid_file, log_file, debug, msg = do_setup()
 
     prev_state = AttrDict.from_nested_dict(st.defState)
-    st.changes = []
-    st.fpnState.update(fpn0=True, fpn1=True)
-    next_state = AttrDict.from_nested_dict(st.fpnState)
+    next_state = AttrDict.from_nested_dict(st.defState)
     assert not st.changes
 
     run_event_handlers(st.changes)
     get_state_values(prev_state, next_state)
-    assert len(st.changes) == 2
+    assert len(st.changes) == 0
+
+    next_state.update(fpn0=True, fpn1=True)
     # print(prev_state)
     # print(st.changes)
     log_fpn_state(st.changes)
     run_event_handlers(st.changes)
+    get_state_values(prev_state, next_state)
+    assert len(st.changes) == 2

@@ -27,6 +27,7 @@ NODE_SETTINGS = {
     u'max_cache_age': 60,  # maximum cache age in seconds
     u'use_localhost': True,  # messaging interface to use
     u'node_role': None,  # role this node will run as
+    u'ctlr_list': ['848c7c9ad9'],  # list of fpn controller nodes
     u'moon_list': ['4f4114472a'],  # list of fpn moons to orbiit
     u'home_dir': None,
     u'debug': False
@@ -48,21 +49,30 @@ def check_and_set_role(role, path=None):
     if not path:
         path = get_filepath()
 
+    none_path = os.path.join(path, 'controller.d')
+    if os.path.exists(none_path):
+        for file in os.listdir(none_path):
+            none_file = fnmatch.fnmatch(file, '*.conf')
+            if none_file:
+                return new_role
+
     if role == 'moon':
         role_path = os.path.join(path, 'moons.d')
+        role_ext = role
         # print(role_path)
     elif role == 'controller':
-        role_path = os.path.join(path, 'controller.d')
+        role_path = os.path.join(path, 'controller.d/network')
+        role_ext = 'json'
     else:
         return new_role
 
     if os.path.exists(role_path):
         for file in os.listdir(role_path):
-            role_file = fnmatch.fnmatch(file, '*.' + role)
+            role_file = fnmatch.fnmatch(file, '*.' + role_ext)
             # print(role_file)
-            if role_file:
-                NODE_SETTINGS['node_role'] = None
-                new_role = False
+            if role_file and role == 'controller':
+                NODE_SETTINGS['node_role'] = role
+                new_role = True
 
     return new_role
 
@@ -324,6 +334,8 @@ def validate_role():
 
     if nodeState.fpn_id in NODE_SETTINGS['moon_list']:
         NODE_SETTINGS['node_role'] = 'moon'
+    elif nodeState.fpn_id in NODE_SETTINGS['ctlr_list']:
+        NODE_SETTINGS['node_role'] = 'controller'
     else:
         NODE_SETTINGS['node_role'] = None
     logger.debug('ROLE: validated role is {}'.format(NODE_SETTINGS['node_role']))
