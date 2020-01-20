@@ -37,7 +37,7 @@ Getting Started
 
 Not much to see here yet except test output; at this point we only target
 Linux with at least Python 3.5.  Slightly older packages are available for
-`Debian and Ubuntu,`_ and the latest can be installed on Gentoo using the
+`Debian and Ubuntu`_, and the latest can be installed on Gentoo using the
 live ebuild in `this portage overlay`_.
 
 
