@@ -18,14 +18,10 @@ from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
 
-try:
-    from datetime import timezone
-    utc = timezone.utc
-except ImportError:
-    from daemon.timezone import UTC
-    utc = UTC()
+from datetime import timezone
 
 
+utc = timezone.utc
 logger = logging.getLogger(__name__)
 cache = Index(get_cachedir())
 max_age = NODE_SETTINGS['max_cache_age']
@@ -154,14 +150,14 @@ def update_runner():
         size = len(cache)
         logger.debug('API result: {}'.format(res))
     except:  # noqa: E722
-        logger.error('No data available, cache was NOT updated')
+        logger.warning('No data available, cache was NOT updated')
         pass
     else:
         if size < 1:
-            logger.debug('No data available (live or cached)')
+            logger.warning('No data available (live or cached)')
         elif size > 0:
             do_logstats()
         else:
-            logger.debug('Cache empty and API returned ENODATA')
+            logger.warning('Cache empty and API returned ENODATA')
     do_logstats('Leaving update_runner')
     return res

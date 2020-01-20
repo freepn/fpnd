@@ -5,8 +5,39 @@ from __future__ import print_function
 
 import logging
 
+from node_tools.helper_funcs import NODE_SETTINGS
+
 
 logger = logging.getLogger(__name__)
+
+
+def control_daemon(action):
+    """
+    Controller function for msg_responder daemon.
+    :param action: one of <start|stop|restart>
+    """
+    import os
+    import subprocess
+
+    result = ''
+    home = NODE_SETTINGS['home_dir']
+    commands = ['start', 'stop', 'restart']
+    daemon_file = os.path.join(home, 'msg_responder.py')
+
+    if not os.path.isfile(daemon_file):
+        result = None
+    if action not in commands:
+        result = False
+
+    try:
+        result = subprocess.call([daemon_file, action], shell=False)
+        if result < 0:
+            logger.error('cmd terminated by signal: {}'.format(result))
+        else:
+            logger.debug('cmd returned: {}'.format(result))
+    except OSError as exc:
+        logger.error('cmd exception: {}'.format(exc))
+    return result
 
 
 def get_moon_data():

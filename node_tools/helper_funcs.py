@@ -6,10 +6,7 @@ from __future__ import print_function
 import sys
 import logging
 
-if sys.hexversion >= 0x3020000:
-    from configparser import ConfigParser as SafeConfigParser
-else:
-    from configparser import SafeConfigParser
+from configparser import ConfigParser as SafeConfigParser
 
 
 logger = logging.getLogger(__name__)
@@ -28,10 +25,47 @@ ENODATA = Constant('ENODATA')  # error return for async state data updates
 
 NODE_SETTINGS = {
     u'max_cache_age': 60,  # maximum cache age in seconds
+    u'use_localhost': True,  # messaging interface to use
+    u'node_role': None,  # role this node will run as
+    u'ctlr_list': ['848c7c9ad9'],  # list of fpn controller nodes
     u'moon_list': ['4f4114472a'],  # list of fpn moons to orbiit
     u'home_dir': None,
     u'debug': False
 }
+
+
+def check_and_set_role(role, path=None):
+    """
+    Check for role-specific paths to set tentative initial fpn role,
+    one of <None|moon|controller>.  Once the cache is populated the
+    initial role is verified and updated if needed.
+    :param role: the non-default role to query for <moon|ctlr>
+    :return <True|False>: True if role query is a match
+    """
+    import os
+    import fnmatch
+
+    new_role = False
+    if not path:
+        path = get_filepath()
+
+    if role == 'moon':
+        role_path = os.path.join(path, 'moons.d')
+        role_ext = role
+    elif role == 'controller':
+        role_path = os.path.join(path, 'controller.d', 'network')
+        role_ext = 'json'
+    else:
+        return new_role
+
+    if os.path.exists(role_path):
+        for file in os.listdir(role_path):
+            role_file = fnmatch.fnmatch(file, '*.' + role_ext)
+            if role_file and role == 'controller':
+                NODE_SETTINGS['node_role'] = role
+                new_role = True
+
+    return new_role
 
 
 def config_from_ini(file_path=None):
@@ -226,18 +260,6 @@ def net_change_handler(iface, state):
         # raise Exception('Missing command return from get_net_cmds()!')
 
 
-def send_announce_msg(fpn_id):
-    """
-    Send node announcement message (hey, this is my id).
-    """
-    import schedule
-    from node_tools.network_funcs import echo_client
-
-    if fpn_id:
-        logger.debug('Sending msg with: {}'.format(fpn_id))
-        schedule.every(1).seconds.do(echo_client, fpn_id).tag('hey-moon')
-
-
 def run_event_handlers(diff=None):
     """
     Run state change event handlers (currently just the net handler)
@@ -254,6 +276,18 @@ def run_event_handlers(diff=None):
                 net_change_handler(iface, state)
 
 
+def send_announce_msg(fpn_id, addr):
+    """
+    Send node announcement message (hey, this is my id).
+    """
+    import schedule
+    from node_tools.network_funcs import echo_client
+
+    if fpn_id:
+        logger.debug('Sending msg: {} to addr {}'.format(fpn_id, addr))
+        schedule.every(1).seconds.do(echo_client, fpn_id, addr).tag('hey-moon')
+
+
 def startup_handlers():
     """
     Event handlers that need to run at, well, startup (currently only
@@ -263,7 +297,11 @@ def startup_handlers():
     nodeState = AttrDict.from_nested_dict(st.fpnState)
 
     if nodeState.moon_id0 in NODE_SETTINGS['moon_list']:
-        send_announce_msg(nodeState.fpn_id)
+        addr = nodeState.moon_addr
+    if NODE_SETTINGS['use_localhost'] or not addr:
+        addr = '127.0.0.1'
+
+    send_announce_msg(nodeState.fpn_id, addr)
 
 
 def update_state():
@@ -274,8 +312,24 @@ def update_state():
         exec_full(node_scr)
         return 'OK'
     except Exception as exc:
-        logger.error('update_state exception: {}'.format(exc))
+        logger.warning('update_state exception: {}'.format(exc))
         return ENODATA
+
+
+def validate_role():
+    """
+    Validate and set initial role with state data from the cache.
+    """
+    from node_tools import state_data as st
+    nodeState = AttrDict.from_nested_dict(st.fpnState)
+
+    if nodeState.fpn_id in NODE_SETTINGS['moon_list']:
+        NODE_SETTINGS['node_role'] = 'moon'
+    elif nodeState.fpn_id in NODE_SETTINGS['ctlr_list']:
+        NODE_SETTINGS['node_role'] = 'controller'
+    else:
+        NODE_SETTINGS['node_role'] = None
+    logger.debug('ROLE: validated role is {}'.format(NODE_SETTINGS['node_role']))
 
 
 def xform_state_diff(diff):

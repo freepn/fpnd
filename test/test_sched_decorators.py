@@ -2,6 +2,7 @@
 
 import os
 import sys
+import time
 import datetime
 import logging
 import functools
@@ -144,8 +145,10 @@ class SendMsgTest(unittest.TestCase):
         super(SendMsgTest, self).setUp()
         from node_tools import state_data as st
 
+        schedule.clear()
         self.default_state = st.defState
         self.state = st.fpnState
+        self.addr = '127.0.0.1'
 
     def tearDown(self):
         from node_tools import state_data as st
@@ -155,18 +158,18 @@ class SendMsgTest(unittest.TestCase):
         st.fpnState = self.default_state
         super(SendMsgTest, self).tearDown()
 
-    def test_send_announce_msg(self):
+    def test_send_no_responder(self):
 
         nodeState = AttrDict.from_nested_dict(self.state)
         fpn_id = nodeState.fpn_id
-        send_announce_msg(fpn_id)
         # expected command result is a list so the return
         # result for echo_client() is actually None
         mock_job = make_mock_job()
         tj = every().second.do(mock_job)
+        send_announce_msg(fpn_id, None)
 
         with self.assertWarns(RuntimeWarning) as err:
-            result = echo_client(fpn_id)
+            result = echo_client(fpn_id, self.addr)
         # print(err.warning)
         self.assertEqual('Connection timed out', '{}'.format(err.warning))
 
@@ -187,6 +190,21 @@ class NetCmdTests(unittest.TestCase):
         state, res, ret = run_net_cmd(cmd)
         self.assertFalse(state)
         self.assertEqual(res, b'')
+
+    def test_get_net_cmds_bad_path(self):
+        mock_job = make_mock_job()
+        tj = every().second.do(mock_job)
+
+        bad_dir = '/tmp/foobar/'
+        cmd = ['/tmp/foo0-down.sh']
+        self.assertFalse(os.path.isdir(bad_dir))
+        res = get_net_cmds(bad_dir, 'fpn0', True)
+        # print(cmd)
+        self.assertIsNone(res)
+        state, result, ret = run_net_cmd(cmd)
+        self.assertFalse(state)
+        self.assertRaises(FileNotFoundError)
+        # print(result)
 
     def test_run_net_cmd_not_found(self):
         mock_job = make_mock_job()

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 import time
+import shutil
 import datetime
 import logging
 import ipaddress
@@ -17,15 +19,18 @@ from node_tools.logger_config import setup_logging
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
+from node_tools.helper_funcs import check_and_set_role
 from node_tools.helper_funcs import config_from_ini
 from node_tools.helper_funcs import do_setup
 from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import get_filepath
 from node_tools.helper_funcs import json_dump_file
 from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import log_fpn_state
 from node_tools.helper_funcs import run_event_handlers
 from node_tools.helper_funcs import update_state
+from node_tools.helper_funcs import validate_role
 from node_tools.helper_funcs import xform_state_diff
 from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import load_cache_by_type
@@ -37,6 +42,7 @@ from node_tools.cache_funcs import get_state
 from node_tools.data_funcs import get_state_values
 from node_tools.data_funcs import update_runner
 from node_tools.network_funcs import get_net_cmds
+from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import get_moon_data
 from node_tools.node_funcs import run_moon_cmd
 from node_tools.sched_funcs import check_return_status
@@ -50,6 +56,7 @@ except ImportError:
     utc = UTC()
 
 
+# unittest-based test cases
 class BasicConfigTest(unittest.TestCase):
 
     """Basic tests for logger_config.py"""
@@ -184,6 +191,92 @@ class NetCmdTest(unittest.TestCase):
         self.assertEqual(name, 'fpn1-setup.sh')
 
 
+class SetRolesTest(unittest.TestCase):
+    """
+    Tests for check_and_set_role() and validate_role().
+    """
+    def setUp(self):
+        super(SetRolesTest, self).setUp()
+        from node_tools import state_data as st
+
+        self.saved_state = AttrDict.from_nested_dict(st.fpnState)
+        self.default_state = AttrDict.from_nested_dict(st.defState)
+        self.state = st.fpnState
+        # self.state.update(online=False)
+
+        self.role = NODE_SETTINGS['node_role']
+        self.parent_dir = os.path.join(os.getcwd(), 'test/role_test')
+        self.ctlr = 'bb8dead3c63cea29.json'
+        self.ctlr_dir = os.path.join(self.parent_dir, 'controller.d', 'network')
+        self.ctlr_file = os.path.join(self.ctlr_dir, self.ctlr)
+        self.moon = '000000' + NODE_SETTINGS['moon_list'][0] + '.moon'
+        self.moon_dir = os.path.join(self.parent_dir, 'moons.d')
+        self.moon_file = os.path.join(self.moon_dir, self.moon)
+        self.createDirs()
+        self.addCleanup(self.cleanDirs)
+
+    def tearDown(self):
+        from node_tools import state_data as st
+
+        st.fpnState = self.saved_state
+        NODE_SETTINGS['node_role'] = None
+        super(SetRolesTest, self).tearDown()
+
+    def createDirs(self):
+        os.makedirs(self.parent_dir, exist_ok=False)
+
+    def cleanDirs(self):
+        shutil.rmtree(self.parent_dir)
+
+    def test_ctlr_role(self):
+        self.assertIsNone(self.role)
+        os.makedirs(self.ctlr_dir, exist_ok=False)
+
+        with open(self.ctlr_file, "w") as file:
+            file.write('')
+        result = check_and_set_role('controller', path=self.parent_dir)
+        self.assertTrue(result)
+        self.assertEqual(NODE_SETTINGS['node_role'], 'controller')
+
+        validate_role()
+        self.assertIsNone(NODE_SETTINGS['node_role'])
+
+        # print(NODE_SETTINGS)
+        NODE_SETTINGS['ctlr_list'].append(self.state['fpn_id'])
+        validate_role()
+        self.assertEqual(NODE_SETTINGS['node_role'], 'controller')
+
+    def test_moon_role(self):
+        self.assertIsNone(self.role)
+        os.makedirs(self.moon_dir, exist_ok=False)
+
+        with open(self.moon_file, "w") as file:
+            file.write('')
+        result = check_and_set_role('moon', path=self.parent_dir)
+        self.assertFalse(result)
+        self.assertIsNone(NODE_SETTINGS['node_role'])
+
+        self.state.update(online=True,
+                          fpn_id='ddfd7368e6',
+                          moon_id0='deadd738e6')
+        NODE_SETTINGS['node_role'] = 'moon'
+        validate_role()
+        self.assertIsNone(NODE_SETTINGS['node_role'])
+        NODE_SETTINGS['moon_list'].append(self.state['fpn_id'])
+        validate_role()
+        self.assertEqual(NODE_SETTINGS['node_role'], 'moon')
+
+    def test_passing_path(self):
+        self.assertTrue(os.path.isdir(self.parent_dir))
+        result = check_and_set_role('foobar', path=self.parent_dir)
+        self.assertFalse(result)
+
+    @pytest.mark.xfail(raises=PermissionError)
+    def test_passing_nothing(self):
+        result = check_and_set_role('foobar')
+        self.assertFalse(result)
+
+
 class StateChangeTest(unittest.TestCase):
     """
     Note the input for this test case is a pair of node fpnState
@@ -193,7 +286,8 @@ class StateChangeTest(unittest.TestCase):
         super(StateChangeTest, self).setUp()
         from node_tools import state_data as st
 
-        self.default_state = st.defState
+        self.saved_state = AttrDict.from_nested_dict(st.fpnState)
+        self.default_state = AttrDict.from_nested_dict(st.defState)
         self.state = st.fpnState
 
     def tearDown(self):
@@ -201,11 +295,19 @@ class StateChangeTest(unittest.TestCase):
 
         # defState = s.defState
 
-        st.fpnState = self.default_state
+        st.fpnState = self.saved_state
         super(StateChangeTest, self).tearDown()
 
+    def show_state(self):
+        from node_tools import state_data as st
+
+        print('')
+        print(self.default_state)
+        print(self.state)
+
     def test_change_none(self):
-        self.state = self.default_state
+        # self.show_state()
+        # self.state = self.default_state
         self.assertIsInstance(self.state, dict)
         self.assertFalse(self.state['online'])
         self.assertFalse(self.state['fpn1'])
@@ -217,16 +319,16 @@ class StateChangeTest(unittest.TestCase):
         self.assertFalse(self.state['fpn1'])
 
     def test_change_upfpn0(self):
-        self.state.update(fpn0=True)
+        self.state.update(online=True, fpn0=True)
         self.assertTrue(self.state['online'])
         self.assertTrue(self.state['fpn0'])
         self.assertFalse(self.state['fpn1'])
 
     def test_change_upfpn1_downfpn0(self):
-        self.state.update(fpn0=False, fpn1=True)
+        self.state.update(online=True, fpn0=False, fpn1=True)
         self.assertTrue(self.state['online'])
-        self.assertTrue(self.state['fpn1'])
         self.assertFalse(self.state['fpn0'])
+        self.assertTrue(self.state['fpn1'])
 
 
 class XformStateDataTest(unittest.TestCase):
@@ -282,6 +384,58 @@ utc_stamp = datetime.datetime.now(utc)  # use local time for console
 client = mock_zt_api_client()
 
 
+# pytest-based test cases using capture
+# NOTE these tests cannot be run using unittest.TestCase since the
+# function under test is actually calling a separate daemon with its
+# own context (thus capsys will not work either, so we use capfd)
+def test_file_is_found(capfd):
+    """
+    Test if we can find the msg_responder daemon.
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
+    res = control_daemon('fart')
+    captured = capfd.readouterr()
+    assert res == 2
+    assert 'Unknown command' in captured.out
+
+
+def test_daemon_can_start(capfd):
+    """
+    Test if we can start the msg_responder daemon.
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
+    res = control_daemon('start')
+    captured = capfd.readouterr()
+    # print(res)
+    assert res == 0
+    assert 'Starting' in captured.out
+
+
+def test_daemon_can_stop(capfd):
+    """
+    Test if we can stop the msg_responder daemon.
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
+    res = control_daemon('stop')
+    captured = capfd.readouterr()
+    assert res == 0
+    assert 'Stopped' in captured.out
+
+
+# @pytest.mark.xfail(raises=PermissionError)
+def test_path_ecxeption(capfd):
+    """
+    Test if we can generate an exception (yes we can, so now we don't
+    need to raise it).
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), '/root')
+    res = control_daemon('restart')
+    captured = capfd.readouterr()
+    assert not res
+    assert not captured.out
+
+
+# special test cases
 def json_check(data):
     import json
 
@@ -348,14 +502,13 @@ def test_unorbit_moon():
     assert res is False
 
 
-def should_be_enodata():
-    res = update_runner()
-    return res
-
-
 def test_should_be_enodata():
+    def should_be_enodata():
+        res = update_state()
+        return res
+
     res = should_be_enodata()
-    assert res == ENODATA
+    assert res is ENODATA
 
 
 def test_api_warning_msg():
@@ -378,6 +531,9 @@ def test_cache_loading():
     def test_cache_is_empty():
         cache.clear()
         assert list(cache) == []
+        res = update_runner()
+        assert res is ENODATA
+        # print(res)
 
     def test_load_cache_node():
         _, node_data = client.get_data('status')
@@ -419,6 +575,8 @@ def test_cache_loading():
 
     def test_update_runner():
         res = update_runner()
+        assert res is ENODATA
+        # print(res)
 
     def test_cache_size():
         assert len(cache) == 8
@@ -530,7 +688,7 @@ def test_get_state():
 def test_get_state_values():
     from node_tools import state_data as stest
 
-    assert isinstance(stest.changes, tuple)
+    assert isinstance(stest.changes, list)
     assert not stest.changes
 
     get_state(cache)
@@ -570,6 +728,8 @@ def test_get_state_values():
     assert isinstance(stest.changes, tuple)
     assert len(stest.changes) == 2
     assert len(stest.changes[0]) == 2
+    # reset shared state vars
+    stest.changes = []
 
 
 def test_run_event_handler():
@@ -578,15 +738,15 @@ def test_run_event_handler():
     home, pid_file, log_file, debug, msg = do_setup()
 
     prev_state = AttrDict.from_nested_dict(st.defState)
-    st.changes = []
-    st.fpnState.update(fpn0=True, fpn1=True)
-    next_state = AttrDict.from_nested_dict(st.fpnState)
+    next_state = AttrDict.from_nested_dict(st.defState)
     assert not st.changes
 
-    run_event_handlers(st.changes)
     get_state_values(prev_state, next_state)
-    assert len(st.changes) == 2
-    # print(prev_state)
-    # print(st.changes)
-    log_fpn_state(st.changes)
     run_event_handlers(st.changes)
+    assert len(st.changes) == 0
+
+    next_state.update(fpn0=True, fpn1=True)
+    get_state_values(prev_state, next_state)
+    run_event_handlers(st.changes)
+    log_fpn_state(st.changes)
+    assert len(st.changes) == 2
