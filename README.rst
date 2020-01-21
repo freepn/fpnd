@@ -42,7 +42,7 @@ live ebuild in `this portage overlay`_.
 
 
 .. _Debian and Ubuntu: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
-.. _this portage overlay: https://github.com/sarnold/portage-overlay
+.. _this portage overlay: https://github.com/freepn/python-overlay
 
 
 Prerequisites
