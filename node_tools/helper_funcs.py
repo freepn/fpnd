@@ -27,7 +27,7 @@ NODE_SETTINGS = {
     u'max_cache_age': 60,  # maximum cache age in seconds
     u'use_localhost': True,  # messaging interface to use
     u'node_role': None,  # role this node will run as
-    u'ctlr_list': ['848c7c9ad9'],  # list of fpn controller nodes
+    u'ctlr_list': ['1e808c0690'],  # list of fpn controller nodes
     u'moon_list': ['4f4114472a'],  # list of fpn moons to orbiit
     u'home_dir': None,
     u'debug': False

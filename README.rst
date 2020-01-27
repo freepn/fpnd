@@ -7,7 +7,7 @@
 
 .. image:: https://img.shields.io/github/v/tag/freepn/fpnd?color=green&include_prereleases&label=latest%20release
     :target: https://github.com/freepn/fpnd/releases
-    :alt: GitHub tag (latest SemVer pre-release)
+    :alt: GitHub tag (latest SemVer, including pre-release)
 
 .. image:: https://travis-ci.org/freepn/fpnd.svg?branch=master
     :target: https://travis-ci.org/freepn/fpnd
@@ -52,12 +52,12 @@ A supported linux distribution, mainly something that uses either `.ebuilds`
 (eg, Gentoo or funtoo) or `.deb` packages, starting with at least Ubuntu
 xenial or Debian stretch (see the above PPA package repo on Launchpad).
 
-For the latter, make sure you have the ``add-apt-repository`` command
-installed and then add the PPA:
+For the latter, make sure you have the ``gpg`` and ``add-apt-repository``
+commands installed and then add the PPA:
 
 ::
 
-  $ sudo apt-get install software-properties-common
+  $ sudo apt-get install software-properties-common ubuntu-keyring ubuntu-archive-keyring
   $ sudo add-apt-repository -y -s ppa:nerdboy/embedded
 
 

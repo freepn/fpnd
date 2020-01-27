@@ -22,13 +22,10 @@ fpnState = {'online': False,
             'fallback': True,
             'moon_id0': None,
             'moon_addr': None,
+            'moon_ref0': None,
             'fpn0': False,
             'fpn1': False,
             'fpn_id0': None,
             'fpn_id1': None}
-
-fpnRegState = {'registered': False,
-               'moon_result': None,
-               'moon_ref': None}
 
 changes = []
