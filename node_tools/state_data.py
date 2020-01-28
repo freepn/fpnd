@@ -4,7 +4,6 @@
     Default fpn node state data and changes.
     :var fpnState: built from cache data on each cache update
     :var changes: state diff tuple of fpnState changes
-    :var fpnRegState: set on startup on successful node registration
 """
 
 defState = dict.fromkeys(['online',
@@ -12,6 +11,7 @@ defState = dict.fromkeys(['online',
                           'fallback',
                           'moon_id0',
                           'moon_addr',
+                          'moon_ref0',
                           'fpn0',
                           'fpn1',
                           'fpn_id0',

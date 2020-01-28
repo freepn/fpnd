@@ -61,14 +61,14 @@ async def main():
         try:
             # get status details of the controller node
             # await client.get_data('controller')
-            #print('Controller status:')
-            #pprint(client.data)
-            #print(client.data.get('controller'))
+            # print('Controller status:')
+            # pprint(client.data)
+            # print(client.data.get('controller'))
 
             # get status details of the node peers
             await client.get_data('peer')
-            #print('Peers found:')
-            #pprint(client.data)
+            # print('Peers found:')
+            # pprint(client.data)
             peer_data = client.data
             peer_keys = find_keys(cache, 'peer')
             print('Returned peer keys: {}'.format(peer_keys))
@@ -89,10 +89,10 @@ async def main():
             # load_cache_by_type(cache, net_data, 'net')
             # net_keys = find_keys(cache, 'net')
             # print('{} network keys found'.format(len(net_list)))
-            #pprint(net_data)
+            # pprint(net_data)
 
         except Exception as exc:
-            #print(str(exc))
+            # print(str(exc))
             raise exc
 
 cache = Index(get_cachedir(dir_name='ctlr_data'))
