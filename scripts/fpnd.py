@@ -73,15 +73,18 @@ def do_scheduling():
     schedule.run_all(10, 'base-tasks')
     time.sleep(1)
     validate_role()
+    role = NODE_SETTINGS['node_role']
 
-    if not role:
+    if role is None:
         for moon in moons:
             res = run_moon_cmd(moon, action='orbit')
 
         moon_metadata = get_moon_data()
         logger.debug('Moon data size: {}'.format(len(moon_metadata)))
 
-    startup_handlers()  # this only knows default role for now
+        startup_handlers()  # this only knows default role for now
+
+    logger.debug('ROLE: startup role {}'.format(role))
 
     while True:
         schedule.run_pending()

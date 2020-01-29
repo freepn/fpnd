@@ -8,6 +8,7 @@
 
 defState = dict.fromkeys(['online',
                           'fpn_id',
+                          'fpn_role',
                           'fallback',
                           'moon_id0',
                           'moon_addr',
@@ -19,6 +20,7 @@ defState = dict.fromkeys(['online',
 
 fpnState = {'online': False,
             'fpn_id': None,
+            'fpn_role': None,
             'fallback': True,
             'moon_id0': None,
             'moon_addr': None,

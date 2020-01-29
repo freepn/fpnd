@@ -28,7 +28,7 @@ class rspDaemon(Daemon):
     def run(self):
 
         self.sock_addr = 'ipc:///tmp/service.sock'
-        self.tcp_addr = 'tcp://127.0.0.1:5051'
+        self.tcp_addr = 'tcp://127.0.0.1:9443'
 
         s = Responder(self.tcp_addr, timeouts=(None, None))
         s.register('echo', echo)

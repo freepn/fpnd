@@ -23,7 +23,7 @@ def echo_client(fpn_id, addr):
     node_data = st.fpnState
     reply_list = []
     reciept = False
-    c = Requester('tcp://{}:5051'.format(addr), timeouts=(1000, 1000))
+    c = Requester('tcp://{}:9443'.format(addr), timeouts=(1000, 1000))
 
     try:
         reply_list = c.call('echo', fpn_id)
