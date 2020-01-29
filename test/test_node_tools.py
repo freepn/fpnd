@@ -265,6 +265,7 @@ class SetRolesTest(unittest.TestCase):
         NODE_SETTINGS['moon_list'].append(self.state['fpn_id'])
         validate_role()
         self.assertEqual(NODE_SETTINGS['node_role'], 'moon')
+        self.assertEqual(NODE_SETTINGS['node_runner'], 'peerstate.py')
 
     def test_passing_path(self):
         self.assertTrue(os.path.isdir(self.parent_dir))

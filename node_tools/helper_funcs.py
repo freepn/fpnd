@@ -28,9 +28,10 @@ NODE_SETTINGS = {
     u'use_localhost': True,  # messaging interface to use
     u'node_role': None,  # role this node will run as
     u'ctlr_list': ['1e808c0690'],  # list of fpn controller nodes
-    u'moon_list': ['4f4114472a'],  # list of fpn moons to orbiit
+    u'moon_list': ['7c76e3becd', '9f5aa7b693'],  # list of fpn moons to orbiit
     u'home_dir': None,
-    u'debug': False
+    u'debug': False,
+    u'node_runner': 'nodestate.py'
 }
 
 
@@ -307,7 +308,7 @@ def startup_handlers():
 def update_state():
     import pathlib
     here = pathlib.Path(__file__).parent
-    node_scr = here.joinpath("nodestate.py")
+    node_scr = here.joinpath(NODE_SETTINGS['node_runner'])
     try:
         exec_full(node_scr)
         return 'OK'
@@ -325,6 +326,7 @@ def validate_role():
 
     if nodeState.fpn_id in NODE_SETTINGS['moon_list']:
         NODE_SETTINGS['node_role'] = 'moon'
+        NODE_SETTINGS['node_runner'] = 'peerstate.py'
     elif nodeState.fpn_id in NODE_SETTINGS['ctlr_list']:
         NODE_SETTINGS['node_role'] = 'controller'
     else:

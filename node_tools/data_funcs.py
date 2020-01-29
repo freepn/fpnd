@@ -24,7 +24,6 @@ from datetime import timezone
 utc = timezone.utc
 logger = logging.getLogger(__name__)
 cache = Index(get_cachedir())
-max_age = NODE_SETTINGS['max_cache_age']
 
 
 def do_logstats(msg=None):
@@ -78,6 +77,7 @@ def with_cache_aging(func):
         from node_tools import state_data as st
 
         stamp = None
+        max_age = NODE_SETTINGS['max_cache_age']
         utc_stamp = datetime.datetime.now(utc)
         do_logstats('Entering cache wrapper')
         if 'utc-time' in cache:
