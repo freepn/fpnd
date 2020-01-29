@@ -144,7 +144,7 @@ def get_state(cache):
                     d['online'] = True
                 d['fpn_id'] = data.identity
                 d['fallback'] = data.tcpFallback
-            if 'mstate' in str(key):
+            if 'mstate' in str(key) and not data.role:
                 d['moon_id0'] = data.identity
                 d['moon_addr'] = data.address
             if 'istate' in str(key) and 'OK' in data.status:
