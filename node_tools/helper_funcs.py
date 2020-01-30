@@ -302,7 +302,10 @@ def startup_handlers():
     if NODE_SETTINGS['use_localhost'] or not addr:
         addr = '127.0.0.1'
 
-    send_announce_msg(nodeState.fpn_id, addr)
+    try:
+        send_announce_msg(nodeState.fpn_id, addr)
+    except Exception as exc:
+        logger.warning('send_announce_msg exception: {}'.format(exc))
 
 
 def update_state():
