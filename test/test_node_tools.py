@@ -633,7 +633,6 @@ def test_load_moon_state():
             moonStatus.append(peer)
             break
     load_cache_by_type(cache, moonStatus, 'mstate')
-    # print(moonStatus)
     assert len(cache) == 10
 
 
@@ -678,9 +677,7 @@ def test_get_state():
     assert not nodeState.fallback
     assert nodeState.fpn0
     assert nodeState.fpn1
-    # print(nodeState)
-    # tighter moon pairing, (test)sideeffect no longer works
-    assert nodeState.moon_id0 is None
+    assert nodeState.moon_id0 == 'deadd738e6'
     assert nodeState['fpn_id0'] == 'b6079f73c63cea29'
     assert nodeState['fpn_id1'] == '3efa5cb78a8129ad'
 
