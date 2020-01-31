@@ -36,15 +36,18 @@ role = NODE_SETTINGS['node_role']  # baseline role we run as
 timestamp = datetime.datetime.now(utc)  # use local time for console
 
 
-def assign_initial_role(role):
+def assign_initial_role():
     """
     Assign initial role on startup, confirm after cache is available
     (eg, check node_id against moon_list).  No params or returns, all
     we do is set the role in NODE_SETTINGS.
     """
-    res = check_and_set_role(role)
-    if res:
-        logger.debug('ROLE: tentative new role is {}'.format(role))
+    roles = ['moon', 'controller']
+    for role in roles:
+        res = check_and_set_role(role)
+        if res:
+            break
+    logger.debug('ROLE: tentative new role is {}'.format(role))
 
 
 def show_scheduled_jobs():
@@ -70,6 +73,7 @@ def setup_scheduling(max_age):
 
 
 def do_scheduling():
+    assign_initial_role()
     schedule.run_all(10, 'base-tasks')
     time.sleep(1)
     validate_role()
