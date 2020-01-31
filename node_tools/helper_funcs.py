@@ -25,7 +25,7 @@ ENODATA = Constant('ENODATA')  # error return for async state data updates
 
 NODE_SETTINGS = {
     u'max_cache_age': 60,  # maximum cache age in seconds
-    u'use_localhost': True,  # messaging interface to use
+    u'use_localhost': False,  # messaging interface to use
     u'node_role': None,  # role this node will run as
     u'ctlr_list': ['1e808c0690'],  # list of fpn controller nodes
     u'moon_list': ['7c76e3becd'],  # list of fpn moons to orbiit
@@ -296,6 +296,8 @@ def startup_handlers():
     """
     from node_tools import state_data as st
     nodeState = AttrDict.from_nested_dict(st.fpnState)
+
+    addr = None
 
     if nodeState.moon_id0 in NODE_SETTINGS['moon_list']:
         addr = nodeState.moon_addr

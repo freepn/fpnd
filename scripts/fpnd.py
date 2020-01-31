@@ -82,7 +82,7 @@ def do_scheduling():
         moon_metadata = get_moon_data()
         logger.debug('Moon data size: {}'.format(len(moon_metadata)))
 
-        startup_handlers()  # this only knows default role for now
+        startup_handlers()
 
     logger.debug('ROLE: startup role {}'.format(role))
 
