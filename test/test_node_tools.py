@@ -29,6 +29,7 @@ from node_tools.helper_funcs import json_dump_file
 from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import log_fpn_state
 from node_tools.helper_funcs import run_event_handlers
+from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import validate_role
 from node_tools.helper_funcs import xform_state_diff
@@ -245,6 +246,7 @@ class SetRolesTest(unittest.TestCase):
         NODE_SETTINGS['ctlr_list'].append(self.state['fpn_id'])
         validate_role()
         self.assertEqual(NODE_SETTINGS['node_role'], 'controller')
+        NODE_SETTINGS['ctlr_list'].remove(self.state['fpn_id'])
 
     def test_moon_role(self):
         self.assertIsNone(self.role)
@@ -253,15 +255,11 @@ class SetRolesTest(unittest.TestCase):
         with open(self.moon_file, "w") as file:
             file.write('')
         result = check_and_set_role('moon', path=self.parent_dir)
-        self.assertFalse(result)
-        self.assertIsNone(NODE_SETTINGS['node_role'])
+        self.assertTrue(result)
 
-        self.state.update(online=True,
-                          fpn_id='ddfd7368e6',
-                          moon_id0='deadd738e6')
-        NODE_SETTINGS['node_role'] = 'moon'
         validate_role()
         self.assertIsNone(NODE_SETTINGS['node_role'])
+
         NODE_SETTINGS['moon_list'].append(self.state['fpn_id'])
         validate_role()
         self.assertEqual(NODE_SETTINGS['node_role'], 'moon')

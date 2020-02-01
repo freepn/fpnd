@@ -70,6 +70,63 @@ def get_moon_data():
     return result
 
 
+def get_node_info():
+    import subprocess
+
+    cmd = ['zerotier-cli', 'info']
+    result = None
+
+    try:
+        b = subprocess.Popen(cmd,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             shell=False)
+
+        out, err = b.communicate()
+
+        if err:
+            logger.error('get_node_info err result: {}'.format(err.decode().strip()))
+        else:
+            result = out.decode().strip()
+            logger.info('got data: {}'.format(result))
+
+    except Exception as exc:
+        logger.error('zerotier-cli exception: {}'.format(exc))
+        pass
+
+    return result
+
+
+def parse_moon_data(data):
+    """
+    Parse moon metadata returned from get_moon_data function so we can
+    use the ID and endpoint address during daemon startup.
+    """
+    import ipaddress
+    from node_tools.helper_funcs import AttrDict
+
+    result = []
+    for item in data:
+        moon_data = AttrDict.from_nested_dict(item)
+        moon_id = moon_data.id.replace('000000', '', 1)
+        for root in moon_data.roots:
+            root_data = AttrDict.from_nested_dict(root)
+            for endpoint in root_data.stableEndpoints:
+                addr = endpoint.split('/')
+                try:
+                    addr_obj = ipaddress.ip_address(addr[0])
+                except ValueError as exc:
+                    logger.error('ipaddress exception: {}'.format(exc))
+                if addr_obj.version == 4:
+                    moon_addr = addr[0]
+                    moon_port = addr[1]
+                else:
+                    return result
+        result.append((moon_id, moon_addr, moon_port))
+
+    return result
+
+
 def run_moon_cmd(moon_id, action='orbit'):
     """
     Run moon command via zerotier-cli and trap the output.
@@ -114,5 +171,36 @@ def run_moon_cmd(moon_id, action='orbit'):
 def wait_for_moon():
     """
     Wait for moon data on startup before sending any messages.
+    Update state vars when we get moon data.
     """
-    pass
+    import time
+    from node_tools import state_data as st
+
+    moons = NODE_SETTINGS['moon_list']
+    for moon in moons:
+        res = run_moon_cmd(moon, action='orbit')
+        if res:
+            break
+
+    count = 0
+    moon_metadata = get_moon_data()
+
+    while not len(moon_metadata) > 0:
+        moon_metadata = get_moon_data()
+        logger.debug('Moon data size: {}'.format(len(moon_metadata)))
+        time.sleep(1)
+        count += 1
+    logger.debug('Moon sync took {} sec'.format(count))
+    logger.debug('Moon data: {}'.format(moon_metadata))
+
+    result = parse_moon_data(moon_metadata)
+    logger.debug('Parse data returned: {}'.format(result))
+    # logger.debug('st.fpnState data is: {}'.format(st.fpnState))
+
+    if len(result) == 0:
+        # raise an exception?
+        logger.error('moon result should not be empty: {}'.format(result))
+    else:
+        ident, addr, port = result[0]
+        st.fpnState.update(moon_id0=ident, moon_addr=addr)
+        logger.debug('moon state has id {} addr {}'.format(st.fpnState['moon_id0'], st.fpnState['moon_addr']))

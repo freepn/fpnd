@@ -62,9 +62,10 @@ def check_and_set_role(role, path=None):
     if os.path.exists(role_path):
         for file in os.listdir(role_path):
             role_file = fnmatch.fnmatch(file, '*.' + role_ext)
-            if role_file and role == 'controller':
+            if role_file:
                 NODE_SETTINGS['node_role'] = role
                 new_role = True
+        logger.debug('ROLE: found file in path {} for role {}'.format(role_path, role))
 
     return new_role
 
@@ -289,23 +290,45 @@ def send_announce_msg(fpn_id, addr):
         schedule.every(1).seconds.do(echo_client, fpn_id, addr).tag('hey-moon')
 
 
+def set_initial_role():
+    """
+    Set initial node role from node ID if ID is a known infra node.
+    """
+    from node_tools.node_funcs import get_node_info
+
+    try:
+        res = get_node_info()
+        if res:
+            node_data = res.split()
+        logger.debug('ROLE: data is {}'.format(node_data))
+
+        node_id = node_data[2]
+        if node_id in NODE_SETTINGS['moon_list']:
+            NODE_SETTINGS['node_role'] = 'moon'
+        elif node_id in NODE_SETTINGS['ctlr_list']:
+            NODE_SETTINGS['node_role'] = 'controller'
+
+    except Exception as exc:
+        logger.warning('get_node_info exception: {}'.format(exc))
+
+
 def startup_handlers():
     """
     Event handlers that need to run at, well, startup (currently only
     the moon announcement message).
     """
     from node_tools import state_data as st
-    nodeState = AttrDict.from_nested_dict(st.fpnState)
 
     addr = None
+    nsState = AttrDict.from_nested_dict(st.fpnState)
 
-    if nodeState.moon_id0 in NODE_SETTINGS['moon_list']:
-        addr = nodeState.moon_addr
+    if nsState.moon_id0 in NODE_SETTINGS['moon_list']:
+        addr = nsState.moon_addr
     if NODE_SETTINGS['use_localhost'] or not addr:
         addr = '127.0.0.1'
 
     try:
-        send_announce_msg(nodeState.fpn_id, addr)
+        send_announce_msg(nsState.fpn_id, addr)
     except Exception as exc:
         logger.warning('send_announce_msg exception: {}'.format(exc))
 

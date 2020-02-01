@@ -63,11 +63,12 @@ async def main():
             logger.debug('{} LEAF nodes in node queue: {}'.format(len(deque), list(deque)))
 
             if len(deque) > 0:
-                control_daemon('restart')
+                res = control_daemon('restart')
                 logger.debug('Listening for peer msg')
             else:
                 logger.debug('Stopping msg responder')
-                control_daemon('stop')
+                res = control_daemon('stop')
+            logger.debug('msg daemon response: {}'.format(res))
 
         except Exception as exc:
             logger.error(str(exc))
