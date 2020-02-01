@@ -15,11 +15,19 @@ import pytest
 from diskcache import Index
 
 # from node_tools import state_data as stest
-from node_tools.logger_config import setup_logging
+from node_tools.cache_funcs import find_keys
+from node_tools.cache_funcs import load_cache_by_type
+from node_tools.cache_funcs import get_endpoint_data
+from node_tools.cache_funcs import get_net_status
+from node_tools.cache_funcs import get_node_status
+from node_tools.cache_funcs import get_peer_status
+from node_tools.cache_funcs import get_state
+from node_tools.data_funcs import get_state_values
+from node_tools.data_funcs import update_runner
+from node_tools.exceptions import MemberNodeError
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
-from node_tools.helper_funcs import check_and_set_role
 from node_tools.helper_funcs import config_from_ini
 from node_tools.helper_funcs import do_setup
 from node_tools.helper_funcs import find_ipv4_iface
@@ -30,22 +38,18 @@ from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import log_fpn_state
 from node_tools.helper_funcs import run_event_handlers
 from node_tools.helper_funcs import set_initial_role
+from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import validate_role
 from node_tools.helper_funcs import xform_state_diff
-from node_tools.cache_funcs import find_keys
-from node_tools.cache_funcs import load_cache_by_type
-from node_tools.cache_funcs import get_endpoint_data
-from node_tools.cache_funcs import get_net_status
-from node_tools.cache_funcs import get_node_status
-from node_tools.cache_funcs import get_peer_status
-from node_tools.cache_funcs import get_state
-from node_tools.data_funcs import get_state_values
-from node_tools.data_funcs import update_runner
+from node_tools.logger_config import setup_logging
 from node_tools.network_funcs import get_net_cmds
 from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import get_moon_data
+from node_tools.node_funcs import get_node_info
+from node_tools.node_funcs import parse_moon_data
 from node_tools.node_funcs import run_moon_cmd
+from node_tools.node_funcs import wait_for_moon
 from node_tools.sched_funcs import check_return_status
 
 
@@ -203,18 +207,8 @@ class SetRolesTest(unittest.TestCase):
         self.saved_state = AttrDict.from_nested_dict(st.fpnState)
         self.default_state = AttrDict.from_nested_dict(st.defState)
         self.state = st.fpnState
-        # self.state.update(online=False)
-
+        self.state.update(fpn_id='ddfd7368e6')
         self.role = NODE_SETTINGS['node_role']
-        self.parent_dir = os.path.join(os.getcwd(), 'test/role_test')
-        self.ctlr = 'bb8dead3c63cea29.json'
-        self.ctlr_dir = os.path.join(self.parent_dir, 'controller.d', 'network')
-        self.ctlr_file = os.path.join(self.ctlr_dir, self.ctlr)
-        self.moon = '000000' + NODE_SETTINGS['moon_list'][0] + '.moon'
-        self.moon_dir = os.path.join(self.parent_dir, 'moons.d')
-        self.moon_file = os.path.join(self.moon_dir, self.moon)
-        self.createDirs()
-        self.addCleanup(self.cleanDirs)
 
     def tearDown(self):
         from node_tools import state_data as st
@@ -223,57 +217,36 @@ class SetRolesTest(unittest.TestCase):
         NODE_SETTINGS['node_role'] = None
         super(SetRolesTest, self).tearDown()
 
-    def createDirs(self):
-        os.makedirs(self.parent_dir, exist_ok=False)
-
-    def cleanDirs(self):
-        shutil.rmtree(self.parent_dir)
-
     def test_ctlr_role(self):
         self.assertIsNone(self.role)
-        os.makedirs(self.ctlr_dir, exist_ok=False)
 
-        with open(self.ctlr_file, "w") as file:
-            file.write('')
-        result = check_and_set_role('controller', path=self.parent_dir)
-        self.assertTrue(result)
-        self.assertEqual(NODE_SETTINGS['node_role'], 'controller')
-
+        set_initial_role()
         validate_role()
         self.assertIsNone(NODE_SETTINGS['node_role'])
 
-        # print(NODE_SETTINGS)
         NODE_SETTINGS['ctlr_list'].append(self.state['fpn_id'])
+
         validate_role()
+
         self.assertEqual(NODE_SETTINGS['node_role'], 'controller')
+        self.assertEqual(self.state['fpn_role'], 'controller')
         NODE_SETTINGS['ctlr_list'].remove(self.state['fpn_id'])
 
     def test_moon_role(self):
         self.assertIsNone(self.role)
-        os.makedirs(self.moon_dir, exist_ok=False)
 
-        with open(self.moon_file, "w") as file:
-            file.write('')
-        result = check_and_set_role('moon', path=self.parent_dir)
-        self.assertTrue(result)
-
+        set_initial_role()
         validate_role()
         self.assertIsNone(NODE_SETTINGS['node_role'])
 
         NODE_SETTINGS['moon_list'].append(self.state['fpn_id'])
+
         validate_role()
+
         self.assertEqual(NODE_SETTINGS['node_role'], 'moon')
         self.assertEqual(NODE_SETTINGS['node_runner'], 'peerstate.py')
-
-    def test_passing_path(self):
-        self.assertTrue(os.path.isdir(self.parent_dir))
-        result = check_and_set_role('foobar', path=self.parent_dir)
-        self.assertFalse(result)
-
-    @pytest.mark.xfail(raises=PermissionError)
-    def test_passing_nothing(self):
-        result = check_and_set_role('foobar')
-        self.assertFalse(result)
+        self.assertEqual(self.state['fpn_role'], 'moon')
+        NODE_SETTINGS['moon_list'].remove(self.state['fpn_id'])
 
 
 class StateChangeTest(unittest.TestCase):
@@ -486,6 +459,18 @@ def test_get_moon_data():
     assert isinstance(res, list)
 
 
+def test_parse_moon_data():
+    _, moon_data = client.get_data('moon')
+    result = parse_moon_data(moon_data)
+    # print(result)
+    assert result == [('deadd738e6', '10.0.1.66', '9993')]
+
+
+def test_get_node_info():
+    res = get_node_info()
+    assert res is None
+
+
 def test_orbit_moon():
     res = run_moon_cmd('deadd738e6', action='orbit')
     assert res is False
@@ -499,6 +484,19 @@ def test_deorbit_moon():
 def test_unorbit_moon():
     res = run_moon_cmd('deadd738e6', action='unorbit')
     assert res is False
+
+
+@pytest.mark.xfail(raises=MemberNodeError)
+def test_wait_for_moon():
+    wait_for_moon(timeout=1)
+
+
+def test_set_initial_role():
+    set_initial_role()
+
+
+def test_startup_handlers():
+    startup_handlers()
 
 
 def test_should_be_enodata():

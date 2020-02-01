@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import logging
 
+from node_tools.exceptions import MemberNodeError
 from node_tools.helper_funcs import NODE_SETTINGS
 
 
@@ -168,7 +169,7 @@ def run_moon_cmd(moon_id, action='orbit'):
     return result
 
 
-def wait_for_moon():
+def wait_for_moon(timeout=15):
     """
     Wait for moon data on startup before sending any messages.
     Update state vars when we get moon data.
@@ -185,7 +186,7 @@ def wait_for_moon():
     count = 0
     moon_metadata = get_moon_data()
 
-    while not len(moon_metadata) > 0:
+    while not len(moon_metadata) > 0 and count < timeout:
         moon_metadata = get_moon_data()
         logger.debug('Moon data size: {}'.format(len(moon_metadata)))
         time.sleep(1)
@@ -199,7 +200,8 @@ def wait_for_moon():
 
     if len(result) == 0:
         # raise an exception?
-        logger.error('moon result should not be empty: {}'.format(result))
+        raise MemberNodeError('moon result should not be empty!')
+        # logger.error('moon result should not be empty: {}'.format(result))
     else:
         ident, addr, port = result[0]
         st.fpnState.update(moon_id0=ident, moon_addr=addr)

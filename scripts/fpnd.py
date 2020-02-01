@@ -63,8 +63,11 @@ def do_scheduling():
     node_role = NODE_SETTINGS['node_role']
 
     if node_role is None:
-        wait_for_moon()
-        # schedule.run_all(1, 'base-tasks')
+        try:
+            wait_for_moon()
+        except Exception as exc:
+            logger.error('ENODATA exception {}'.format(exc))
+
         startup_handlers()
 
     logger.debug('ROLE: startup role {}'.format(node_role))

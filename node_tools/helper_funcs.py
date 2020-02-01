@@ -35,41 +35,6 @@ NODE_SETTINGS = {
 }
 
 
-def check_and_set_role(role, path=None):
-    """
-    Check for role-specific paths to set tentative initial fpn role,
-    one of <None|moon|controller>.  Once the cache is populated the
-    initial role is verified and updated if needed.
-    :param role: the non-default role to query for <moon|ctlr>
-    :return <True|False>: True if role query is a match
-    """
-    import os
-    import fnmatch
-
-    new_role = False
-    if not path:
-        path = get_filepath()
-
-    if role == 'moon':
-        role_path = os.path.join(path, 'moons.d')
-        role_ext = role
-    elif role == 'controller':
-        role_path = os.path.join(path, 'controller.d', 'network')
-        role_ext = 'json'
-    else:
-        return new_role
-
-    if os.path.exists(role_path):
-        for file in os.listdir(role_path):
-            role_file = fnmatch.fnmatch(file, '*.' + role_ext)
-            if role_file:
-                NODE_SETTINGS['node_role'] = role
-                new_role = True
-        logger.debug('ROLE: found file in path {} for role {}'.format(role_path, role))
-
-    return new_role
-
-
 def config_from_ini(file_path=None):
     config = SafeConfigParser()
     candidates = ['/etc/fpnd.ini',
