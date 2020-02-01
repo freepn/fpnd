@@ -25,7 +25,7 @@ ENODATA = Constant('ENODATA')  # error return for async state data updates
 
 NODE_SETTINGS = {
     u'max_cache_age': 60,  # maximum cache age in seconds
-    u'use_localhost': True,  # messaging interface to use
+    u'use_localhost': False,  # messaging interface to use
     u'node_role': None,  # role this node will run as
     u'ctlr_list': ['1e808c0690'],  # list of fpn controller nodes
     u'moon_list': ['7c76e3becd'],  # list of fpn moons to orbiit
@@ -33,40 +33,6 @@ NODE_SETTINGS = {
     u'debug': False,
     u'node_runner': 'nodestate.py'
 }
-
-
-def check_and_set_role(role, path=None):
-    """
-    Check for role-specific paths to set tentative initial fpn role,
-    one of <None|moon|controller>.  Once the cache is populated the
-    initial role is verified and updated if needed.
-    :param role: the non-default role to query for <moon|ctlr>
-    :return <True|False>: True if role query is a match
-    """
-    import os
-    import fnmatch
-
-    new_role = False
-    if not path:
-        path = get_filepath()
-
-    if role == 'moon':
-        role_path = os.path.join(path, 'moons.d')
-        role_ext = role
-    elif role == 'controller':
-        role_path = os.path.join(path, 'controller.d', 'network')
-        role_ext = 'json'
-    else:
-        return new_role
-
-    if os.path.exists(role_path):
-        for file in os.listdir(role_path):
-            role_file = fnmatch.fnmatch(file, '*.' + role_ext)
-            if role_file and role == 'controller':
-                NODE_SETTINGS['node_role'] = role
-                new_role = True
-
-    return new_role
 
 
 def config_from_ini(file_path=None):
@@ -289,20 +255,47 @@ def send_announce_msg(fpn_id, addr):
         schedule.every(1).seconds.do(echo_client, fpn_id, addr).tag('hey-moon')
 
 
+def set_initial_role():
+    """
+    Set initial node role from node ID if ID is a known infra node.
+    """
+    from node_tools.node_funcs import get_node_info
+
+    try:
+        res = get_node_info()
+        if res:
+            node_data = res.split()
+        logger.debug('ROLE: data is {}'.format(node_data))
+
+        node_id = node_data[2]
+        if node_id in NODE_SETTINGS['moon_list']:
+            NODE_SETTINGS['node_role'] = 'moon'
+        elif node_id in NODE_SETTINGS['ctlr_list']:
+            NODE_SETTINGS['node_role'] = 'controller'
+
+    except Exception as exc:
+        logger.warning('get_node_info exception: {}'.format(exc))
+
+
 def startup_handlers():
     """
     Event handlers that need to run at, well, startup (currently only
     the moon announcement message).
     """
     from node_tools import state_data as st
-    nodeState = AttrDict.from_nested_dict(st.fpnState)
 
-    if nodeState.moon_id0 in NODE_SETTINGS['moon_list']:
-        addr = nodeState.moon_addr
+    addr = None
+    nsState = AttrDict.from_nested_dict(st.fpnState)
+
+    if nsState.moon_id0 in NODE_SETTINGS['moon_list']:
+        addr = nsState.moon_addr
     if NODE_SETTINGS['use_localhost'] or not addr:
         addr = '127.0.0.1'
 
-    send_announce_msg(nodeState.fpn_id, addr)
+    try:
+        send_announce_msg(nsState.fpn_id, addr)
+    except Exception as exc:
+        logger.warning('send_announce_msg exception: {}'.format(exc))
 
 
 def update_state():

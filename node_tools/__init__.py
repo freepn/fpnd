@@ -15,14 +15,15 @@ from node_tools.helper_funcs import get_token as get_token
 from node_tools.helper_funcs import json_dump_file as json_dump_file
 from node_tools.helper_funcs import json_load_file as json_load_file
 from node_tools.helper_funcs import run_event_handlers as run_event_handlers
+from node_tools.helper_funcs import set_initial_role as set_initial_role
 from node_tools.helper_funcs import update_state as update_state
 from node_tools.helper_funcs import AttrDict as AttrDict
 from node_tools.helper_funcs import ENODATA as ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS as NODE_SETTINGS
 from node_tools.network_funcs import get_net_cmds as get_net_cmds
 from node_tools.network_funcs import run_net_cmd as run_net_cmd
-from node_tools.node_funcs import get_moon_data as get_moon_data
-from node_tools.node_funcs import run_moon_cmd as run_moon_cmd
+from node_tools.node_funcs import get_node_info as get_node_info
+from node_tools.node_funcs import wait_for_moon as wait_for_moon
 from node_tools.exceptions import MemberNodeError as MemberNodeError
 from node_tools.exceptions import MemberNodeNoDataError as MemberNodeNoDataError
 
@@ -35,9 +36,9 @@ __all__ = [
     'find_keys',
     'get_cachedir',
     'get_endpoint_data',
-    'get_moon_data',
     'get_net_cmds',
     'get_net_status',
+    'get_node_info',
     'get_node_status',
     'get_peer_status',
     'get_state',
@@ -46,8 +47,9 @@ __all__ = [
     'json_load_file',
     'load_cache_by_type',
     'run_event_handlers',
-    'run_moon_cmd',
     'run_net_cmd',
+    'set_initial_role',
     'update_runner',
     'update_state',
+    'wait_for_moon',
 ]

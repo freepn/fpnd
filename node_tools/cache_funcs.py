@@ -5,6 +5,7 @@ import logging
 from collections import namedtuple
 
 from node_tools.helper_funcs import AttrDict
+from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import find_ipv4_iface
 
 
@@ -144,7 +145,7 @@ def get_state(cache):
                     d['online'] = True
                 d['fpn_id'] = data.identity
                 d['fallback'] = data.tcpFallback
-            if 'mstate' in str(key) and not data.role:
+            if 'mstate' in str(key) and not NODE_SETTINGS['node_role']:
                 d['moon_id0'] = data.identity
                 d['moon_addr'] = data.address
             if 'istate' in str(key) and 'OK' in data.status:
