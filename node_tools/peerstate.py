@@ -16,12 +16,11 @@ from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import load_cache_by_type
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
+from node_tools.msg_queues import manage_incoming_nodes
 from node_tools.node_funcs import control_daemon
-# from node_tools.helper_funcs import json_dump_file
-# from node_tools.helper_funcs import json_load_file
 
 
-logger = logging.getLogger('nodestate')
+logger = logging.getLogger('peerstate')
 
 
 async def main():
@@ -29,7 +28,6 @@ async def main():
     async with aiohttp.ClientSession() as session:
         ZT_API = get_token()
         client = ZeroTier(ZT_API, loop, session)
-        # data_dir = get_cachedir(dir_name='fpn_data')
 
         try:
             # get status details of the local node
@@ -54,15 +52,18 @@ async def main():
             logger.debug('Got node state: {}'.format(nodeStatus))
             load_cache_by_type(cache, nodeStatus, 'nstate')
             peerStatus = get_peer_status(cache)
-            logger.debug('Using deque cache dir: {}'.format(deque))
+            manage_incoming_nodes(node_q, reg_q, wait_q)
+            logger.debug('{} nodes in reg queue: {}'.format(len(reg_q), list(reg_q)))
+            logger.debug('{} nodes in wait queue: {}'.format(len(wait_q), list(wait_q)))
             for peer in peerStatus:
                 if peer['role'] == 'LEAF':
-                    if peer['identity'] not in deque:
-                        deque.append(peer['identity'])
-                        logger.debug('Adding LEAF node id: {}'.format(peer['identity']))
-            logger.debug('{} LEAF nodes in node queue: {}'.format(len(deque), list(deque)))
+                    if peer['identity'] not in reg_q:
+                        if peer['identity'] not in node_q:
+                            node_q.append(peer['identity'])
+                            logger.debug('Adding LEAF node id: {}'.format(peer['identity']))
+            logger.debug('{} nodes in node queue: {}'.format(len(node_q), list(node_q)))
 
-            if len(deque) > 0:
+            if len(node_q) > 0:
                 res = control_daemon('restart')
                 logger.debug('Listening for peer msg')
             else:
@@ -76,6 +77,8 @@ async def main():
 
 
 cache = dc.Index(get_cachedir())
-deque = dc.Deque(directory=get_cachedir('fpn_nodes'))
+node_q = dc.Deque(directory=get_cachedir('node_queue'))
+reg_q = dc.Deque(directory=get_cachedir('reg_queue'))
+wait_q = dc.Deque(directory=get_cachedir('wait_queue'))
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())

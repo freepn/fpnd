@@ -205,4 +205,5 @@ def wait_for_moon(timeout=15):
     else:
         ident, addr, port = result[0]
         st.fpnState.update(moon_id0=ident, moon_addr=addr)
-        logger.debug('moon state has id {} addr {}'.format(st.fpnState['moon_id0'], st.fpnState['moon_addr']))
+        logger.debug('moon state has id {} addr {}'.format(st.fpnState['moon_id0'],
+                                                           st.fpnState['moon_addr']))

@@ -20,6 +20,8 @@ from node_tools.helper_funcs import update_state as update_state
 from node_tools.helper_funcs import AttrDict as AttrDict
 from node_tools.helper_funcs import ENODATA as ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS as NODE_SETTINGS
+from node_tools.msg_queues import handle_announce_msg as handle_announce_msg
+from node_tools.msg_queues import manage_incoming_nodes as manage_incoming_nodes
 from node_tools.network_funcs import get_net_cmds as get_net_cmds
 from node_tools.network_funcs import run_net_cmd as run_net_cmd
 from node_tools.node_funcs import get_node_info as get_node_info
@@ -43,9 +45,11 @@ __all__ = [
     'get_peer_status',
     'get_state',
     'get_token',
+    'handle_announce_msg',
     'json_dump_file',
     'json_load_file',
     'load_cache_by_type',
+    'manage_incoming_nodes',
     'run_event_handlers',
     'run_net_cmd',
     'set_initial_role',

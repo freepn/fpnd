@@ -12,7 +12,7 @@ from node_tools.sched_funcs import run_until_success
 logger = logging.getLogger(__name__)
 
 
-@run_until_success()
+@run_until_success(max_retry=3)
 def echo_client(fpn_id, addr):
     from nanoservice import Requester
     from node_tools import state_data as st

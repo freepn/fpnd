@@ -8,16 +8,25 @@ import time
 import syslog
 import datetime
 
+import diskcache as dc
 from daemon import Daemon
 from nanoservice import Responder
+
+from node_tools.helper_funcs import get_cachedir
+from node_tools.msg_queues import handle_announce_msg
 
 
 pid_file = '/tmp/responder.pid'
 stdout = '/tmp/responder.log'
 stderr = '/tmp/responder_err.log'
 
+node_q = dc.Deque(directory=get_cachedir('node_queue'))
+reg_q = dc.Deque(directory=get_cachedir('reg_queue'))
+wait_q = dc.Deque(directory=get_cachedir('wait_queue'))
+
 
 def echo(msg):
+    handle_announce_msg(node_q, reg_q, wait_q, msg)
     print("Echoing message: {}".format(msg))
     return msg
 
