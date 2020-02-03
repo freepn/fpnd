@@ -26,9 +26,14 @@ wait_q = dc.Deque(directory=get_cachedir('wait_queue'))
 
 
 def echo(msg):
-    handle_announce_msg(node_q, reg_q, wait_q, msg)
-    print("Echoing message: {}".format(msg))
-    return msg
+    import string
+
+    if len(msg) == 10 and set(msg).issubset(string.hexdigits):
+        handle_announce_msg(node_q, reg_q, wait_q, msg)
+        print("Echoing message: {}".format(msg))
+        return msg
+    else:
+        syslog.syslog(syslog.LOG_ERROR, "Bad msg recieved!")
 
 
 # Inherit from Daemon class
