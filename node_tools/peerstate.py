@@ -52,6 +52,7 @@ async def main():
             logger.debug('Got node state: {}'.format(nodeStatus))
             load_cache_by_type(cache, nodeStatus, 'nstate')
             peerStatus = get_peer_status(cache)
+
             manage_incoming_nodes(node_q, reg_q, wait_q)
             logger.debug('{} nodes in reg queue: {}'.format(len(reg_q), list(reg_q)))
             logger.debug('{} nodes in wait queue: {}'.format(len(wait_q), list(wait_q)))

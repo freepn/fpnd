@@ -10,7 +10,7 @@ def handle_announce_msg(node_q, reg_q, wait_q, msg):
             if msg == node:
                 reg_q.append(msg)
     for node in list(node_q):
-        if msg not in list(reg_q):
+        if node not in list(reg_q):
             if msg == node:
                 reg_q.append(msg)
 
