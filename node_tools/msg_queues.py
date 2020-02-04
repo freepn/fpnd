@@ -27,3 +27,14 @@ def manage_incoming_nodes(node_q, reg_q, wait_q):
         if wait_q.count(node) < 3:
             wait_q.append(node)
     node_q.clear()
+
+
+def valid_announce_msg(msg):
+    import string
+
+    try:
+        assert len(msg) == 10
+        assert set(msg).issubset(string.hexdigits)
+    except:
+        return False
+    return True

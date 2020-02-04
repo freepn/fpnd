@@ -16,7 +16,7 @@ from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import load_cache_by_type
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
-from node_tools.node_funcs import get_moon_data
+from node_tools.node_funcs import get_ztcli_data
 # from node_tools.helper_funcs import json_dump_file
 # from node_tools.helper_funcs import json_load_file
 
@@ -50,7 +50,7 @@ async def main():
             load_cache_by_type(cache, peer_data, 'peer')
 
             # check for moon data (only exists for moons we orbit)
-            moon_data = get_moon_data()
+            moon_data = get_ztcli_data(action='listmoons')
             if moon_data:
                 load_cache_by_type(cache, moon_data, 'moon')
 

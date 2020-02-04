@@ -45,10 +45,10 @@ from node_tools.helper_funcs import xform_state_diff
 from node_tools.logger_config import setup_logging
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import manage_incoming_nodes
+from node_tools.msg_queues import valid_announce_msg
 from node_tools.network_funcs import get_net_cmds
 from node_tools.node_funcs import control_daemon
-from node_tools.node_funcs import get_moon_data
-from node_tools.node_funcs import get_node_info
+from node_tools.node_funcs import get_ztcli_data
 from node_tools.node_funcs import parse_moon_data
 from node_tools.node_funcs import run_moon_cmd
 from node_tools.node_funcs import wait_for_moon
@@ -595,7 +595,7 @@ def test_net_client_status():
 
 
 def test_get_moon_data():
-    res = get_moon_data()
+    res = get_ztcli_data(action='listmoons')
     # print(res)
     assert isinstance(res, list)
 
@@ -608,7 +608,7 @@ def test_parse_moon_data():
 
 
 def test_get_node_info():
-    res = get_node_info()
+    res = get_ztcli_data(action='info')
     assert res is None
 
 
@@ -638,6 +638,20 @@ def test_set_initial_role():
 
 def test_startup_handlers():
     startup_handlers()
+
+
+def test_invalid_msg():
+    res = valid_announce_msg('deadbeeh00')
+    assert res is False
+    res = valid_announce_msg('deadbeef0')
+    assert res is False
+    res = valid_announce_msg('deadbeef000')
+    assert res is False
+
+
+def test_valid_msg():
+    res = valid_announce_msg('deadbeef00')
+    assert res is True
 
 
 def test_should_be_enodata():
