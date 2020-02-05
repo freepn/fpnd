@@ -23,6 +23,7 @@ from node_tools.helper_funcs import NODE_SETTINGS as NODE_SETTINGS
 from node_tools.msg_queues import handle_announce_msg as handle_announce_msg
 from node_tools.msg_queues import manage_incoming_nodes as manage_incoming_nodes
 from node_tools.msg_queues import valid_announce_msg as valid_announce_msg
+from node_tools.network_funcs import drain_reg_queue as drain_reg_queue
 from node_tools.network_funcs import get_net_cmds as get_net_cmds
 from node_tools.network_funcs import run_net_cmd as run_net_cmd
 from node_tools.node_funcs import get_ztcli_data as get_ztcli_data
@@ -36,6 +37,7 @@ __all__ = [
     'MemberNodeError',
     'MemberNodeNoDataError',
     'NODE_SETTINGS',
+    'drain_reg_queue',
     'find_keys',
     'get_cachedir',
     'get_endpoint_data',

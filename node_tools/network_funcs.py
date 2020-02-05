@@ -12,6 +12,25 @@ from node_tools.sched_funcs import run_until_success
 logger = logging.getLogger(__name__)
 
 
+def drain_reg_queue(reg_q, addr):
+    import time
+    from nanoservice import Publisher
+
+    if NODE_SETTINGS['use_localhost'] or not addr:
+        addr = '127.0.0.1'
+
+    pub = Publisher('tcp://{}:9442'.format(addr))
+    id_list = list(reg_q)
+
+    # Need to wait a bit to prevent lost messages
+    time.sleep(0.001)
+
+    for _ in id_list:
+        node_id = reg_q.popleft()
+        pub.publish('handle_node', node_id)
+        logger.debug('Published msg {} to {}'.format(node_id, addr))
+
+
 @run_until_success(max_retry=3)
 def echo_client(fpn_id, addr):
     from nanoservice import Requester

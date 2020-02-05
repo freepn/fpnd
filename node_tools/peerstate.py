@@ -17,6 +17,7 @@ from node_tools.cache_funcs import load_cache_by_type
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import manage_incoming_nodes
+from node_tools.network_funcs import drain_reg_queue
 from node_tools.node_funcs import control_daemon
 
 
@@ -56,6 +57,9 @@ async def main():
             manage_incoming_nodes(node_q, reg_q, wait_q)
             logger.debug('{} nodes in reg queue: {}'.format(len(reg_q), list(reg_q)))
             logger.debug('{} nodes in wait queue: {}'.format(len(wait_q), list(wait_q)))
+            if len(reg_q) > 0:
+                drain_reg_queue(reg_q, addr)
+
             for peer in peerStatus:
                 if peer['role'] == 'LEAF':
                     if peer['identity'] not in reg_q:

@@ -12,9 +12,9 @@ from node_tools.helper_funcs import NODE_SETTINGS
 logger = logging.getLogger(__name__)
 
 
-def control_daemon(action):
+def control_daemon(action, script='msg_responder.py'):
     """
-    Controller function for msg_responder daemon.
+    Controller function for messaging daemon.
     :param action: one of <start|stop|restart>
     """
     import os
@@ -23,7 +23,7 @@ def control_daemon(action):
     result = ''
     home = NODE_SETTINGS['home_dir']
     commands = ['start', 'stop', 'restart']
-    daemon_file = os.path.join(home, 'msg_responder.py')
+    daemon_file = os.path.join(home, script)
 
     if not os.path.isfile(daemon_file):
         result = None
