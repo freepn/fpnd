@@ -8,7 +8,7 @@ except ImportError:
     from distutils.core import setup
 
 
-__version__ = '0.7.1'
+__version__ = '0.7.2'
 
 FPND_DOWNLOAD_URL = (
     'https://github.com/sarnold/fpnd/tarball/' + __version__
