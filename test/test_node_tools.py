@@ -43,10 +43,13 @@ from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import validate_role
 from node_tools.helper_funcs import xform_state_diff
 from node_tools.logger_config import setup_logging
+from node_tools.msg_queues import handle_announce_msg
+from node_tools.msg_queues import handle_node_queues
+from node_tools.msg_queues import manage_incoming_nodes
+from node_tools.msg_queues import valid_announce_msg
 from node_tools.network_funcs import get_net_cmds
 from node_tools.node_funcs import control_daemon
-from node_tools.node_funcs import get_moon_data
-from node_tools.node_funcs import get_node_info
+from node_tools.node_funcs import get_ztcli_data
 from node_tools.node_funcs import parse_moon_data
 from node_tools.node_funcs import run_moon_cmd
 from node_tools.node_funcs import wait_for_moon
@@ -196,6 +199,157 @@ class NetCmdTest(unittest.TestCase):
         self.assertEqual(name, 'fpn1-setup.sh')
 
 
+class QueueHandlingTest(unittest.TestCase):
+    """
+    Test managing node queues.
+    """
+    def setUp(self):
+        super(QueueHandlingTest, self).setUp()
+        import diskcache as dc
+
+        self.node_q = dc.Deque(directory='/tmp/test-nq')
+        self.reg_q = dc.Deque(directory='/tmp/test-rq')
+        self.wait_q = dc.Deque(directory='/tmp/test-wq')
+        self.node1 = 'deadbeef01'
+        self.node2 = '20beefdead'
+        self.node3 = 'beef03dead'
+
+    def tearDown(self):
+
+        self.node_q.clear()
+        self.reg_q.clear()
+        self.wait_q.clear()
+        super(QueueHandlingTest, self).tearDown()
+
+    def test_handle_node_queues(self):
+        self.node_q.append(self.node1)
+        self.node_q.append(self.node2)
+
+        self.assertEqual(list(self.node_q), [self.node1, self.node2])
+        self.assertEqual(list(self.reg_q), [])
+        self.assertEqual(list(self.wait_q), [])
+
+        handle_node_queues(self.node_q, self.wait_q)
+        self.assertEqual(list(self.node_q), [])
+        self.assertEqual(list(self.wait_q), [self.node1, self.node2])
+
+    def test_manage_fpn_nodes(self):
+        self.node_q.append(self.node1)
+        self.node_q.append(self.node2)
+
+        self.assertEqual(list(self.node_q), [self.node1, self.node2])
+        self.assertEqual(list(self.reg_q), [])
+        self.assertEqual(list(self.wait_q), [])
+
+        # register node1
+        self.reg_q.append(self.node1)
+
+        manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
+        self.assertEqual(list(self.node_q), [])
+        self.assertEqual(list(self.reg_q), [self.node1])
+        self.assertEqual(list(self.wait_q), [self.node2])
+
+        # register node2
+        self.reg_q.append(self.node2)
+
+        manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
+        self.assertEqual(list(self.node_q), [])
+        self.assertEqual(list(self.reg_q), [self.node1, self.node2])
+        self.assertEqual(list(self.wait_q), [])
+
+    def test_manage_other_nodes(self):
+        self.assertFalse(check_return_status(self.node_q))
+        self.node_q.append(self.node1)
+        self.node_q.append(self.node2)
+
+        self.assertEqual(list(self.node_q), [self.node1, self.node2])
+        self.assertEqual(list(self.reg_q), [])
+        self.assertEqual(list(self.wait_q), [])
+
+        manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
+        self.assertEqual(list(self.node_q), [])
+        self.assertEqual(list(self.reg_q), [])
+        self.assertEqual(list(self.wait_q), [self.node1, self.node2])
+
+        # unregistered nodes are still peers
+        self.node_q.append(self.node1)
+        self.node_q.append(self.node2)
+
+        manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
+        self.assertEqual(list(self.node_q), [])
+        self.assertEqual(list(self.reg_q), [])
+        self.assertEqual(list(self.wait_q), [self.node1,
+                                             self.node2,
+                                             self.node1,
+                                             self.node2])
+
+        # node1 still not seen yet, late register from node2
+        self.node_q.append(self.node1)
+        self.reg_q.append(self.node2)
+
+        manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
+        self.assertEqual(list(self.node_q), [])
+        self.assertEqual(list(self.reg_q), [self.node2])
+        self.assertEqual(list(self.wait_q), [self.node1,
+                                             self.node1,
+                                             self.node1])
+
+        # node2 registered and node1 expired
+        manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
+        self.assertEqual(list(self.node_q), [])
+        self.assertEqual(list(self.reg_q), [self.node2])
+        self.assertEqual(list(self.wait_q), [])
+
+
+class QueueMsgHandlingTest(unittest.TestCase):
+    """
+    Test announce msg handling/node queueing.
+    """
+    def setUp(self):
+        super(QueueMsgHandlingTest, self).setUp()
+        import diskcache as dc
+
+        self.node_q = dc.Deque(directory='/tmp/test-nq')
+        self.reg_q = dc.Deque(directory='/tmp/test-rq')
+        self.wait_q = dc.Deque(directory='/tmp/test-wq')
+        self.node1 = 'beef01dead'
+        self.node2 = '02beefdead'
+        self.node3 = 'deadbeef03'
+
+    def tearDown(self):
+
+        self.node_q.clear()
+        self.reg_q.clear()
+        self.wait_q.clear()
+        super(QueueMsgHandlingTest, self).tearDown()
+
+    def test_handle_msgs(self):
+        self.assertEqual(list(self.node_q), [])
+        self.node_q.append(self.node1)
+        self.node_q.append(self.node2)
+        self.node_q.append(self.node3)
+        self.wait_q.append(self.node3)
+
+        self.assertEqual(list(self.node_q), [self.node1, self.node2, self.node3])
+        self.assertEqual(list(self.reg_q), [])
+        self.assertEqual(list(self.wait_q), [self.node3])
+
+        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node1)
+        self.assertEqual(list(self.node_q), [self.node1, self.node2, self.node3])
+        self.assertEqual(list(self.reg_q), [self.node1])
+        self.assertEqual(list(self.wait_q), [self.node3])
+
+        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node2)
+        self.assertEqual(list(self.node_q), [self.node1, self.node2, self.node3])
+        self.assertEqual(list(self.reg_q), [self.node1, self.node2])
+        self.assertEqual(list(self.wait_q), [self.node3])
+
+        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node3)
+        self.assertEqual(list(self.node_q), list(self.reg_q))
+        self.assertEqual(list(self.wait_q), [self.node3])
+        # print(list(self.node_q), list(self.reg_q), list(self.wait_q))
+
+
 class SetRolesTest(unittest.TestCase):
     """
     Tests for check_and_set_role() and validate_role().
@@ -207,7 +361,7 @@ class SetRolesTest(unittest.TestCase):
         self.saved_state = AttrDict.from_nested_dict(st.fpnState)
         self.default_state = AttrDict.from_nested_dict(st.defState)
         self.state = st.fpnState
-        self.state.update(fpn_id='ddfd7368e6')
+        self.state.update(fpn_id='deadbeef00')
         self.role = NODE_SETTINGS['node_role']
 
     def tearDown(self):
@@ -230,6 +384,7 @@ class SetRolesTest(unittest.TestCase):
 
         self.assertEqual(NODE_SETTINGS['node_role'], 'controller')
         self.assertEqual(self.state['fpn_role'], 'controller')
+        self.assertEqual(NODE_SETTINGS['node_runner'], 'netstate.py')
         NODE_SETTINGS['ctlr_list'].remove(self.state['fpn_id'])
 
     def test_moon_role(self):
@@ -454,7 +609,7 @@ def test_net_client_status():
 
 
 def test_get_moon_data():
-    res = get_moon_data()
+    res = get_ztcli_data(action='listmoons')
     # print(res)
     assert isinstance(res, list)
 
@@ -467,7 +622,7 @@ def test_parse_moon_data():
 
 
 def test_get_node_info():
-    res = get_node_info()
+    res = get_ztcli_data(action='info')
     assert res is None
 
 
@@ -497,6 +652,20 @@ def test_set_initial_role():
 
 def test_startup_handlers():
     startup_handlers()
+
+
+def test_invalid_msg():
+    res = valid_announce_msg('deadbeeh00')
+    assert res is False
+    res = valid_announce_msg('deadbeef0')
+    assert res is False
+    res = valid_announce_msg('deadbeef000')
+    assert res is False
+
+
+def test_valid_msg():
+    res = valid_announce_msg('deadbeef00')
+    assert res is True
 
 
 def test_should_be_enodata():

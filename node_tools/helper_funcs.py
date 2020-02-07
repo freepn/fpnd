@@ -259,10 +259,10 @@ def set_initial_role():
     """
     Set initial node role from node ID if ID is a known infra node.
     """
-    from node_tools.node_funcs import get_node_info
+    from node_tools.node_funcs import get_ztcli_data
 
     try:
-        res = get_node_info()
+        res = get_ztcli_data(action='info')
         if res:
             node_data = res.split()
         logger.debug('ROLE: data is {}'.format(node_data))
@@ -274,7 +274,7 @@ def set_initial_role():
             NODE_SETTINGS['node_role'] = 'controller'
 
     except Exception as exc:
-        logger.warning('get_node_info exception: {}'.format(exc))
+        logger.warning('get_ztcli_data exception: {}'.format(exc))
 
 
 def startup_handlers():
@@ -322,6 +322,7 @@ def validate_role():
         NODE_SETTINGS['node_runner'] = 'peerstate.py'
     elif nodeState.fpn_id in NODE_SETTINGS['ctlr_list']:
         NODE_SETTINGS['node_role'] = 'controller'
+        NODE_SETTINGS['node_runner'] = 'netstate.py'
     else:
         NODE_SETTINGS['node_role'] = None
     st.fpnState['fpn_role'] = NODE_SETTINGS['node_role']

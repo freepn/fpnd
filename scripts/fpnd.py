@@ -19,6 +19,7 @@ from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
 from node_tools.logger_config import setup_logging
+from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import wait_for_moon
 
 try:
@@ -32,6 +33,7 @@ except ImportError:
 logger = logging.getLogger('fpnd')
 max_age = NODE_SETTINGS['max_cache_age']
 timestamp = datetime.datetime.now(utc)  # use local time for console
+subscriber = 'msg_subscriber.py'
 
 
 def show_scheduled_jobs():
@@ -67,8 +69,12 @@ def do_scheduling():
             wait_for_moon()
         except Exception as exc:
             logger.error('ENODATA exception {}'.format(exc))
-
         startup_handlers()
+
+    elif node_role == 'controller':
+        logger.debug('Subscribing to node msgs: {}'.format(subscriber))
+        res = control_daemon('restart', script=subscriber)
+        logger.debug('sub daemon response: {}'.format(res))
 
     logger.debug('ROLE: startup role {}'.format(node_role))
 

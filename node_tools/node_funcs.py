@@ -12,9 +12,9 @@ from node_tools.helper_funcs import NODE_SETTINGS
 logger = logging.getLogger(__name__)
 
 
-def control_daemon(action):
+def control_daemon(action, script='msg_responder.py'):
     """
-    Controller function for msg_responder daemon.
+    Controller function for messaging daemon.
     :param action: one of <start|stop|restart>
     """
     import os
@@ -23,7 +23,7 @@ def control_daemon(action):
     result = ''
     home = NODE_SETTINGS['home_dir']
     commands = ['start', 'stop', 'restart']
-    daemon_file = os.path.join(home, 'msg_responder.py')
+    daemon_file = os.path.join(home, script)
 
     if not os.path.isfile(daemon_file):
         result = None
@@ -41,41 +41,19 @@ def control_daemon(action):
     return result
 
 
-def get_moon_data():
+def get_ztcli_data(command='zerotier-cli', action='listmoons'):
+    """
+    zerotier-cli command wrapper for ``listmoons`` and ``info``
+    commands.
+    """
     import json
     import subprocess
 
-    cmd = ['zerotier-cli', 'listmoons']
-    # always return a list (empty if no moons)
-    result = json.loads(b'[]'.decode().strip())
-
-    try:
-        b = subprocess.Popen(cmd,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             shell=False)
-
-        out, err = b.communicate()
-
-        if err:
-            logger.error('get_moon_data err result: {}'.format(err.decode().strip()))
-        else:
-            result = json.loads(out.decode().strip())
-            logger.info('found moon id: {}'.format(result[0]['id']))
-            logger.debug('Moon data type is: {}'.format(type(result)))
-
-    except Exception as exc:
-        logger.error('zerotier-cli exception: {}'.format(exc))
-        pass
-
-    return result
-
-
-def get_node_info():
-    import subprocess
-
-    cmd = ['zerotier-cli', 'info']
+    cmd = [command, action]
     result = None
+    if action == 'listmoons':
+        # always return a list (empty if no moons)
+        result = json.loads(b'[]'.decode().strip())
 
     try:
         b = subprocess.Popen(cmd,
@@ -86,10 +64,16 @@ def get_node_info():
         out, err = b.communicate()
 
         if err:
-            logger.error('get_node_info err result: {}'.format(err.decode().strip()))
+            logger.error('{} {} err result: {}'.format(command,
+                                                       action,
+                                                       err.decode().strip()))
         else:
-            result = out.decode().strip()
-            logger.info('got data: {}'.format(result))
+            if action == 'listmoons':
+                result = json.loads(out.decode().strip())
+                logger.info('got moon id: {}'.format(result[0]['id']))
+            else:
+                result = out.decode().strip()
+            logger.debug('got data: {}'.format(result))
 
     except Exception as exc:
         logger.error('zerotier-cli exception: {}'.format(exc))
@@ -173,6 +157,10 @@ def wait_for_moon(timeout=15):
     """
     Wait for moon data on startup before sending any messages.
     Update state vars when we get moon data.
+    :param timeout: Number of seconds to wait for the ``orbit`` command
+                    to settle.  Note that it takes 8 or 9 seconds after
+                    orbiting a new moon before moon data is returned.
+    :return None:
     """
     import time
     from node_tools import state_data as st
@@ -184,13 +172,13 @@ def wait_for_moon(timeout=15):
             break
 
     count = 0
-    moon_metadata = get_moon_data()
+    moon_metadata = get_ztcli_data(action='listmoons')
 
     while not len(moon_metadata) > 0 and count < timeout:
-        moon_metadata = get_moon_data()
-        logger.debug('Moon data size: {}'.format(len(moon_metadata)))
-        time.sleep(1)
         count += 1
+        time.sleep(1)
+        moon_metadata = get_ztcli_data(action='listmoons')
+        logger.debug('Moon data size: {}'.format(len(moon_metadata)))
     logger.debug('Moon sync took {} sec'.format(count))
     logger.debug('Moon data: {}'.format(moon_metadata))
 
@@ -205,4 +193,5 @@ def wait_for_moon(timeout=15):
     else:
         ident, addr, port = result[0]
         st.fpnState.update(moon_id0=ident, moon_addr=addr)
-        logger.debug('moon state has id {} addr {}'.format(st.fpnState['moon_id0'], st.fpnState['moon_addr']))
+        logger.debug('moon state has id {} addr {}'.format(st.fpnState['moon_id0'],
+                                                           st.fpnState['moon_addr']))

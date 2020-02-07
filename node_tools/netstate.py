@@ -5,7 +5,8 @@ import asyncio
 import aiohttp
 import logging
 
-from diskcache import Index
+import diskcache as dc
+
 from ztcli_api import ZeroTier
 from ztcli_api import ZeroTierConnectionError
 
@@ -16,12 +17,10 @@ from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import load_cache_by_type
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
-from node_tools.node_funcs import get_ztcli_data
-# from node_tools.helper_funcs import json_dump_file
-# from node_tools.helper_funcs import json_load_file
+from node_tools.msg_queues import handle_node_queues
 
 
-logger = logging.getLogger('nodestate')
+logger = logging.getLogger('netstate')
 
 
 async def main():
@@ -41,19 +40,6 @@ async def main():
             logger.debug('Returned {} key is: {}'.format('node', node_key))
             load_cache_by_type(cache, node_data, 'node')
 
-            # get status details of the node peers
-            await client.get_data('peer')
-            peer_data = client.data
-            logger.info('Found {} peers'.format(len(peer_data)))
-            peer_keys = find_keys(cache, 'peer')
-            logger.debug('Returned peer keys: {}'.format(peer_keys))
-            load_cache_by_type(cache, peer_data, 'peer')
-
-            # check for moon data (only exists for moons we orbit)
-            moon_data = get_ztcli_data(action='listmoons')
-            if moon_data:
-                load_cache_by_type(cache, moon_data, 'moon')
-
             # get all available network data
             await client.get_data('network')
             net_data = client.data
@@ -66,23 +52,28 @@ async def main():
             nodeStatus = get_node_status(cache)
             logger.debug('Got node state: {}'.format(nodeStatus))
             load_cache_by_type(cache, nodeStatus, 'nstate')
-            moonStatus = []
-            peerStatus = get_peer_status(cache)
-            for peer in peerStatus:
-                if peer['role'] == 'MOON':
-                    moonStatus.append(peer)
-                    break
-            logger.debug('Got moon state: {}'.format(moonStatus))
-            load_cache_by_type(cache, moonStatus, 'mstate')
+
             netStatus = get_net_status(cache)
             logger.debug('Got net state: {}'.format(netStatus))
             load_cache_by_type(cache, netStatus, 'istate')
+
+            logger.debug('{} nodes in node queue: {}'.format(len(node_q),
+                                                             list(node_q)))
+            if len(node_q) > 0:
+                handle_node_queues(node_q, staging_q)
+
+            logger.debug('{} nodes in node queue: {}'.format(len(node_q),
+                                                             list(node_q)))
+            logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
+                                                                list(staging_q)))
 
         except Exception as exc:
             logger.error(str(exc))
             raise exc
 
 
-cache = Index(get_cachedir())
+cache = dc.Index(get_cachedir())
+node_q = dc.Deque(directory=get_cachedir('node_queue'))
+staging_q = dc.Deque(directory=get_cachedir('staging_queue'))
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
