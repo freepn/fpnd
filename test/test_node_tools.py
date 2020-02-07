@@ -44,6 +44,7 @@ from node_tools.helper_funcs import validate_role
 from node_tools.helper_funcs import xform_state_diff
 from node_tools.logger_config import setup_logging
 from node_tools.msg_queues import handle_announce_msg
+from node_tools.msg_queues import handle_node_queues
 from node_tools.msg_queues import manage_incoming_nodes
 from node_tools.msg_queues import valid_announce_msg
 from node_tools.network_funcs import get_net_cmds
@@ -206,9 +207,9 @@ class QueueHandlingTest(unittest.TestCase):
         super(QueueHandlingTest, self).setUp()
         import diskcache as dc
 
-        self.node_q = dc.Deque(directory=get_cachedir('test-nq'))
-        self.reg_q = dc.Deque(directory=get_cachedir('test-rq'))
-        self.wait_q = dc.Deque(directory=get_cachedir('test-wq'))
+        self.node_q = dc.Deque(directory='/tmp/test-nq')
+        self.reg_q = dc.Deque(directory='/tmp/test-rq')
+        self.wait_q = dc.Deque(directory='/tmp/test-wq')
         self.node1 = 'deadbeef01'
         self.node2 = '20beefdead'
         self.node3 = 'beef03dead'
@@ -219,6 +220,18 @@ class QueueHandlingTest(unittest.TestCase):
         self.reg_q.clear()
         self.wait_q.clear()
         super(QueueHandlingTest, self).tearDown()
+
+    def test_handle_node_queues(self):
+        self.node_q.append(self.node1)
+        self.node_q.append(self.node2)
+
+        self.assertEqual(list(self.node_q), [self.node1, self.node2])
+        self.assertEqual(list(self.reg_q), [])
+        self.assertEqual(list(self.wait_q), [])
+
+        handle_node_queues(self.node_q, self.wait_q)
+        self.assertEqual(list(self.node_q), [])
+        self.assertEqual(list(self.wait_q), [self.node1, self.node2])
 
     def test_manage_fpn_nodes(self):
         self.node_q.append(self.node1)
@@ -296,9 +309,9 @@ class QueueMsgHandlingTest(unittest.TestCase):
         super(QueueMsgHandlingTest, self).setUp()
         import diskcache as dc
 
-        self.node_q = dc.Deque(directory=get_cachedir('test-nq'))
-        self.reg_q = dc.Deque(directory=get_cachedir('test-rq'))
-        self.wait_q = dc.Deque(directory=get_cachedir('test-wq'))
+        self.node_q = dc.Deque(directory='/tmp/test-nq')
+        self.reg_q = dc.Deque(directory='/tmp/test-rq')
+        self.wait_q = dc.Deque(directory='/tmp/test-wq')
         self.node1 = 'beef01dead'
         self.node2 = '02beefdead'
         self.node3 = 'deadbeef03'
@@ -371,6 +384,7 @@ class SetRolesTest(unittest.TestCase):
 
         self.assertEqual(NODE_SETTINGS['node_role'], 'controller')
         self.assertEqual(self.state['fpn_role'], 'controller')
+        self.assertEqual(NODE_SETTINGS['node_runner'], 'netstate.py')
         NODE_SETTINGS['ctlr_list'].remove(self.state['fpn_id'])
 
     def test_moon_role(self):

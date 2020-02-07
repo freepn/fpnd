@@ -12,7 +12,7 @@ from node_tools.sched_funcs import run_until_success
 logger = logging.getLogger(__name__)
 
 
-def drain_reg_queue(reg_q, addr):
+def drain_reg_queue(reg_q, addr=None):
     import time
     from nanoservice import Publisher
 
@@ -22,7 +22,7 @@ def drain_reg_queue(reg_q, addr):
     pub = Publisher('tcp://{}:9442'.format(addr))
     id_list = list(reg_q)
 
-    # Need to wait a bit to prevent lost messages
+    # Need to wait a bit on connect to prevent lost messages
     time.sleep(0.001)
 
     for _ in id_list:

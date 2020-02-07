@@ -21,6 +21,7 @@ from node_tools.helper_funcs import AttrDict as AttrDict
 from node_tools.helper_funcs import ENODATA as ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS as NODE_SETTINGS
 from node_tools.msg_queues import handle_announce_msg as handle_announce_msg
+from node_tools.msg_queues import handle_node_queues as handle_node_queues
 from node_tools.msg_queues import manage_incoming_nodes as manage_incoming_nodes
 from node_tools.msg_queues import valid_announce_msg as valid_announce_msg
 from node_tools.network_funcs import drain_reg_queue as drain_reg_queue
@@ -49,6 +50,7 @@ __all__ = [
     'get_token',
     'get_ztcli_data',
     'handle_announce_msg',
+    'handle_node_queues',
     'json_dump_file',
     'json_load_file',
     'load_cache_by_type',

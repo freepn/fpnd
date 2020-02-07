@@ -17,7 +17,7 @@ from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import load_cache_by_type
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
-from node_tools.node_funcs import get_ztcli_data
+from node_tools.msg_queues import handle_node_queues
 
 
 logger = logging.getLogger('netstate')
@@ -52,9 +52,20 @@ async def main():
             nodeStatus = get_node_status(cache)
             logger.debug('Got node state: {}'.format(nodeStatus))
             load_cache_by_type(cache, nodeStatus, 'nstate')
+
             netStatus = get_net_status(cache)
             logger.debug('Got net state: {}'.format(netStatus))
             load_cache_by_type(cache, netStatus, 'istate')
+
+            logger.debug('{} nodes in node queue: {}'.format(len(node_q),
+                                                             list(node_q)))
+            if len(node_q) > 0:
+                handle_node_queues(node_q, staging_q)
+
+            logger.debug('{} nodes in node queue: {}'.format(len(node_q),
+                                                             list(node_q)))
+            logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
+                                                                list(staging_q)))
 
         except Exception as exc:
             logger.error(str(exc))
@@ -63,5 +74,6 @@ async def main():
 
 cache = dc.Index(get_cachedir())
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
+staging_q = dc.Deque(directory=get_cachedir('staging_queue'))
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())

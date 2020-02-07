@@ -72,8 +72,9 @@ def do_scheduling():
         startup_handlers()
 
     elif node_role == 'controller':
-        logger.debug('Starting subscriber daemon: {}'.format(subscriber))
-        control_daemon('start', script=subscriber)
+        logger.debug('Subscribing to node msgs: {}'.format(subscriber))
+        res = control_daemon('restart', script=subscriber)
+        logger.debug('sub daemon response: {}'.format(res))
 
     logger.debug('ROLE: startup role {}'.format(node_role))
 

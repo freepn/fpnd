@@ -35,7 +35,8 @@ class subDaemon(Daemon):
             if valid_announce_msg(msg):
                 print('Node ID is: {}'.format(msg))
                 if msg not in node_q:
-                    node_q.append(msg)
+                    with node_q.transact():
+                        node_q.append(msg)
                     syslog.syslog(syslog.LOG_INFO,
                                   'Adding node id: {}'.format(msg))
                 syslog.syslog(syslog.LOG_INFO,

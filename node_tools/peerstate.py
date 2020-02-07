@@ -58,7 +58,7 @@ async def main():
             logger.debug('{} nodes in reg queue: {}'.format(len(reg_q), list(reg_q)))
             logger.debug('{} nodes in wait queue: {}'.format(len(wait_q), list(wait_q)))
             if len(reg_q) > 0:
-                drain_reg_queue(reg_q, addr)
+                drain_reg_queue(reg_q, addr='127.0.0.1')
 
             for peer in peerStatus:
                 if peer['role'] == 'LEAF':
