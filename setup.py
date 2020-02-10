@@ -62,6 +62,8 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
         'Natural Language :: English',
+        "Topic :: System :: Operating System Kernels :: Linux",
+        "Topic :: System :: Networking",
         'Topic :: Security',
     ],
 )

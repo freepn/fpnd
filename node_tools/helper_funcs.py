@@ -265,13 +265,13 @@ def set_initial_role():
         res = get_ztcli_data(action='info')
         if res:
             node_data = res.split()
-        logger.debug('ROLE: data is {}'.format(node_data))
+            logger.debug('ROLE: data is {}'.format(node_data))
 
-        node_id = node_data[2]
-        if node_id in NODE_SETTINGS['moon_list']:
-            NODE_SETTINGS['node_role'] = 'moon'
-        elif node_id in NODE_SETTINGS['ctlr_list']:
-            NODE_SETTINGS['node_role'] = 'controller'
+            node_id = node_data[2]
+            if node_id in NODE_SETTINGS['moon_list']:
+                NODE_SETTINGS['node_role'] = 'moon'
+            elif node_id in NODE_SETTINGS['ctlr_list']:
+                NODE_SETTINGS['node_role'] = 'controller'
 
     except Exception as exc:
         logger.warning('get_ztcli_data exception: {}'.format(exc))

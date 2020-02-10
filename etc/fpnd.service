@@ -6,8 +6,9 @@ After=zerotier-one.service
 [Service]
 ExecStart=/usr/lib/fpnd/fpnd.py start
 ExecStop=/usr/lib/fpnd/fpnd.py stop
+PIDFile=/run/fpnd.pid
 Type=simple
-Restart=always
+Restart=on-failure
 RestartSec=5
 
 [Install]

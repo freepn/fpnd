@@ -5,13 +5,13 @@
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Start/stop fs-watcher that watches specified files/folders for changes
+# Short-Description: simple start/stop sysvinit for a simple daemon
 ### END INIT INFO
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="contols fpnd daemon"
 NAME="fpnd"
-DAEMON="/usr/bin/fpnd"
+DAEMON="/usr/lib/fpnd/fpnd.py"
 DAEMON_CONFIG="/etc/fpnd.ini"
 
 test -f $DAEMON || exit 0
