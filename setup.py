@@ -8,10 +8,13 @@ except ImportError:
     from distutils.core import setup
 
 
-__version__ = '0.7.2'
+__version__ = '0.7.2-2'
+
+# make setuptools happy with PEP 440-compliant post version
+REL_TAG = __version__.replace('-', 'p')
 
 FPND_DOWNLOAD_URL = (
-    'https://github.com/sarnold/fpnd/tarball/' + __version__
+    'https://github.com/sarnold/fpnd/tarball/' + REL_TAG
 )
 
 
