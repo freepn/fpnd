@@ -8,7 +8,7 @@ except ImportError:
     from distutils.core import setup
 
 
-__version__ = '0.7.2-2'
+__version__ = '0.7.2-3'
 
 # make setuptools happy with PEP 440-compliant post version
 REL_TAG = __version__.replace('-', 'p')

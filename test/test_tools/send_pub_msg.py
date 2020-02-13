@@ -3,7 +3,10 @@ import time
 from nanoservice import Publisher
 
 
-pub_id = Publisher('tcp://127.0.0.1:9442')
+addr = '127.0.0.1'
+# addr = 'whatever'
+
+pub_id = Publisher('tcp://{}:9442'.format(addr))
 id_list = ['deadbeef00', 'deadbeef04', 'deadbeef03', 'deadbeef02', 'deadbeef01']
 
 # Need to wait a bit to prevent lost messages
