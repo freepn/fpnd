@@ -12,6 +12,8 @@ import diskcache as dc
 from daemon import Daemon
 from nanoservice import Responder
 
+from node_tools import state_data as st
+
 from node_tools.helper_funcs import get_cachedir
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import valid_announce_msg

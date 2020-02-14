@@ -44,6 +44,14 @@ def manage_incoming_nodes(node_q, reg_q, wait_q):
         node_q.clear()
 
 
+def populate_leaf_list(node_q, wait_q, data):
+    from node_tools import state_data as st
+
+    st.leaf_nodes = []
+    if data['identity'] in node_q or data['identity'] in wait_q:
+        st.leaf_nodes.append({data['identity']: data['address']})
+
+
 def valid_announce_msg(msg):
     import string
 

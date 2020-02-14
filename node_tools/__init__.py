@@ -23,6 +23,7 @@ from node_tools.helper_funcs import NODE_SETTINGS as NODE_SETTINGS
 from node_tools.msg_queues import handle_announce_msg as handle_announce_msg
 from node_tools.msg_queues import handle_node_queues as handle_node_queues
 from node_tools.msg_queues import manage_incoming_nodes as manage_incoming_nodes
+from node_tools.msg_queues import populate_leaf_list as populate_leaf_list
 from node_tools.msg_queues import valid_announce_msg as valid_announce_msg
 from node_tools.network_funcs import drain_reg_queue as drain_reg_queue
 from node_tools.network_funcs import get_net_cmds as get_net_cmds
@@ -55,6 +56,7 @@ __all__ = [
     'json_load_file',
     'load_cache_by_type',
     'manage_incoming_nodes',
+    'populate_leaf_list',
     'run_event_handlers',
     'run_net_cmd',
     'set_initial_role',
