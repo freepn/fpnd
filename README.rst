@@ -21,7 +21,7 @@
 
 
 What is FreePN?  FreePN is aiming to be the first free, fast, anonymous,
-ulimited-bandwidth peer-to-peer proxy application.
+unlimited-bandwidth peer-to-peer proxy application.
 
 Yes, it's "free" (as in FOSS) and it's sort of like a VPN (except p2p).
 FreePN is essentially an anonymizing p2p internet proxy using a "virtual
@@ -36,39 +36,39 @@ Getting Started
 ===============
 
 Not much to see here yet except test output; at this point we only target
-Linux with at least Python 3.5.  Slightly older packages are available for
-`Debian and Ubuntu`_, and the latest can be installed on Gentoo using the
-live ebuild in `this portage overlay`_.
+Linux with at least `Python`_ 3.5.  Packages are available for Ubuntu and
+Gentoo using the live ebuild in our `python overlay`_ and a `PPA on Launchpad`_.
+The PPA sources can also be used to build Debian packages, however, we
+don't (yet) support any "official" Debian packages.
 
 
-.. _Debian and Ubuntu: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
-.. _this portage overlay: https://github.com/freepn/python-overlay
+.. _PPA on Launchpad: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
+.. _python overlay: https://github.com/freepn/python-overlay
+
+
+.. note:: This stack depends on both Python and nanomsg and the Ubuntu
+          releases are just enough out of sync with Debian, so the PPA
+          binaries are not usable directly on any specific Debian version
+          (so must be rebuilt from source).
 
 
 Prerequisites
 -------------
 
-A supported linux distribution, mainly something that uses either `.ebuilds`
-(eg, Gentoo or funtoo) or `.deb` packages, starting with at least Ubuntu
-xenial or Debian stretch (see the above PPA package repo on Launchpad).
+A supported linux distribution, mainly something that uses `.ebuilds`
+(eg, Gentoo or funtoo) or a supported Ubuntu series, currently xenial
+16.0.4 LTS and bionic 18.0.4 LTS (see the above `PPA on Launchpad`_).
 
 For the latter, make sure you have the ``gpg`` and ``add-apt-repository``
 commands installed and then add the PPA:
 
 ::
 
-  $ sudo apt-get install software-properties-common ubuntu-keyring ubuntu-archive-keyring
+  $ sudo apt-get install -y software-properties-common
   $ sudo add-apt-repository -y -s ppa:nerdboy/embedded
 
-
-.. note:: Since the only package series currently published is for xenial
-          the second command above will need to be manually corrected
-          afterwards if installing on Debian.
-
-
-To install on Debian you *can* use the above method, but you will need
-to edit the file under ``sources.d`` and set the distro to ``xenial``
-and then run the update command:
+If the second command above does not run ``apt-get update`` automatically,
+then you'll need to run it manually:
 
 ::
 
@@ -92,19 +92,20 @@ Dev Install
 -----------
 
 As long as you have git and at least Python 3.5, then the "easy" dev
-install is to clone this repository and install `tox`_ and the
-`nanomsg`_ library (there are packages in the PPA and Gentoo overlay).
+install is to clone this repository and install `tox`_ (optional) and the
+`nanomsg`_ library (required).
 
-Do the usual install dance, either::
+`Install the overlay`_ and do the usual install dance; add ``FEATURES=test``
+if you want the pytest deps::
 
-  # emerge nanomsg tox
+  # FEATURES=test emerge net-misc/fpnd
 
 or::
 
-  $ sudo apt-get install libnanomsg-dev tox
+  $ sudo apt-get build-dep python3-fpnd
+  $ sudo apt-get install tox
 
-
-After cloning this repository, you can run the current tests with the
+After cloning the repository, you can run the current tests with the
 ``tox`` command.  It will build a virtual python environment for each
 installed version of python with all the python dependencies and run
 the tests (including style checkers and test coverage).
@@ -115,6 +116,15 @@ the tests (including style checkers and test coverage).
   $ cd fpnd
   $ tox
 
+If you're on Ubuntu and you want to experiment with the current state
+of fpnd, then just install the package after doing the above:
+
+::
+
+  $ sudo apt-get install python3-fpnd
+
+
+.. _Install the overlay: https://github.com/freepn/python-overlay/blob/master/README.rst
 
 Standards and Coding Style
 --------------------------
