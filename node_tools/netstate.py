@@ -28,7 +28,6 @@ async def main():
     async with aiohttp.ClientSession() as session:
         ZT_API = get_token()
         client = ZeroTier(ZT_API, loop, session)
-        # data_dir = get_cachedir(dir_name='fpn_data')
 
         try:
             # get status details of the local node
@@ -39,36 +38,46 @@ async def main():
             node_key = find_keys(cache, 'node')
             logger.debug('Returned {} key is: {}'.format('node', node_key))
             load_cache_by_type(cache, node_data, 'node')
-
-            # get all available network data
-            await client.get_data('network')
-            net_data = client.data
-            logger.info('Found {} networks'.format(len(net_data)))
-            net_keys = find_keys(cache, 'net')
-            logger.debug('Returned network keys: {}'.format(net_keys))
-            load_cache_by_type(cache, net_data, 'net')
-
-            # if we get here, we can update our state objects
             nodeStatus = get_node_status(cache)
-            logger.debug('Got node state: {}'.format(nodeStatus))
+            logger.debug('Got ctlr state: {}'.format(nodeStatus))
             load_cache_by_type(cache, nodeStatus, 'nstate')
 
-            netStatus = get_net_status(cache)
-            logger.debug('Got net state: {}'.format(netStatus))
-            load_cache_by_type(cache, netStatus, 'istate')
+            # get all available ctlr network data
+            await client.get_data('controller/network')
+            logger.debug('{} networks found'.format(len(client.data)))
+            net_list = client.data
+            net_data = []
+            mbr_data = []
+            for net_id in net_list:
+                # Get details about each network
+                await client.get_data('controller/network/{}'.format(net_id))
+                net_data.append(client.data)
+                await client.get_data('controller/network/{}/member'.format(net_id))
+                # logger.debug('{} members found'.format(len(client.data)))
+                member_dict = client.data
+                for mbr_id in member_dict.keys():
+                    # get details about each network member
+                    await client.get_data('controller/network/{}/member/{}'.format(net_id, mbr_id))
+                    mbr_data.append(client.data)
+
+            load_cache_by_type(cache, net_data, 'net')
+            net_keys = find_keys(cache, 'net')
+            logger.debug('{} network keys found'.format(len(net_keys)))
+            load_cache_by_type(cache, mbr_data, 'mbr')
+            mbr_keys = find_keys(cache, 'mbr')
+            logger.debug('{} member keys found'.format(len(mbr_keys)))
 
             logger.debug('{} nodes in node queue: {}'.format(len(node_q),
                                                              list(node_q)))
             if len(node_q) > 0:
                 handle_node_queues(node_q, staging_q)
-
-            logger.debug('{} nodes in node queue: {}'.format(len(node_q),
-                                                             list(node_q)))
+                logger.debug('{} nodes in node queue: {}'.format(len(node_q),
+                                                                 list(node_q)))
             logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
                                                                 list(staging_q)))
 
         except Exception as exc:
-            logger.error(str(exc))
+            logger.error('netstate exception was: {}'.format(exc))
             raise exc
 
 

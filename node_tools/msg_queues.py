@@ -22,10 +22,12 @@ def handle_node_queues(node_q, staging_q):
     for _ in list(node_q):
         with node_q.transact():
             node_id = node_q.popleft()
-            staging_list.append(node_id)
+            if node_id not in staging_list:
+                staging_list.append(node_id)
     for node_id in staging_list:
-        with staging_q.transact():
-            staging_q.append(node_id)
+        if staging_q.count(node_id) < 1:
+            with staging_q.transact():
+                staging_q.append(node_id)
 
 
 def manage_incoming_nodes(node_q, reg_q, wait_q):
