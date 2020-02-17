@@ -12,6 +12,8 @@ import diskcache as dc
 from daemon import Daemon
 from nanoservice import Responder
 
+from node_tools import state_data as st
+
 from node_tools.helper_funcs import get_cachedir
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import valid_announce_msg
@@ -53,8 +55,9 @@ def echo(msg):
     :return node ID: zerotier node identity
     """
     if valid_announce_msg(msg):
+        syslog.syslog(syslog.LOG_INFO, "Got valid msg: {}".format(msg))
         handle_announce_msg(node_q, reg_q, wait_q, msg)
-        print("Echoing message: {}".format(msg))
+        # print("Echoing message: {}".format(msg))
         return msg
     else:
         syslog.syslog(syslog.LOG_ERROR, "Bad msg recieved!")

@@ -326,7 +326,7 @@ def validate_role():
     else:
         NODE_SETTINGS['node_role'] = None
     st.fpnState['fpn_role'] = NODE_SETTINGS['node_role']
-    logger.debug('ROLE: validated role is {}'.format(NODE_SETTINGS['node_role']))
+    logger.debug('ROLE: validated role is {}'.format(st.fpnState['fpn_role']))
 
 
 def xform_state_diff(diff):

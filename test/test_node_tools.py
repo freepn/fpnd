@@ -46,6 +46,7 @@ from node_tools.logger_config import setup_logging
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import handle_node_queues
 from node_tools.msg_queues import manage_incoming_nodes
+from node_tools.msg_queues import populate_leaf_list
 from node_tools.msg_queues import valid_announce_msg
 from node_tools.network_funcs import get_net_cmds
 from node_tools.node_funcs import control_daemon
@@ -785,6 +786,35 @@ def test_get_net_status():
         assert 'mac' in Net
         assert 'ztaddress' in Net
         assert 'gateway' in Net
+
+
+def test_populate_leaf_list():
+    import diskcache as dc
+    from node_tools import state_data as st
+
+    node_q = dc.Deque(directory='/tmp/test-nq')
+    wait_q = dc.Deque(directory='/tmp/test-wq')
+    node_q.clear()
+    wait_q.clear()
+    node_q.append('beef9f73c6')
+
+    peers = get_peer_status(cache)
+    for peer in peers:
+        if peer['role'] == 'LEAF':
+            populate_leaf_list(node_q, wait_q, peer)
+            assert len(st.leaf_nodes) == 1
+            assert st.leaf_nodes[0]['beef9f73c6'] == '134.47.250.137'
+
+    node_q.clear()
+    wait_q.append('beef9f73c6')
+    for peer in peers:
+        if peer['role'] == 'LEAF':
+            populate_leaf_list(node_q, wait_q, peer)
+            assert len(st.leaf_nodes) == 1
+            assert st.leaf_nodes[0]['beef9f73c6'] == '134.47.250.137'
+
+    wait_q.clear()
+    st.leaf_nodes = []
 
 
 def test_load_node_state():

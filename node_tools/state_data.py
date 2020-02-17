@@ -30,4 +30,6 @@ fpnState = {'online': False,
             'fpn_id0': None,
             'fpn_id1': None}
 
+leaf_nodes = []
+
 changes = []

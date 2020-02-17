@@ -10,6 +10,8 @@ import diskcache as dc
 from ztcli_api import ZeroTier
 from ztcli_api import ZeroTierConnectionError
 
+from node_tools import state_data as st
+
 from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import get_peer_status
@@ -17,6 +19,7 @@ from node_tools.cache_funcs import load_cache_by_type
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import manage_incoming_nodes
+from node_tools.msg_queues import populate_leaf_list
 from node_tools.network_funcs import drain_reg_queue
 from node_tools.node_funcs import control_daemon
 
@@ -66,6 +69,8 @@ async def main():
                         if peer['identity'] not in node_q:
                             node_q.append(peer['identity'])
                             logger.debug('Adding LEAF node id: {}'.format(peer['identity']))
+                    populate_leaf_list(node_q, wait_q, peer)
+            logger.debug('Collected leaf nodes: {}'.format(st.leaf_nodes))
             logger.debug('{} nodes in node queue: {}'.format(len(node_q), list(node_q)))
 
             if len(node_q) > 0:

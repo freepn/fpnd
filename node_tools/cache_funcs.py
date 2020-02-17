@@ -18,7 +18,7 @@ def create_cache_entry(cache, data, key_str):
     :param cache: <cache> object
     :param data: payload data in a dictionary
     :param key_str: desired 'key_str', one of
-                    ['node'|'peer'|'net'|'moon'] or
+                    ['node'|'peer'|'net'|'mbr'|'moon'] or
                     ['nstate'|'mstate'|'istate']
     """
     new_data = AttrDict.from_nested_dict(data)
@@ -30,7 +30,7 @@ def create_cache_entry(cache, data, key_str):
 
 def find_keys(cache, key_str):
     """Find API key(s) in cache using key type string, return list of keys."""
-    valid_strings = ['node', 'peer', 'net', 'moon', 'nstate', 'mstate', 'istate']
+    valid_strings = ['node', 'peer', 'moon', 'net', 'mbr', 'nstate', 'mstate', 'istate']
     match_list = [key for key in valid_strings if key_str in key]
     if not match_list:
         logger.debug('Key type {} not valid'.format(key_str))
@@ -48,7 +48,7 @@ def get_endpoint_data(cache, key_str):
     Get all data for key type from cache (can be endpoint or state).
     :param cache: <cache> object
     :param key_str: desired 'key_str', one of
-                    ['node'|'peer'|'net'|'moon'] or
+                    ['node'|'peer'|'net'|'mbr'|'moon'] or
                     ['nstate'|'mstate'|'istate']
     :return tuple: (list of [keys], list of [values])
     """
@@ -68,8 +68,9 @@ def get_endpoint_data(cache, key_str):
 
 def get_net_status(cache):
     """
-    Get status data for 'network' endpoint from cache, return a
+    Get user node status data for 'network' endpoint from cache, return
     list of dictionaries.
+    NOTE: Not valid for networks under the 'controller' endpoint.
     """
     networks = []  # list of network objects
     key_list, values = get_endpoint_data(cache, 'net')
@@ -193,7 +194,7 @@ def update_cache_entry(cache, data, key):
     :param cache: <cache> object
     :param data: payload data in a dictionary
     :param key_str: desired 'key_str', one of
-                    ['node'|'peer'|'net'|'moon'] or
+                    ['node'|'peer'|'net'|'mbr'|'moon'] or
                     ['nstate'|'mstate'|'istate']
     """
     new_data = AttrDict.from_nested_dict(data)

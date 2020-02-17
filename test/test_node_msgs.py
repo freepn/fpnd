@@ -16,6 +16,7 @@ class BaseTestCase(unittest.TestCase):
         self.node1 = 'deadbeef01'
         self.node2 = '20beefdead'
         self.node_q = dc.Deque(directory='/tmp/test-nq')
+        self.node_q.clear()
 
         self.addr = '127.0.0.1'
         self.tcp_addr = 'tcp://{}:9442'.format(self.addr)
