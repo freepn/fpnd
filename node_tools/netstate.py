@@ -33,10 +33,8 @@ async def main():
             # get status details of the local node
             await client.get_data('status')
             node_data = client.data
-            node_id = node_data.get('address')
-            logger.info('Found node: {}'.format(node_id))
-            node_key = find_keys(cache, 'node')
-            logger.debug('Returned {} key is: {}'.format('node', node_key))
+            logger.debug('Found node: {}'.format(node_data.get('address')))
+            logger.debug('Returned {} key is: {}'.format('node', find_keys(cache, 'node')))
             load_cache_by_type(cache, node_data, 'node')
             nodeStatus = get_node_status(cache)
             logger.debug('Got ctlr state: {}'.format(nodeStatus))

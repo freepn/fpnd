@@ -1,7 +1,6 @@
 # coding: utf-8
 
 """msg queue-specific helper functions."""
-import logging
 
 
 def handle_announce_msg(node_q, reg_q, wait_q, msg):

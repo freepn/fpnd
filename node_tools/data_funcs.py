@@ -40,9 +40,9 @@ def get_state_values(old, new, pairs=False):
     Get ordered changes for two state item views
     :param old: old state dict
     :param new: new state dict
-    :param pairs: if true, each tuple in the return list will contain a
-                  tuple of pairs for each change (old, new).  otherwise
-                  return a tuple with only the new value for each change.
+    :param pairs: If true, each tuple in the changes list will contain a
+                  tuple of pairs for each change (old, new).  Otherwise
+                  create a tuple with only the new value for each change.
     :return: None (updates state_data.changes)
     """
     from node_tools import state_data as st
@@ -60,7 +60,7 @@ def get_state_values(old, new, pairs=False):
                     if i != j:
                         item = (i, j)
                         diff.append(item)
-                logger.debug('State changed: {}'.format(diff))
+            logger.debug('State changed: {}'.format(diff))
         st.changes = tuple(diff)
 
 

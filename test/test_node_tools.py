@@ -22,6 +22,7 @@ from node_tools.cache_funcs import get_net_status
 from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import get_state
+from node_tools.ctlr_funcs import gen_netobj_queue
 from node_tools.data_funcs import get_state_values
 from node_tools.data_funcs import update_runner
 from node_tools.exceptions import MemberNodeError
@@ -786,6 +787,22 @@ def test_get_net_status():
         assert 'mac' in Net
         assert 'ztaddress' in Net
         assert 'gateway' in Net
+
+
+def test_gen_netobj_queue():
+    import diskcache as dc
+
+    netobj_q = dc.Deque(directory='/tmp/test-oq')
+    netobj_q.clear()
+
+    gen_netobj_queue(netobj_q, ipnet='192.168.0.0/24')
+    assert len(netobj_q) == 64
+    net = netobj_q.peekleft()
+    assert isinstance(net, ipaddress.IPv4Network)
+    assert len(list(net)) == 4
+    assert len(list(net.hosts())) == 2
+    gen_netobj_queue(netobj_q, ipnet='192.168.0.0/24')
+    # netobj_q.clear()
 
 
 def test_populate_leaf_list():
