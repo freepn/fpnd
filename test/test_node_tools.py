@@ -23,6 +23,7 @@ from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import get_state
 from node_tools.ctlr_funcs import gen_netobj_queue
+from node_tools.ctlr_funcs import handle_node_status
 from node_tools.data_funcs import get_state_values
 from node_tools.data_funcs import update_runner
 from node_tools.exceptions import MemberNodeError
@@ -719,6 +720,10 @@ def test_cache_loading():
         load_cache_by_type(cache, peer_data, 'peer')
         assert len(list(cache)) == 5
 
+    def test_delete_cache_entry():
+        delete_cache_entry(cache, 'peer')
+        assert len(list(cache)) == 1
+
     def test_update_cache_peer():
         _, peer_data = client.get_data('peer')
         load_cache_by_type(cache, peer_data, 'peer')
@@ -749,6 +754,10 @@ def test_cache_loading():
     def test_cache_size():
         assert len(cache) == 8
 
+    def test_handle_node_status():
+        _, node_data = client.get_data('status')
+        handle_node_status(node_data, cache)
+
     test_cache_is_empty()
     test_load_cache_node()
     test_update_cache_node()
@@ -759,6 +768,7 @@ def test_cache_loading():
     test_update_cache_net()
     test_update_runner()
     test_cache_size()
+    test_handle_node_status()
 
 
 def test_get_node_status():

@@ -28,6 +28,25 @@ def create_cache_entry(cache, data, key_str):
     logger.debug('New key created for: {}'.format(key))
 
 
+def delete_cache_entry(cache, key_str):
+    """
+    Delete cache entry by key type.
+    :param cache: <cache> object
+    :param key_str: desired 'key_str', one of
+                    ['node'|'peer'|'net'|'mbr'|'moon'] or
+                    ['nstate'|'mstate'|'istate']
+    """
+    key_list = find_keys(cache, key_str)
+    if key_list:
+        for key in key_list:
+            logger.debug('Deleting entry for: {}'.format(key))
+            with cache.transact():
+                del cache[key]
+        logger.debug('Deleted cache items matching: {}'.format(key_str))
+    else:
+        logger.warning('No matchine keys found for: {}'.format(key_str))
+
+
 def find_keys(cache, key_str):
     """Find API key(s) in cache using key type string, return list of keys."""
     valid_strings = ['node', 'peer', 'moon', 'net', 'mbr', 'nstate', 'mstate', 'istate']
