@@ -15,6 +15,7 @@ import pytest
 from diskcache import Index
 
 # from node_tools import state_data as stest
+from node_tools.cache_funcs import delete_cache_entry
 from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import load_cache_by_type
 from node_tools.cache_funcs import get_endpoint_data
@@ -720,6 +721,10 @@ def test_cache_loading():
         load_cache_by_type(cache, peer_data, 'peer')
         assert len(list(cache)) == 5
 
+    def test_delete_cache_entry_no_key():
+        delete_cache_entry(cache, 'reep')
+        assert len(list(cache)) == 5
+
     def test_delete_cache_entry():
         delete_cache_entry(cache, 'peer')
         assert len(list(cache)) == 1
@@ -762,6 +767,8 @@ def test_cache_loading():
     test_load_cache_node()
     test_update_cache_node()
     test_load_cache_peer()
+    test_delete_cache_entry_no_key()
+    test_delete_cache_entry()
     test_update_cache_peer()
     test_find_keys_nonet()
     test_load_cache_net()
