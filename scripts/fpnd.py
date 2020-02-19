@@ -13,9 +13,7 @@ import functools
 import diskcache as dc
 from daemon import Daemon
 
-from node_tools.ctlr_funcs import create_state_trie
 from node_tools.ctlr_funcs import gen_netobj_queue
-from node_tools.ctlr_funcs import run_subscriber_daemon
 from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import do_setup
@@ -24,6 +22,7 @@ from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
 from node_tools.logger_config import setup_logging
+from node_tools.node_funcs import run_subscriber_daemon
 from node_tools.node_funcs import wait_for_moon
 
 try:
@@ -75,7 +74,6 @@ def do_scheduling():
         startup_handlers()
 
     elif node_role == 'controller':
-        create_state_trie(directory=get_cachedir('state_trie'))
         netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
         gen_netobj_queue(netobj_q, ipnet='192.168.10.0/24')
         run_subscriber_daemon()

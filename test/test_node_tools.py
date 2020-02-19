@@ -56,6 +56,7 @@ from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import get_ztcli_data
 from node_tools.node_funcs import parse_moon_data
 from node_tools.node_funcs import run_moon_cmd
+from node_tools.node_funcs import run_subscriber_daemon
 from node_tools.node_funcs import wait_for_moon
 from node_tools.sched_funcs import check_return_status
 
@@ -550,6 +551,32 @@ def test_daemon_can_stop(capfd):
     res = control_daemon('stop')
     captured = capfd.readouterr()
     assert res == 0
+    assert 'Stopped' in captured.out
+
+
+def test_daemon_subscriber_start(capfd):
+    """
+    Test if we can (re)start the msg_subscriber daemon.
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
+    res = run_subscriber_daemon()
+    captured = capfd.readouterr()
+    assert res == 0
+    # print(captured.out)
+    assert 'Stopping' in captured.out
+    assert 'Starting' in captured.out
+
+
+def test_daemon_subscriber_stop(capfd):
+    """
+    Test if we can stop the msg_subscriber daemon.
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
+    res = run_subscriber_daemon('stop')
+    captured = capfd.readouterr()
+    assert res == 0
+    # print(captured.out)
+    assert 'Stopping' in captured.out
     assert 'Stopped' in captured.out
 
 

@@ -6,7 +6,6 @@ import logging
 from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import load_cache_by_type
-from node_tools.node_funcs import control_daemon
 
 
 logger = logging.getLogger(__name__)
@@ -72,17 +71,3 @@ def process_netobj(netobj):
     :return config dict: Attrdict of JSON config fragments
     """
     pass
-
-
-def run_subscriber_daemon(cmd='restart'):
-    """
-    Command wrapper for msg subscriber daemon to log status.
-    :param cmd: command to pass to the msg_subscriber daemon
-                <start|stop|restart>
-    """
-
-    subscriber = 'msg_subscriber.py'
-
-    logger.debug('Subscribing to node msgs: {}'.format(subscriber))
-    res = control_daemon(cmd, script=subscriber)
-    logger.debug('sub daemon response: {}'.format(res))
