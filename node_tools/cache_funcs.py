@@ -44,7 +44,7 @@ def delete_cache_entry(cache, key_str):
                 del cache[key]
         logger.debug('Deleted cache items matching: {}'.format(key_str))
     else:
-        logger.warning('No matchine keys found for: {}'.format(key_str))
+        logger.warning('No matching keys found for: {}'.format(key_str))
 
 
 def find_keys(cache, key_str):

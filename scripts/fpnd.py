@@ -14,6 +14,7 @@ import diskcache as dc
 from daemon import Daemon
 
 from node_tools.ctlr_funcs import gen_netobj_queue
+from node_tools.cache_funcs import delete_cache_entry
 from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import do_setup
@@ -76,6 +77,9 @@ def do_scheduling():
     elif node_role == 'controller':
         netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
         gen_netobj_queue(netobj_q, ipnet='192.168.10.0/24')
+        cache = dc.Index(get_cachedir())
+        for key_str in ['peer', 'moon', 'mstate']:
+            delete_cache_entry(cache, key_str)
         run_subscriber_daemon()
 
     logger.debug('ROLE: startup role {}'.format(node_role))

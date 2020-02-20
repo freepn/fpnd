@@ -322,7 +322,7 @@ def validate_role():
         NODE_SETTINGS['node_runner'] = 'peerstate.py'
     elif nodeState.fpn_id in NODE_SETTINGS['ctlr_list']:
         NODE_SETTINGS['node_role'] = 'controller'
-        NODE_SETTINGS['node_runner'] = 'netstate.py'
+        NODE_SETTINGS['node_runner'] = 'netstate2.py'
     else:
         NODE_SETTINGS['node_role'] = None
     st.fpnState['fpn_role'] = NODE_SETTINGS['node_role']
