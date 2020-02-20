@@ -183,7 +183,7 @@ def get_state(cache):
 
 def handle_node_status(data, cache):
     """
-    Cache handling for node status/state data (common to all roles).
+    Cache handling/state update for node status data (common to all roles).
     :param data: ZT client data from 'status' endpoint
     :param cache: Index <cache> object
     """

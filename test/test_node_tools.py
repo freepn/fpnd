@@ -7,9 +7,12 @@ import datetime
 import logging
 import ipaddress
 # import mock
+import string
+import tempfile
 import unittest
-
 import warnings
+
+import datrie
 import pytest
 
 from diskcache import Index
@@ -25,7 +28,10 @@ from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import get_state
 from node_tools.cache_funcs import handle_node_status
 from node_tools.ctlr_funcs import check_net_trie
+from node_tools.ctlr_funcs import create_state_trie
 from node_tools.ctlr_funcs import gen_netobj_queue
+from node_tools.ctlr_funcs import load_state_trie
+from node_tools.ctlr_funcs import save_state_trie
 from node_tools.data_funcs import get_state_values
 from node_tools.data_funcs import update_runner
 from node_tools.exceptions import MemberNodeError
@@ -592,6 +598,28 @@ def test_path_ecxeption(capfd):
     captured = capfd.readouterr()
     assert not res
     assert not captured.out
+
+
+def test_state_trie_load_save():
+    # the char set under test is string.hexdigits
+    _, fname = create_state_trie()
+    trie = load_state_trie(fname)
+    trie['f00baf'] = 1
+    trie['foobar'] = 2
+    trie['baf'] = 3
+    trie['fa'] = 4
+    trie['Faa'] = 'vasia'
+    save_state_trie(trie, fname)
+    del trie
+
+    trie2 = load_state_trie(fname)
+    assert trie2['f00baf'] == 1
+    assert trie2['baf'] == 3
+    assert trie2['fa'] == 4
+    assert trie2['Faa'] == 'vasia'
+
+    with pytest.raises(KeyError):
+        assert trie2['foobar'] == 2
 
 
 def test_check_net_trie():

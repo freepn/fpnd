@@ -24,28 +24,27 @@ def check_net_trie(trie):
     return True
 
 
-def create_state_trie(directory='/tmp/state_trie'):
-    import os
+def create_state_trie(prefix='trie', ext='.dat'):
     import string
-    import datrie as dt
+    import tempfile
+    import datrie
 
-    trie = dt.Trie(string.hexdigits)
-    trie.save(os.path.join(directory, 'trie.dat'))
+    fd, fname = tempfile.mkstemp(suffix=ext, prefix=prefix)
+    trie = datrie.Trie(string.hexdigits)
+    trie.save(fname)
+
+    return fd, fname
 
 
-def load_state_trie(directory='/tmp/state_trie'):
-    import os
-    import datrie as dt
+def load_state_trie(fname):
+    import datrie
 
-    trie = dt.Trie.load(os.path.join(directory, 'trie.dat'))
+    trie = datrie.Trie.load(fname)
     return trie
 
 
-def save_state_trie(trie, directory='/tmp/state_trie'):
-    import os
-    import datrie as dt
-
-    trie.save(os.path.join(directory, 'trie.dat'))
+def save_state_trie(trie, fname):
+    trie.save(fname)
 
 
 def gen_netobj_queue(deque, ipnet='172.16.0.0/12'):
