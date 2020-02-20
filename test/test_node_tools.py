@@ -23,8 +23,9 @@ from node_tools.cache_funcs import get_net_status
 from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import get_state
+from node_tools.cache_funcs import handle_node_status
+from node_tools.ctlr_funcs import check_net_trie
 from node_tools.ctlr_funcs import gen_netobj_queue
-from node_tools.ctlr_funcs import handle_node_status
 from node_tools.data_funcs import get_state_values
 from node_tools.data_funcs import update_runner
 from node_tools.exceptions import MemberNodeError
@@ -591,6 +592,12 @@ def test_path_ecxeption(capfd):
     captured = capfd.readouterr()
     assert not res
     assert not captured.out
+
+
+def test_check_net_trie():
+    from node_tools import ctlr_data as ct
+    res = check_net_trie(ct.net_trie)
+    assert res is True
 
 
 # special test cases

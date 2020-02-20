@@ -11,6 +11,19 @@ from node_tools.cache_funcs import load_cache_by_type
 logger = logging.getLogger(__name__)
 
 
+def check_net_trie(trie):
+    """
+    Check shared state Trie is fresh and empty (mainly on startup)
+    :param trie: newly instantiated ``datrie.Trie(alpha_set)``
+    """
+    try:
+        assert trie.is_dirty()
+        assert list(trie) == []
+    except:
+        return False
+    return True
+
+
 def create_state_trie(directory='/tmp/state_trie'):
     import os
     import string
@@ -46,22 +59,6 @@ def gen_netobj_queue(deque, ipnet='172.16.0.0/12'):
         for net in netobjs:
             deque.append(net)
     logger.debug('{} IPv4 network objects in queue: {}'.format(len(deque), deque.directory))
-
-
-def handle_node_status(data, cache):
-    """
-    Cache handling for node status/state data
-    """
-    node_id = data.get('address')
-    logger.debug('Found node: {}'.format(node_id))
-    load_cache_by_type(cache, data, 'node')
-    logger.debug('Returned {} key is: {}'.format('node', find_keys(cache, 'node')))
-
-    nodeStatus = get_node_status(cache)
-    logger.debug('Got node state: {}'.format(nodeStatus))
-    load_cache_by_type(cache, nodeStatus, 'nstate')
-
-    return node_id
 
 
 def process_netobj(netobj):
