@@ -11,6 +11,77 @@ from node_tools.cache_funcs import load_cache_by_type
 logger = logging.getLogger(__name__)
 
 
+def name_generator(size=10, char_set=None):
+    """
+    Generate a random network name for ZT create_network_object. The
+    name returned is two substrings of <size> concatenated together
+    with an underscore. Default character set is lowercase ascii plus
+    digits, default size is 10.
+    :param size: size of each substring
+    :param char_set: character set used for sub strings
+    """
+    import random
+
+    if not char_set:
+        import string
+        chars = string.ascii_lowercase + string.digits
+    else:
+        chars = char_set
+
+    str1 = ''.join(random.choice(chars) for _ in range(size))
+    str2 = ''.join(random.choice(chars) for _ in range(size))
+    return str1 + '_' + str2
+
+
+async def create_network_object(client, net_id=None, mbr_id=None, ctlr_id=None):
+    """
+    Command wrapper for creating ZT objects under the ``controller`` endpoint.
+    Required arguments are either one of the following:
+        ``net_id`` *and* ``mbr_id`` for creating a new member object *or*
+        ``ctlr_id`` for creating a new network object
+    :param client: ztcli_api client object
+    :param net_id: network ID endpoint path
+    :param mbr_id: member ID endpoint path
+    :param ctlr_id: network controller ID
+    """
+    if net_id and mbr_id:
+        endpoint = 'controller/network/{}/member/{}'.format(net_id, mbr_id)
+        args = endpoint
+    elif ctlr_id:
+        net_name = name_generator()
+        endpoint = 'controller/network/{}'.format(ctlr_id + '______')
+        args = 'name', net_name, endpoint
+    else:
+        logger.error('One or more required arguments not found!')
+        return None
+
+    await client.set_value(args)
+    return client
+
+
+async def delete_network_object(client, net_id, mbr_id=None):
+    """
+    Command wrapper for deleting ZT objects under the ``controller`` endpoint.
+    Required arguments are either one of the following:
+        ``net_id`` *and* ``mbr_id`` for deleting a member object *or*
+        ``net_id`` for deleting a network object
+    Warning: deleting a network object is permanent.
+    :param client: ztcli_api client object
+    :param net_id: network ID endpoint path
+    :param mbr_id: member ID endpoint path
+    """
+    if mbr_id and net_id:
+        endpoint = 'controller/network/{}/member/{}'.format(net_id, mbr_id)
+    elif net_id:
+        endpoint = 'controller/network/{}'.format(net_id)
+    else:
+        logger.error('One or more required arguments not found!')
+        return None
+
+    await client.delete_thing(endpoint)
+    return client
+
+
 def check_net_trie(trie):
     """
     Check shared state Trie is fresh and empty (mainly on startup)

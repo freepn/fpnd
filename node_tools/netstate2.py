@@ -45,23 +45,15 @@ async def main():
                 await client.get_data('controller/network/{}'.format(net_id))
                 ct.net_trie[net_id] = client.data
                 await client.get_data('controller/network/{}/member'.format(net_id))
-                logger.debug('{} members found'.format(len(client.data)))
+                logger.debug('network {} has {} member(s)'.format(net_id, len(client.data)))
                 member_dict = client.data
                 for mbr_id in member_dict.keys():
-                    mbr_list.append(mbr_id)
                     # get details about each network member
                     await client.get_data('controller/network/{}/member/{}'.format(net_id, mbr_id))
-                    ct.net_trie[mbr_id + net_id] = client.data
-            logger.debug('State trie has {} networks with ctlr_id prefix'.format(len(ct.net_trie.items(ctlr_id))))
-            logger.debug('State trie has network keys: {}'.format(ct.net_trie.keys(ctlr_id)))
-            logger.debug('{} members in member list: {}'.format(len(mbr_list), mbr_list))
-            for mbr in mbr_list:
-                if ct.net_trie.has_keys_with_prefix(mbr):
-                    logger.debug('has_keys_with_prefix {} says {}'.format(mbr, ct.net_trie.has_keys_with_prefix(mbr)))
-                    logger.debug('keys for {} returns {}'.format(mbr, ct.net_trie.keys(mbr)))
-                    mbrs.append(ct.net_trie.keys(mbr)[0])
-            logger.debug('State trie has {} members with mbr_id prefix'.format(len(mbrs)))
-            logger.debug('State trie has member keys: {}'.format(mbrs))
+                    logger.debug('adding member: {}'.format(mbr_id))
+                    ct.net_trie[net_id + mbr_id] = client.data
+
+            logger.debug('TRIE: has keys: {}'.format(ct.net_trie.keys(ctlr_id)))
 
             # handle node queues
             logger.debug('{} nodes in node queue: {}'.format(len(node_q),

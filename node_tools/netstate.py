@@ -64,6 +64,8 @@ async def main():
             load_cache_by_type(cache, mbr_data, 'mbr')
             mbr_keys = find_keys(cache, 'mbr')
             logger.debug('{} member keys found'.format(len(mbr_keys)))
+            for item in mbr_data:
+                logger.debug('DATA: member has {}'.format(item))
 
             logger.debug('{} nodes in node queue: {}'.format(len(node_q),
                                                              list(node_q)))
