@@ -10,17 +10,16 @@ import diskcache as dc
 from ztcli_api import ZeroTier
 from ztcli_api import ZeroTierConnectionError
 
+from node_tools import ctlr_data as ct
+
 from node_tools.cache_funcs import find_keys
-from node_tools.cache_funcs import get_net_status
-from node_tools.cache_funcs import get_node_status
-from node_tools.cache_funcs import get_peer_status
-from node_tools.cache_funcs import load_cache_by_type
+from node_tools.cache_funcs import handle_node_status
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import handle_node_queues
 
 
-logger = logging.getLogger('netstate')
+logger = logging.getLogger('netstate2')
 
 
 async def main():
@@ -32,41 +31,30 @@ async def main():
         try:
             # get status details of the local node
             await client.get_data('status')
-            node_data = client.data
-            logger.debug('Found node: {}'.format(node_data.get('address')))
-            logger.debug('Returned {} key is: {}'.format('node', find_keys(cache, 'node')))
-            load_cache_by_type(cache, node_data, 'node')
-            nodeStatus = get_node_status(cache)
-            logger.debug('Got ctlr state: {}'.format(nodeStatus))
-            load_cache_by_type(cache, nodeStatus, 'nstate')
+            ctlr_id = handle_node_status(client.data, cache)
 
             # get all available ctlr network data
             await client.get_data('controller/network')
             logger.debug('{} networks found'.format(len(client.data)))
             net_list = client.data
-            net_data = []
-            mbr_data = []
+            mbrs = []
+            mbr_list = []
             for net_id in net_list:
                 # Get details about each network
                 await client.get_data('controller/network/{}'.format(net_id))
-                net_data.append(client.data)
+                ct.net_trie[net_id] = client.data
                 await client.get_data('controller/network/{}/member'.format(net_id))
-                # logger.debug('{} members found'.format(len(client.data)))
+                logger.debug('network {} has {} member(s)'.format(net_id, len(client.data)))
                 member_dict = client.data
                 for mbr_id in member_dict.keys():
                     # get details about each network member
                     await client.get_data('controller/network/{}/member/{}'.format(net_id, mbr_id))
-                    mbr_data.append(client.data)
+                    logger.debug('adding member: {}'.format(mbr_id))
+                    ct.net_trie[net_id + mbr_id] = client.data
 
-            load_cache_by_type(cache, net_data, 'net')
-            net_keys = find_keys(cache, 'net')
-            logger.debug('{} network keys found'.format(len(net_keys)))
-            load_cache_by_type(cache, mbr_data, 'mbr')
-            mbr_keys = find_keys(cache, 'mbr')
-            logger.debug('{} member keys found'.format(len(mbr_keys)))
-            for item in mbr_data:
-                logger.debug('DATA: member has {}'.format(item))
+            logger.debug('TRIE: has keys: {}'.format(ct.net_trie.keys(ctlr_id)))
 
+            # handle node queues
             logger.debug('{} nodes in node queue: {}'.format(len(node_q),
                                                              list(node_q)))
             if len(node_q) > 0:
@@ -77,7 +65,7 @@ async def main():
                                                                 list(staging_q)))
 
         except Exception as exc:
-            logger.error('netstate exception was: {}'.format(exc))
+            logger.error('netstate2 exception was: {}'.format(exc))
             raise exc
 
 
