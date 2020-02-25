@@ -1,85 +1,11 @@
 # coding: utf-8
 
 """ctlr-specific helper functions."""
-import logging
 
-from node_tools.cache_funcs import find_keys
-from node_tools.cache_funcs import get_node_status
-from node_tools.cache_funcs import load_cache_by_type
+import logging
 
 
 logger = logging.getLogger(__name__)
-
-
-def name_generator(size=10, char_set=None):
-    """
-    Generate a random network name for ZT create_network_object. The
-    name returned is two substrings of <size> concatenated together
-    with an underscore. Default character set is lowercase ascii plus
-    digits, default size is 10.
-    :param size: size of each substring
-    :param char_set: character set used for sub strings
-    """
-    import random
-
-    if not char_set:
-        import string
-        chars = string.ascii_lowercase + string.digits
-    else:
-        chars = char_set
-
-    str1 = ''.join(random.choice(chars) for _ in range(size))
-    str2 = ''.join(random.choice(chars) for _ in range(size))
-    return str1 + '_' + str2
-
-
-async def create_network_object(client, net_id=None, mbr_id=None, ctlr_id=None):
-    """
-    Command wrapper for creating ZT objects under the ``controller`` endpoint.
-    Required arguments are either one of the following:
-        ``net_id`` *and* ``mbr_id`` for creating a new member object *or*
-        ``ctlr_id`` for creating a new network object
-    :param client: ztcli_api client object
-    :param net_id: network ID endpoint path
-    :param mbr_id: member ID endpoint path
-    :param ctlr_id: network controller ID
-    """
-    if net_id and mbr_id:
-        endpoint = 'controller/network/{}/member/{}'.format(net_id, mbr_id)
-        args = endpoint
-    elif ctlr_id:
-        net_name = name_generator()
-        endpoint = 'controller/network/{}'.format(ctlr_id + '______')
-        args = 'name', net_name, endpoint
-    else:
-        logger.error('One or more required arguments not found!')
-        return None
-
-    await client.set_value(args)
-    return client
-
-
-async def delete_network_object(client, net_id, mbr_id=None):
-    """
-    Command wrapper for deleting ZT objects under the ``controller`` endpoint.
-    Required arguments are either one of the following:
-        ``net_id`` *and* ``mbr_id`` for deleting a member object *or*
-        ``net_id`` for deleting a network object
-    Warning: deleting a network object is permanent.
-    :param client: ztcli_api client object
-    :param net_id: network ID endpoint path
-    :param mbr_id: member ID endpoint path
-    """
-    if mbr_id and net_id:
-        endpoint = 'controller/network/{}/member/{}'.format(net_id, mbr_id)
-    elif net_id:
-        endpoint = 'controller/network/{}'.format(net_id)
-    else:
-        logger.error('One or more required arguments not found!')
-        return None
-
-    await client.delete_thing(endpoint)
-    return client
 
 
 def check_net_trie(trie):
@@ -128,13 +54,83 @@ def gen_netobj_queue(deque, ipnet='172.16.0.0/12'):
         netobjs = list(ipaddress.ip_network(ipnet).subnets(new_prefix=30))
         for net in netobjs:
             deque.append(net)
-    logger.debug('{} IPv4 network objects in queue: {}'.format(len(deque), deque.directory))
+    logger.debug('{} IPNetwork objects in queue: {}'.format(len(deque), deque.directory))
 
 
-def process_netobj(netobj):
+def name_generator(size=10, char_set=None):
+    """
+    Generate a random network name for ZT add_network_object. The
+    name returned is two substrings of <size> concatenated together
+    with an underscore. Default character set is lowercase ascii plus
+    digits, default size is 10.
+    :param size: size of each substring
+    :param char_set: character set used for sub strings
+    """
+    import random
+
+    if not char_set:
+        import string
+        chars = string.ascii_lowercase + string.digits
+    else:
+        chars = char_set
+
+    str1 = ''.join(random.choice(chars) for _ in range(size))
+    str2 = ''.join(random.choice(chars) for _ in range(size))
+    return str1 + '_' + str2
+
+
+def ipnet_get_netcfg(netobj):
     """
     Process a (python) network object into config Attrdict.
     :param subnet object: python subnet object from the netobj queue
     :return config dict: Attrdict of JSON config fragments
+    """
+    import ipaddress as ip
+    from node_tools.helper_funcs import AttrDict
+
+    if isinstance(netobj, ip.IPv4Network):
+        net_cidr = str(netobj)
+        net_pfx = '/' + str(netobj.prefixlen)
+        gate_iface = ip.IPv4Interface(str(list(netobj.hosts())[0]) + net_pfx)
+        host_iface = ip.IPv4Interface(str(list(netobj.hosts())[1]) + net_pfx)
+        host_addr = str(host_iface.ip)
+        gate_addr = str(gate_iface.ip)
+        host_cidr = str(host_iface)
+        gate_cidr = str(gate_iface)
+
+        net_routes = [{"target": "{}".format(net_cidr)},
+                      {"target": "0.0.0.0/0", "via": "{}".format(gate_addr)}]
+
+        d = {
+            "net_routes": "{}".format(net_routes),
+            "host": "{}".format(host_cidr),
+            "gateway": "{}".format(gate_cidr)
+        }
+        return AttrDict.from_nested_dict(d)
+    else:
+        raise ValueError('{} is not a valid IPv4Network object'.format(netobj))
+
+
+def netcfg_get_ipnet(addr):
+    """
+    Process member host or gateway addr string into the (python)
+    network object it belongs to.  We also assume/require the CIDR
+    prefix for ``addr`` == /30 to be compatible with gen_netobj_queue().
+    :param host_addr: IPv4 address string without mask
+    :return <netobj>: network object for host_addr
+    :raises AddressValueError:
+    """
+    import ipaddress as ip
+    from node_tools.helper_funcs import find_ipv4_iface
+
+    if find_ipv4_iface(addr + '/30', strip=False):
+        netobj = ip.ip_network(addr + '/30', strict=False)
+        return netobj
+    else:
+        raise ip.AddressValueError
+
+
+def set_network_cfg():
+    """
     """
     pass

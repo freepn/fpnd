@@ -82,6 +82,9 @@ def do_scheduling():
             delete_cache_entry(cache, key_str)
         run_subscriber_daemon()
 
+    elif node_role == 'adhoc':
+        logger.debug('Running in adhoc mode...')
+
     logger.debug('ROLE: startup role {}'.format(node_role))
 
     while True:

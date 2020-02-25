@@ -1,6 +1,10 @@
 # coding: utf-8
 """Main fpnd node module"""
 
+from node_tools.async_funcs import add_network_object as add_network_object
+from node_tools.async_funcs import delete_network_object as delete_network_object
+from node_tools.async_funcs import get_network_object_data as get_network_object_data
+from node_tools.async_funcs import get_network_object_ids as get_network_object_ids
 from node_tools.cache_funcs import find_keys as find_keys
 from node_tools.cache_funcs import get_endpoint_data as get_endpoint_data
 from node_tools.cache_funcs import get_net_status as get_net_status
@@ -45,6 +49,10 @@ __all__ = [
     'get_endpoint_data',
     'get_net_cmds',
     'get_net_status',
+    'add_network_object',
+    'delete_network_object',
+    'get_network_object_data',
+    'get_network_object_ids',
     'get_node_status',
     'get_peer_status',
     'get_state',

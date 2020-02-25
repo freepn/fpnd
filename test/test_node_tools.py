@@ -20,8 +20,10 @@ from diskcache import Index
 from node_tools.ctlr_funcs import check_net_trie
 from node_tools.ctlr_funcs import create_state_trie
 from node_tools.ctlr_funcs import gen_netobj_queue
+from node_tools.ctlr_funcs import ipnet_get_netcfg
 from node_tools.ctlr_funcs import load_state_trie
 from node_tools.ctlr_funcs import name_generator
+from node_tools.ctlr_funcs import netcfg_get_ipnet
 from node_tools.ctlr_funcs import save_state_trie
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
@@ -131,10 +133,10 @@ class CheckReturnsTest(unittest.TestCase):
         self.assertFalse(check_return_status((False, 'blarg', 1)))
 
 
-class IPv4MethodsTest(unittest.TestCase):
+class IPv4InterfaceTest(unittest.TestCase):
     """
-    Note the input for this test case is an ipaddress.IPv4Interface
-    object.
+    Note the input for this test case is the input string for a Python
+    ipaddress.IPv4Interface object.
     """
     def test_strip(self):
         """Return IPv4 addr without prefix"""
@@ -143,13 +145,42 @@ class IPv4MethodsTest(unittest.TestCase):
 
     def test_nostrip(self):
         """Return True if IPv4 addr is valid"""
-        nostrip = find_ipv4_iface('192.168.1.1/24', False)
+        nostrip = find_ipv4_iface('172.16.0.241' + '/30', False)
         self.assertTrue(nostrip)
 
     def test_bogus(self):
         """Return False if IPv4 addr is not valid"""
         bogus_addr = find_ipv4_iface('192.168.1.300/24', False)
         self.assertFalse(bogus_addr)
+
+
+class IPv4NetObjectTest(unittest.TestCase):
+    """
+    The input for this test case is a bare IPv4 address string,
+    followed by an ipaddress.IPv4Network object.
+    """
+    def test_get_valid_obj(self):
+        """Return IPv4 network object"""
+        netobj = netcfg_get_ipnet('172.16.0.241')
+        self.assertIsInstance(netobj, ipaddress.IPv4Network)
+        self.assertEqual(str(netobj), '172.16.0.240/30')
+
+    def test_get_invalid_obj(self):
+        """Raise IPv4 address error"""
+        with self.assertRaises(ipaddress.AddressValueError):
+            netobj = netcfg_get_ipnet('172.16.0.261')
+
+    def test_get_valid_cfg(self):
+        netobj = ipaddress.ip_network('172.16.0.0/30')
+        res = ipnet_get_netcfg(netobj)
+        self.assertIsInstance(res, AttrDict)
+        self.assertEqual(res.host, '172.16.0.2/30')
+        print(res)
+
+    def test_get_invalid_cfg(self):
+        """Raise IPv4Network ValueError"""
+        with self.assertRaises(ValueError):
+            res = ipnet_get_netcfg('172.16.0.0/30')
 
 
 class NetCmdTest(unittest.TestCase):

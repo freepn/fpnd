@@ -13,7 +13,6 @@ from ztcli_api import ZeroTierConnectionError
 from node_tools import ctlr_data as ct
 
 from node_tools.cache_funcs import find_keys
-from node_tools.cache_funcs import get_net_status
 from node_tools.cache_funcs import handle_node_status
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
