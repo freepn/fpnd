@@ -11,8 +11,8 @@ from ztcli_api import ZeroTierConnectionError
 
 from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import get_net_status
-from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import get_peer_status
+from node_tools.cache_funcs import handle_node_status
 from node_tools.cache_funcs import load_cache_by_type
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
@@ -32,14 +32,9 @@ async def main():
         # data_dir = get_cachedir(dir_name='fpn_data')
 
         try:
-            # get status details of the local node
+            # get status details of the local node and update state
             await client.get_data('status')
-            node_data = client.data
-            node_id = node_data.get('address')
-            logger.info('Found node: {}'.format(node_id))
-            node_key = find_keys(cache, 'node')
-            logger.debug('Returned {} key is: {}'.format('node', node_key))
-            load_cache_by_type(cache, node_data, 'node')
+            node_id = handle_node_status(client.data, cache)
 
             # get status details of the node peers
             await client.get_data('peer')
@@ -62,10 +57,6 @@ async def main():
             logger.debug('Returned network keys: {}'.format(net_keys))
             load_cache_by_type(cache, net_data, 'net')
 
-            # if we get here, we can update our state objects
-            nodeStatus = get_node_status(cache)
-            logger.debug('Got node state: {}'.format(nodeStatus))
-            load_cache_by_type(cache, nodeStatus, 'nstate')
             moonStatus = []
             peerStatus = get_peer_status(cache)
             for peer in peerStatus:

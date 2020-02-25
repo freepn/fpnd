@@ -31,7 +31,8 @@ NODE_SETTINGS = {
     u'moon_list': ['9790eaaea1'],  # list of fpn moons to orbiit
     u'home_dir': None,
     u'debug': False,
-    u'node_runner': 'nodestate.py'
+    u'node_runner': 'nodestate.py',
+    u'use_exitnode': []  # populate with IDs: ['srcnode', 'exitnode']
 }
 
 
@@ -106,9 +107,9 @@ def find_ipv4_iface(addr_string, strip=True):
     single ZT network.
     :param addr_string: IPv4 address in CIDR format
                             eg: 192.168.1.10/24
-    :param strip:
-    :return stripped addr_str: if 'strip' return IPv4 addr only, or
-    :return True: if not 'strip' or False if addr not valid
+    :param strip: check addr or return bare addr string
+    :return addr: Stripped addr_str if 'strip' return IPv4 addr only, or
+    :return boolean: True if not 'strip' or False if addr not valid
     """
     import ipaddress
     try:
@@ -272,6 +273,8 @@ def set_initial_role():
                 NODE_SETTINGS['node_role'] = 'moon'
             elif node_id in NODE_SETTINGS['ctlr_list']:
                 NODE_SETTINGS['node_role'] = 'controller'
+            elif node_id in NODE_SETTINGS['use_exitnode']:
+                NODE_SETTINGS['node_role'] = 'adhoc'
 
     except Exception as exc:
         logger.warning('get_ztcli_data exception: {}'.format(exc))
@@ -323,6 +326,8 @@ def validate_role():
     elif nodeState.fpn_id in NODE_SETTINGS['ctlr_list']:
         NODE_SETTINGS['node_role'] = 'controller'
         NODE_SETTINGS['node_runner'] = 'netstate.py'
+    elif nodeState.fpn_id in NODE_SETTINGS['use_exitnode']:
+        NODE_SETTINGS['node_role'] = 'adhoc'
     else:
         NODE_SETTINGS['node_role'] = None
     st.fpnState['fpn_role'] = NODE_SETTINGS['node_role']
@@ -336,7 +341,7 @@ def xform_state_diff(diff):
     object returned is mutable!
     :caveats: if returned k,v are tuples of (old, new) state values
               the returned keys are prefixed with `old_` and `new_`
-    :param state_data.changes obj: list of tuples with state changes
+    :param diff: state_data.changes obj (list of tuples with state changes)
     :return AttrDict: dict with state changes (with attribute access)
     """
 

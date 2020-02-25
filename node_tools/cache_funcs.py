@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def create_cache_entry(cache, data, key_str):
     """
     Load new cache entry by key type.
-    :param cache: <cache> object
+    :param cache: Index <cache> object
     :param data: payload data in a dictionary
     :param key_str: desired 'key_str', one of
                     ['node'|'peer'|'net'|'mbr'|'moon'] or
@@ -26,6 +26,25 @@ def create_cache_entry(cache, data, key_str):
     with cache.transact():
         key = cache.push(new_data, prefix=key_str)
     logger.debug('New key created for: {}'.format(key))
+
+
+def delete_cache_entry(cache, key_str):
+    """
+    Delete cache entry by key type.
+    :param cache: Index <cache> object
+    :param key_str: desired 'key_str', one of
+                    ['node'|'peer'|'net'|'mbr'|'moon'] or
+                    ['nstate'|'mstate'|'istate']
+    """
+    key_list = find_keys(cache, key_str)
+    if key_list:
+        for key in key_list:
+            logger.debug('Deleting entry for: {}'.format(key))
+            with cache.transact():
+                del cache[key]
+        logger.debug('Deleted cache items matching: {}'.format(key_str))
+    else:
+        logger.warning('No matching keys found for: {}'.format(key_str))
 
 
 def find_keys(cache, key_str):
@@ -46,7 +65,7 @@ def find_keys(cache, key_str):
 def get_endpoint_data(cache, key_str):
     """
     Get all data for key type from cache (can be endpoint or state).
-    :param cache: <cache> object
+    :param cache: Index <cache> object
     :param key_str: desired 'key_str', one of
                     ['node'|'peer'|'net'|'mbr'|'moon'] or
                     ['nstate'|'mstate'|'istate']
@@ -160,6 +179,24 @@ def get_state(cache):
                 d.update(fpn0=None, fpn1=None, fpn_id0=None, fpn_id1=None)
         st.fpnState.update(d)
         logger.debug('fpnState: {}'.format(st.fpnState))
+
+
+def handle_node_status(data, cache):
+    """
+    Cache handling/state update for node status data (common to all roles).
+    :param data: ZT client data from 'status' endpoint
+    :param cache: Index <cache> object
+    """
+    node_id = data.get('address')
+    logger.debug('Found node: {}'.format(node_id))
+    load_cache_by_type(cache, data, 'node')
+    logger.debug('Returned {} key is: {}'.format('node', find_keys(cache, 'node')))
+
+    nodeStatus = get_node_status(cache)
+    logger.debug('Got node state: {}'.format(nodeStatus))
+    load_cache_by_type(cache, nodeStatus, 'nstate')
+
+    return node_id
 
 
 def load_cache_by_type(cache, data, key_str):

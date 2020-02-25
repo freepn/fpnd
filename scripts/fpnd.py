@@ -10,16 +10,20 @@ import logging
 import schedule
 import functools
 
+import diskcache as dc
 from daemon import Daemon
 
+from node_tools.ctlr_funcs import gen_netobj_queue
+from node_tools.cache_funcs import delete_cache_entry
 from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import do_setup
+from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
 from node_tools.logger_config import setup_logging
-from node_tools.node_funcs import control_daemon
+from node_tools.node_funcs import run_subscriber_daemon
 from node_tools.node_funcs import wait_for_moon
 
 try:
@@ -33,7 +37,6 @@ except ImportError:
 logger = logging.getLogger('fpnd')
 max_age = NODE_SETTINGS['max_cache_age']
 timestamp = datetime.datetime.now(utc)  # use local time for console
-subscriber = 'msg_subscriber.py'
 
 
 def show_scheduled_jobs():
@@ -72,9 +75,15 @@ def do_scheduling():
         startup_handlers()
 
     elif node_role == 'controller':
-        logger.debug('Subscribing to node msgs: {}'.format(subscriber))
-        res = control_daemon('restart', script=subscriber)
-        logger.debug('sub daemon response: {}'.format(res))
+        netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
+        gen_netobj_queue(netobj_q, ipnet='192.168.10.0/24')
+        cache = dc.Index(get_cachedir())
+        for key_str in ['peer', 'moon', 'mstate']:
+            delete_cache_entry(cache, key_str)
+        run_subscriber_daemon()
+
+    elif node_role == 'adhoc':
+        logger.debug('Running in adhoc mode...')
 
     logger.debug('ROLE: startup role {}'.format(node_role))
 

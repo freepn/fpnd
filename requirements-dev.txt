@@ -1,5 +1,6 @@
 mock
 pytest
+pytest-asyncio
 pytest-flake8
 pytest-pep8
 pytest-cov

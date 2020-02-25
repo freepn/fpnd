@@ -13,8 +13,8 @@ from ztcli_api import ZeroTierConnectionError
 from node_tools import state_data as st
 
 from node_tools.cache_funcs import find_keys
-from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import get_peer_status
+from node_tools.cache_funcs import handle_node_status
 from node_tools.cache_funcs import load_cache_by_type
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
@@ -34,14 +34,9 @@ async def main():
         client = ZeroTier(ZT_API, loop, session)
 
         try:
-            # get status details of the local node
+            # get status details of the local node and update state
             await client.get_data('status')
-            node_data = client.data
-            node_id = node_data.get('address')
-            logger.info('Found node: {}'.format(node_id))
-            node_key = find_keys(cache, 'node')
-            logger.debug('Returned {} key is: {}'.format('node', node_key))
-            load_cache_by_type(cache, node_data, 'node')
+            node_id = handle_node_status(client.data, cache)
 
             # get status details of the node peers
             await client.get_data('peer')
@@ -51,18 +46,13 @@ async def main():
             logger.debug('Returned peer keys: {}'.format(peer_keys))
             load_cache_by_type(cache, peer_data, 'peer')
 
-            # if we get here, we can update our state objects
-            nodeStatus = get_node_status(cache)
-            logger.debug('Got node state: {}'.format(nodeStatus))
-            load_cache_by_type(cache, nodeStatus, 'nstate')
-            peerStatus = get_peer_status(cache)
-
             manage_incoming_nodes(node_q, reg_q, wait_q)
             logger.debug('{} nodes in reg queue: {}'.format(len(reg_q), list(reg_q)))
             logger.debug('{} nodes in wait queue: {}'.format(len(wait_q), list(wait_q)))
             if len(reg_q) > 0:
                 drain_reg_queue(reg_q, addr='127.0.0.1')
 
+            peerStatus = get_peer_status(cache)
             for peer in peerStatus:
                 if peer['role'] == 'LEAF':
                     if peer['identity'] not in reg_q:
