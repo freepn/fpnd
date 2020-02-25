@@ -175,7 +175,7 @@ class IPv4NetObjectTest(unittest.TestCase):
         res = ipnet_get_netcfg(netobj)
         self.assertIsInstance(res, AttrDict)
         self.assertEqual(res.host, '172.16.0.2/30')
-        print(res)
+        # print(res)
 
     def test_get_invalid_cfg(self):
         """Raise IPv4Network ValueError"""
