@@ -28,7 +28,6 @@ from node_tools.ctlr_funcs import save_state_trie
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
-from node_tools.helper_funcs import do_setup
 from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_filepath
 from node_tools.helper_funcs import set_initial_role

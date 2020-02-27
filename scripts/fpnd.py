@@ -66,26 +66,28 @@ def do_scheduling():
     schedule.run_all(1, 'base-tasks')
     validate_role()
     node_role = NODE_SETTINGS['node_role']
+    mode = NODE_SETTINGS['mode']
 
-    if node_role is None:
-        try:
-            wait_for_moon()
-        except Exception as exc:
-            logger.error('ENODATA exception {}'.format(exc))
-        startup_handlers()
+    if mode == 'peer':
+        if node_role is None:
+            try:
+                wait_for_moon()
+            except Exception as exc:
+                logger.error('ENODATA exception {}'.format(exc))
+            startup_handlers()
 
-    elif node_role == 'controller':
-        netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
-        gen_netobj_queue(netobj_q, ipnet='192.168.10.0/24')
-        cache = dc.Index(get_cachedir())
-        for key_str in ['peer', 'moon', 'mstate']:
-            delete_cache_entry(cache, key_str)
-        run_subscriber_daemon()
+        elif node_role == 'controller':
+            netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
+            gen_netobj_queue(netobj_q, ipnet='192.168.10.0/24')
+            cache = dc.Index(get_cachedir())
+            for key_str in ['peer', 'moon', 'mstate']:
+                delete_cache_entry(cache, key_str)
+            run_subscriber_daemon()
 
-    elif node_role == 'adhoc':
+    elif mode == 'adhoc':
         logger.debug('Running in adhoc mode...')
 
-    logger.debug('ROLE: startup role {}'.format(node_role))
+    logger.debug('MODE: startup mode is {} and role is {}'.format(mode, node_role))
 
     while True:
         schedule.run_pending()
@@ -101,9 +103,9 @@ class fpnDaemon(Daemon):
 
 
 if __name__ == "__main__":
-    home, pid_file, log_file, debug, msg = do_setup()
+    home, pid_file, log_file, debug, msg, mode, role = do_setup()
     setup_logging(debug, log_file)
-    logger.debug('do_setup returned Home: {} and debug: {}'.format(home, debug))
+    logger.debug('fpnd.ini set startup mode: {} and role: {}'.format(mode, role))
     setup_scheduling(max_age)
     if not home:
         home = '.'

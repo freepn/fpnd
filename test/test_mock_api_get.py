@@ -42,6 +42,7 @@ from node_tools.helper_funcs import run_event_handlers
 from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import update_state
+from node_tools.helper_funcs import validate_role
 from node_tools.msg_queues import populate_leaf_list
 from node_tools.node_funcs import get_ztcli_data
 from node_tools.node_funcs import parse_moon_data
@@ -376,6 +377,18 @@ def test_get_state():
     assert nodeState['fpn_id1'] == '3efa5cb78a8129ad'
 
 
+# def test_role_state():
+    # from node_tools import state_data as stest
+
+    # get_state(cache)
+    # nodeState = AttrDict.from_nested_dict(stest.fpnState)
+    # res = set_initial_role()
+    # assert res is None
+    # assert nodeState.fpn_role is None
+    # print(nodeState)
+    # print(NODE_SETTINGS)
+
+
 def test_get_state_values():
     from node_tools import state_data as stest
 
@@ -426,7 +439,7 @@ def test_get_state_values():
 def test_run_event_handler():
     from node_tools import state_data as st
 
-    home, pid_file, log_file, debug, msg = do_setup()
+    home, pid_file, log_file, debug, msg, mode, role = do_setup()
 
     prev_state = AttrDict.from_nested_dict(st.defState)
     next_state = AttrDict.from_nested_dict(st.defState)

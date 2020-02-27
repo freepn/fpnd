@@ -32,12 +32,13 @@ NODE_SETTINGS = {
     u'home_dir': None,
     u'debug': False,
     u'node_runner': 'nodestate.py',
+    u'mode': 'peer',
     u'use_exitnode': []  # populate with IDs: ['srcnode', 'exitnode']
 }
 
 
 def config_from_ini(file_path=None):
-    config = SafeConfigParser()
+    config = SafeConfigParser(allow_no_value=True)
     candidates = ['/etc/fpnd.ini',
                   '/etc/fpnd/fpnd.ini',
                   '/usr/lib/fpnd/fpnd.ini',
@@ -68,8 +69,11 @@ def do_setup():
 
     my_conf, msg = config_from_ini()
     if my_conf:
+        role = my_conf['Options']['role']
+        mode = my_conf['Options']['mode']
         debug = my_conf.getboolean('Options', 'debug')
         home = my_conf['Paths']['home_dir']
+        NODE_SETTINGS['mode'] = mode
         NODE_SETTINGS['debug'] = debug
         NODE_SETTINGS['home_dir'] = home
         if 'system' not in msg:
@@ -88,7 +92,7 @@ def do_setup():
         debug = False
         pid = '/tmp/fpnd.pid'
         log = '/tmp/fpnd.log'
-    return home, pid, log, debug, msg
+    return home, pid, log, debug, msg, mode, role
 
 
 def exec_full(filepath):
@@ -138,7 +142,7 @@ def get_cachedir(dir_name='fpn_cache'):
 
 def get_filepath():
     import platform
-    """Get filepath according to OS"""
+    """Get default ZeroTier HOME filepath according to OS."""
     if platform.system() == "Linux":
         return "/var/lib/zerotier-one"
     elif platform.system() == "Darwin":
@@ -149,9 +153,11 @@ def get_filepath():
         return "C:\\ProgramData\\ZeroTier\\One"
 
 
-def get_token():
-    """Get authentication token (requires root or user acl)"""
-    with open(get_filepath()+"/authtoken.secret") as file:
+def get_token(zt_home=None):
+    """Get ZeroTier authentication token (requires root or user acl)."""
+    if not zt_home:
+        zt_home = get_filepath()
+    with open(zt_home + "/authtoken.secret") as file:
         auth_token = file.read()
     return auth_token
 
@@ -266,15 +272,16 @@ def set_initial_role():
         res = get_ztcli_data(action='info')
         if res:
             node_data = res.split()
-            logger.debug('ROLE: data is {}'.format(node_data))
+            logger.debug('INITNODE: node data is {}'.format(node_data))
 
-            node_id = node_data[2]
-            if node_id in NODE_SETTINGS['moon_list']:
-                NODE_SETTINGS['node_role'] = 'moon'
-            elif node_id in NODE_SETTINGS['ctlr_list']:
-                NODE_SETTINGS['node_role'] = 'controller'
-            elif node_id in NODE_SETTINGS['use_exitnode']:
-                NODE_SETTINGS['node_role'] = 'adhoc'
+            if NODE_SETTINGS['mode'] == 'peer':
+                node_id = node_data[2]
+                if node_id in NODE_SETTINGS['moon_list']:
+                    NODE_SETTINGS['node_role'] = 'moon'
+                elif node_id in NODE_SETTINGS['ctlr_list']:
+                    NODE_SETTINGS['node_role'] = 'controller'
+            logger.debug('INITROLE: mode is {}'.format(NODE_SETTINGS['node_role']))
+            logger.debug('INITMODE: mode is {}'.format(NODE_SETTINGS['mode']))
 
     except Exception as exc:
         logger.warning('get_ztcli_data exception: {}'.format(exc))
@@ -301,15 +308,20 @@ def startup_handlers():
         logger.warning('send_announce_msg exception: {}'.format(exc))
 
 
-def update_state():
+def update_state(scr=None):
     import pathlib
+
+    if not scr:
+        scr = NODE_SETTINGS['node_runner']
+
     here = pathlib.Path(__file__).parent
-    node_scr = here.joinpath(NODE_SETTINGS['node_runner'])
+    node_scr = here.joinpath(scr)
+
     try:
         exec_full(node_scr)
         return 'OK'
     except Exception as exc:
-        logger.warning('update_state exception: {}'.format(exc))
+        logger.warning('{} exception: {}'.format(scr, exc))
         return ENODATA
 
 
@@ -320,16 +332,20 @@ def validate_role():
     from node_tools import state_data as st
     nodeState = AttrDict.from_nested_dict(st.fpnState)
 
-    if nodeState.fpn_id in NODE_SETTINGS['moon_list']:
-        NODE_SETTINGS['node_role'] = 'moon'
-        NODE_SETTINGS['node_runner'] = 'peerstate.py'
-    elif nodeState.fpn_id in NODE_SETTINGS['ctlr_list']:
-        NODE_SETTINGS['node_role'] = 'controller'
-        NODE_SETTINGS['node_runner'] = 'netstate.py'
-    elif nodeState.fpn_id in NODE_SETTINGS['use_exitnode']:
-        NODE_SETTINGS['node_role'] = 'adhoc'
-    else:
+    if NODE_SETTINGS['mode'] == 'peer':
+        if nodeState.fpn_id in NODE_SETTINGS['moon_list']:
+            NODE_SETTINGS['node_role'] = 'moon'
+            NODE_SETTINGS['node_runner'] = 'peerstate.py'
+        elif nodeState.fpn_id in NODE_SETTINGS['ctlr_list']:
+            NODE_SETTINGS['node_role'] = 'controller'
+            NODE_SETTINGS['node_runner'] = 'netstate.py'
+        else:
+            NODE_SETTINGS['node_role'] = None
+    elif NODE_SETTINGS['mode'] == 'adhoc':
         NODE_SETTINGS['node_role'] = None
+        if NODE_SETTINGS['use_exitnode'] == []:
+            logger.warning('No adhoc node IDs found in NODE_SETTINGS.')
+            logger.warning('Follow the initial setup docs for adhoc mode.')
     st.fpnState['fpn_role'] = NODE_SETTINGS['node_role']
     logger.debug('ROLE: validated role is {}'.format(st.fpnState['fpn_role']))
 

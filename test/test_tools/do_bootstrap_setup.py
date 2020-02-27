@@ -14,7 +14,6 @@ from ztcli_api import ZeroTier
 from ztcli_api import ZeroTierConnectionError as ZeroTierConnectionError
 
 from node_tools.async_funcs import add_network_object
-from node_tools.async_funcs import delete_network_object
 from node_tools.async_funcs import get_network_object_data
 from node_tools.async_funcs import get_network_object_ids
 from node_tools.cache_funcs import handle_node_status
