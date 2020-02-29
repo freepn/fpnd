@@ -33,7 +33,8 @@ NODE_SETTINGS = {
     u'debug': False,
     u'node_runner': 'nodestate.py',
     u'mode': 'peer',
-    u'use_exitnode': []  # populate with IDs: ['srcnode', 'exitnode']
+    u'use_exitnode': [],  # edit to populate with ID: ['exitnode']
+    u'nwid': None  # populated automatically in adhoc mode
 }
 
 
@@ -224,10 +225,12 @@ def net_change_handler(iface, state):
     from node_tools.network_funcs import run_net_cmd
 
     fpn_home = NODE_SETTINGS['home_dir']
-
     cmd = get_net_cmds(fpn_home, iface, state)
+
     if cmd:
-        logger.debug('get_net_cmds returned: {}'.format(cmd))
+        if NODE_SETTINGS['mode'] == 'adhoc' and NODE_SETTINGS['nwid']:
+            cmd.append(NODE_SETTINGS['nwid'])
+        logger.debug('run_net_cmd using cmd: {}'.format(cmd))
         schedule.every(1).seconds.do(run_net_cmd, cmd).tag('net-change')
     else:
         logger.error('get_net_cmds returned None')

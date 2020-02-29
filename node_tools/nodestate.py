@@ -71,6 +71,8 @@ async def main():
             netStatus = get_net_status(cache)
             logger.debug('Got net state: {}'.format(netStatus))
             load_cache_by_type(cache, netStatus, 'istate')
+            if NODE_SETTINGS['mode'] == 'adhoc' and not NODE_SETTINGS['nwid']:
+                NODE_SETTINGS['nwid'] = netStatus[0]['identity']
 
         except Exception as exc:
             logger.error(str(exc))

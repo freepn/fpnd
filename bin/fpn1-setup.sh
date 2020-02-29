@@ -28,12 +28,18 @@ exec 2> >(tee -ia /tmp/fpn1-setup-${DATE}_error.log)
 # on eth0 UP but null, eg, this is needed on espressobin
 #ETH0_NULL="lan1"
 
-ZT_UP=$(/etc/init.d/zerotier status | grep -o started)
-if [[ $ZT_UP != "started" ]]; then
-    [[ -n $VERBOSE ]] && echo "FPN zerotier service is not running!!"
-    [[ -n $VERBOSE ]] && echo "Please start the zerotier service and then re-run this script."
-    exit 1
-fi
+#DISTRO=$(cat /etc/os-release | grep ^ID= | cut -f2 -d=)
+#if [[ $DISTRO == ubuntu || $DISTRO == debian ]]; then
+    #ZT_UP=$(service zerotier-one status | grep -o active)
+#else
+    #ZT_UP=$(/etc/init.d/zerotier status | grep -o started)
+#fi
+
+#if [[ $ZT_UP != "started" ]]; then
+    #[[ -n $VERBOSE ]] && echo "FPN zerotier service is not running!!"
+    #[[ -n $VERBOSE ]] && echo "Please start the zerotier service and then re-run this script."
+    #exit 1
+#fi
 
 zt_route_tgts=( $(ip route show | grep zt | cut -d" " -f3) )
 num_zt_tgts=${#zt_route_tgts[@]}
@@ -42,17 +48,13 @@ if ((num_zt_tgts < 1)); then
     echo "No FPN networks found!!"
     echo "Has this device joined a network yet?"
     exit 1
-elif ((num_zt_tgts < 2)); then
-    echo "Only 1 FPN network found!!"
-    echo "Has this device joined a second network yet?"
-    exit 1
-elif ((num_zt_tgts = 2)); then
-    [[ -n $VERBOSE ]] && echo "Two FPN networks found, parsing network IDs..."
+elif ((num_zt_tgts > 0)); then
+    [[ -n $VERBOSE ]] && echo "FPN networks found, parsing network IDs..."
 fi
 
 while read -r line; do
     [[ -n $VERBOSE ]] && echo "Checking network..."
-    LAST_OCTET=$(echo "$line" | cut -d"/" -f2 | cut -d"," -f2 | cut -d'.' -f4)
+    LAST_OCTET=$(echo "$line" | cut -d" " -f9 | cut -d"/" -f1 | cut -d"." -f4)
     ZT_NET_ID=$(echo "$line" | cut -d" " -f3)
     if [[ $LAST_OCTET = 1 ]]; then
         ZT_SRC_NETID="${ZT_NET_ID}"
@@ -107,9 +109,9 @@ fi
 
 # setup nat/masq to forward outbound/return traffic
 iptables -t nat -A POSTROUTING -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -j SNAT --to-source "${INET_ADDRESS}"
-iptables -A FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 80 -j ACCEPT
+#iptables -A FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 80 -j ACCEPT
 iptables -A FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 443 -j ACCEPT
-iptables -A FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
+#iptables -A FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
 iptables -A FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 443 -j ACCEPT
 
 [[ -n $VERBOSE ]] && echo ""

@@ -25,12 +25,12 @@ exec 2> >(tee -ia /tmp/fpn0-setup-${DATE}_error.log)
 
 #VERBOSE="anything"
 
-ZT_UP=$(/etc/init.d/zerotier status | grep -o started)
-if [[ $ZT_UP != "started" ]]; then
-    echo "FPN zerotier service is not running!!"
-    echo "Please start the zerotier service and re-run this script."
-    exit 1
-fi
+#ZT_UP=$(/etc/init.d/zerotier status | grep -o started)
+#if [[ $ZT_UP != "started" ]]; then
+    #echo "FPN zerotier service is not running!!"
+    #echo "Please start the zerotier service and re-run this script."
+    #exit 1
+#fi
 
 [[ -n $VERBOSE ]] && echo "Checking kernel rp_filter setting..."
 RP_NEED="2"
@@ -45,7 +45,7 @@ fi
 
 while read -r line; do
     [[ -n $VERBOSE ]] && echo "Checking network..."
-    LAST_OCTET=$(echo "$line" | cut -d"/" -f2 | cut -d"," -f2 | cut -d'.' -f4)
+    LAST_OCTET=$(echo "$line" | cut -d" " -f9 | cut -d"/" -f1 | cut -d"." -f4)
     ZT_NET_ID=$(echo "$line" | cut -d" " -f3)
     if [[ $LAST_OCTET != 1 ]]; then
         ZT_NETWORK="${ZT_NET_ID}"
@@ -117,11 +117,11 @@ sleep 2
 
 # Mark these packets so that ip can route web traffic through fpn0
 iptables -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
-iptables -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
+#iptables -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
 
 # now rewrite the src-addr using snat
 iptables -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
-iptables -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
+#iptables -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
 
 [[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then

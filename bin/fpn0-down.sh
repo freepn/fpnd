@@ -32,7 +32,7 @@ fi
 
 while read -r line; do
     [[ -n $VERBOSE ]] && echo "Checking network..."
-    LAST_OCTET=$(echo "$line" | cut -d"/" -f2 | cut -d"," -f2 | cut -d'.' -f4)
+    LAST_OCTET=$(echo "$line" | cut -d" " -f9 | cut -d"/" -f1 | cut -d"." -f4)
     ZT_NET_ID=$(echo "$line" | cut -d" " -f3)
     if [[ $LAST_OCTET != 1 ]]; then
         ZT_NETWORK="${ZT_NET_ID}"
@@ -98,10 +98,10 @@ fi
 
 [[ -n $VERBOSE ]] && echo "Deleting nat and mangle rules..."
 iptables -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
-iptables -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
+#iptables -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
 
 iptables -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
-iptables -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
+#iptables -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
 
 [[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then
