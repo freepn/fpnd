@@ -32,7 +32,7 @@ from node_tools.msg_queues import valid_announce_msg as valid_announce_msg
 from node_tools.network_funcs import drain_reg_queue as drain_reg_queue
 from node_tools.network_funcs import get_net_cmds as get_net_cmds
 from node_tools.network_funcs import run_net_cmd as run_net_cmd
-from node_tools.node_funcs import get_ztcli_data as get_ztcli_data
+from node_tools.node_funcs import run_ztcli_cmd as run_ztcli_cmd
 from node_tools.node_funcs import wait_for_moon as wait_for_moon
 from node_tools.exceptions import MemberNodeError as MemberNodeError
 from node_tools.exceptions import MemberNodeNoDataError as MemberNodeNoDataError
@@ -57,7 +57,6 @@ __all__ = [
     'get_peer_status',
     'get_state',
     'get_token',
-    'get_ztcli_data',
     'handle_announce_msg',
     'handle_node_queues',
     'json_dump_file',
@@ -67,6 +66,7 @@ __all__ = [
     'populate_leaf_list',
     'run_event_handlers',
     'run_net_cmd',
+    'run_ztcli_cmd',
     'set_initial_role',
     'update_runner',
     'update_state',

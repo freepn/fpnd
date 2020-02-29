@@ -20,7 +20,7 @@ from node_tools.cache_funcs import load_cache_by_type
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
-from node_tools.node_funcs import get_ztcli_data
+from node_tools.node_funcs import run_ztcli_cmd
 
 
 logger = logging.getLogger('nodestate')
@@ -47,7 +47,7 @@ async def main():
                 load_cache_by_type(cache, peer_data, 'peer')
 
                 # check for moon data (only exists for moons we orbit)
-                moon_data = get_ztcli_data(action='listmoons')
+                moon_data = run_ztcli_cmd(action='listmoons')
                 if moon_data:
                     load_cache_by_type(cache, moon_data, 'moon')
 

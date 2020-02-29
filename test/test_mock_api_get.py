@@ -44,7 +44,7 @@ from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import validate_role
 from node_tools.msg_queues import populate_leaf_list
-from node_tools.node_funcs import get_ztcli_data
+from node_tools.node_funcs import run_ztcli_cmd
 from node_tools.node_funcs import parse_moon_data
 from node_tools.node_funcs import run_moon_cmd
 from node_tools.node_funcs import run_subscriber_daemon
@@ -128,7 +128,7 @@ def test_net_client_status():
 
 
 def test_get_moon_data():
-    res = get_ztcli_data(action='listmoons')
+    res = run_ztcli_cmd(action='listmoons')
     # print(res)
     assert isinstance(res, list)
 
@@ -141,7 +141,7 @@ def test_parse_moon_data():
 
 
 def test_get_node_info():
-    res = get_ztcli_data(action='info')
+    res = run_ztcli_cmd(action='info')
     assert res is None
 
 

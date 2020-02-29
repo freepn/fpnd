@@ -41,15 +41,23 @@ def control_daemon(action, script='msg_responder.py'):
     return result
 
 
-def get_ztcli_data(command='zerotier-cli', action='listmoons'):
+def run_ztcli_cmd(command='zerotier-cli', action='listmoons', extra=None):
     """
-    zerotier-cli command wrapper for ``listmoons`` and ``info``
-    commands.
+    Command wrapper for zerotier commands ``listmoons``, ``info``, etc,
+    where normal output is a text string (some actions such as ``listmoons``
+    will return a JSON string).
+    :param command: zerotier command to run, eg, ``zerotier-cli``
+    :param action: action for command to run, eg, ``info``
+    :param extra: extra args for command/action, eg, <network_id>
+    :return result: text or JSON encoded string
     """
     import json
     import subprocess
 
     cmd = [command, action]
+    if extra:
+        cmd = [command, action, extra]
+
     result = None
     if action == 'listmoons':
         # always return a list (empty if no moons)
@@ -188,12 +196,12 @@ def wait_for_moon(timeout=15):
             break
 
     count = 0
-    moon_metadata = get_ztcli_data(action='listmoons')
+    moon_metadata = run_ztcli_cmd(action='listmoons')
 
     while not len(moon_metadata) > 0 and count < timeout:
         count += 1
         time.sleep(1)
-        moon_metadata = get_ztcli_data(action='listmoons')
+        moon_metadata = run_ztcli_cmd(action='listmoons')
         logger.debug('Moon data size: {}'.format(len(moon_metadata)))
     logger.debug('Moon sync took {} sec'.format(count))
     logger.debug('Moon data: {}'.format(moon_metadata))

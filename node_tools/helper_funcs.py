@@ -269,10 +269,10 @@ def set_initial_role():
     """
     Set initial node role from node ID if ID is a known infra node.
     """
-    from node_tools.node_funcs import get_ztcli_data
+    from node_tools.node_funcs import run_ztcli_cmd
 
     try:
-        res = get_ztcli_data(action='info')
+        res = run_ztcli_cmd(action='info')
         if res:
             node_data = res.split()
             logger.debug('INITNODE: node data is {}'.format(node_data))
@@ -287,7 +287,7 @@ def set_initial_role():
             logger.debug('INITMODE: mode is {}'.format(NODE_SETTINGS['mode']))
 
     except Exception as exc:
-        logger.warning('get_ztcli_data exception: {}'.format(exc))
+        logger.warning('run_ztcli_cmd exception: {}'.format(exc))
 
 
 def startup_handlers():
