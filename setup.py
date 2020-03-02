@@ -52,9 +52,9 @@ setup(
         'datrie',
         'diskcache @ git+https://github.com/grantjenks/python-diskcache@v4.1.0',
         'nanoservice @ git+https://github.com/freepn/nanoservice@0.7.2p1',
-        'python-daemon @ git+https://github.com/freepn/python-daemon@0.2.1',
-        'schedule @ git+https://github.com/freepn/schedule@0.6.0p1',
-        'ztcli-async @ git+https://github.com/freepn/ztcli-async@0.0.3',
+        'python-daemon @ git+https://github.com/freepn/python-daemon@0.2.2',
+        'schedule @ git+https://github.com/freepn/schedule@0.6.0p2',
+        'ztcli-async @ git+https://github.com/freepn/ztcli-async@0.0.7',
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

@@ -44,10 +44,10 @@ from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import validate_role
 from node_tools.msg_queues import populate_leaf_list
-from node_tools.node_funcs import run_ztcli_cmd
 from node_tools.node_funcs import parse_moon_data
 from node_tools.node_funcs import run_moon_cmd
 from node_tools.node_funcs import run_subscriber_daemon
+from node_tools.node_funcs import run_ztcli_cmd
 from node_tools.node_funcs import wait_for_moon
 from node_tools.sched_funcs import check_return_status
 
@@ -127,9 +127,18 @@ def test_net_client_status():
         assert status == 'OK'
 
 
+def test_node_info():
+    res = run_ztcli_cmd(action='info')
+    assert res is None
+
+
+def test_join_args():
+    res = run_ztcli_cmd(action='join', extra='b6079f73ca8129ad')
+    assert res is None
+
+
 def test_get_moon_data():
     res = run_ztcli_cmd(action='listmoons')
-    # print(res)
     assert isinstance(res, list)
 
 
@@ -374,7 +383,7 @@ def test_get_state():
     assert nodeState.fpn1
     assert nodeState.moon_id0 == 'deadd738e6'
     assert nodeState['fpn_id0'] == 'b6079f73c63cea29'
-    assert nodeState['fpn_id1'] == '3efa5cb78a8129ad'
+    assert nodeState['fpn_id1'] == 'b6079f73ca8129ad'
 
 
 # def test_role_state():

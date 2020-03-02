@@ -49,7 +49,7 @@ def run_ztcli_cmd(command='zerotier-cli', action='listmoons', extra=None):
     :param command: zerotier command to run, eg, ``zerotier-cli``
     :param action: action for command to run, eg, ``info``
     :param extra: extra args for command/action, eg, <network_id>
-    :return result: text or JSON encoded string
+    :return result: one of ``str``, ``[]``, or None
     """
     import json
     import subprocess
