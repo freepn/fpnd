@@ -34,6 +34,7 @@ setup(
                       'bin/fpn0-setup.sh',
                       'bin/fpn1-down.sh',
                       'bin/fpn1-setup.sh',
+                      'bin/show-geoip.sh',
                       'etc/fpnd.ini',
                       'scripts/fpnd.py',
                       'scripts/msg_responder.py',
