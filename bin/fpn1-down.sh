@@ -21,6 +21,9 @@ exec 2> >(tee -ia /tmp/fpn1-setup-${DATE}_error.log)
 # uncomment for more output
 #VERBOSE="anything"
 
+# set allowed ports
+ports_to_fwd="http https domain ntp ssh submission imaps ircs ircs-u"
+
 # uncomment AND set if you have a weird interface name that depends
 # on eth0 UP but null, eg, this is needed on espressobin
 #ETH0_NULL="lan1"

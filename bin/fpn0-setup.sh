@@ -25,6 +25,9 @@ exec 2> >(tee -ia /tmp/fpn0-setup-${DATE}_error.log)
 
 #VERBOSE="anything"
 
+# set allowed ports
+ports_to_fwd="http https domain ntp ssh submission imaps ircs ircs-u"
+
 #ZT_UP=$(/etc/init.d/zerotier status | grep -o started)
 #if [[ $ZT_UP != "started" ]]; then
     #echo "FPN zerotier service is not running!!"

@@ -19,6 +19,9 @@ exec 2> >(tee -ia /tmp/fpn0-down-${DATE}_error.log)
 
 #VERBOSE="anything"
 
+# set allowed ports
+ports_to_fwd="http https domain ntp ssh submission imaps ircs ircs-u"
+
 [[ -n $VERBOSE ]] && echo "Checking kernel rp_filter setting..."
 RP_NEED="1"
 RP_ORIG="$(sysctl net.ipv4.conf.all.rp_filter | cut -f3 -d' ')"
