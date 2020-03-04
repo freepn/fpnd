@@ -20,6 +20,7 @@ from node_tools.cache_funcs import load_cache_by_type
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
+from node_tools.network_funcs import do_peer_check
 from node_tools.node_funcs import run_ztcli_cmd
 
 
@@ -71,8 +72,23 @@ async def main():
             netStatus = get_net_status(cache)
             logger.debug('Got net state: {}'.format(netStatus))
             load_cache_by_type(cache, netStatus, 'istate')
-            if NODE_SETTINGS['mode'] == 'adhoc' and not NODE_SETTINGS['nwid']:
-                NODE_SETTINGS['nwid'] = netStatus[0]['identity']
+
+            if NODE_SETTINGS['mode'] == 'adhoc':
+                if not NODE_SETTINGS['nwid']:
+                    logger.warning('ADHOC: network ID not set {}'.format(NODE_SETTINGS['nwid']))
+                else:
+                    logger.debug('ADHOC: found network ID {}'.format(NODE_SETTINGS['nwid']))
+                if netStatus != []:
+                    nwid = netStatus[0]['identity']
+                    addr = netStatus[0]['gateway']
+                    nwstat = netStatus[0]['status']
+                    logger.debug('ADHOC: found network with ID {}'.format(nwid))
+                    logger.debug('ADHOC: network status is {}'.format(nwstat))
+                    if addr:
+                        res = do_peer_check(addr)
+
+                # elif NODE_SETTINGS['nwid']:
+                #     run_ztcli_cmd(action='join', extra=NODE_SETTINGS['nwid'])
 
         except Exception as exc:
             logger.error(str(exc))

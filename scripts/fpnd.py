@@ -23,6 +23,8 @@ from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
 from node_tools.logger_config import setup_logging
+from node_tools.node_funcs import do_cleanup
+from node_tools.node_funcs import do_startup
 from node_tools.node_funcs import run_subscriber_daemon
 from node_tools.node_funcs import wait_for_moon
 
@@ -86,6 +88,12 @@ def do_scheduling():
 
     elif mode == 'adhoc':
         logger.debug('Running in adhoc mode...')
+        if NODE_SETTINGS['nwid']:
+            logger.debug('ADHOC: found network {}'.format(NODE_SETTINGS['nwid']))
+            do_startup(NODE_SETTINGS['nwid'])
+        else:
+            logger.error('No network ID found in NODE_SETTINGS!!')
+            logger.error('Have you created a network yet?')
 
     logger.debug('MODE: startup mode is {} and role is {}'.format(mode, node_role))
 
@@ -96,6 +104,10 @@ def do_scheduling():
 
 # Inherit from Daemon class
 class fpnDaemon(Daemon):
+    def cleanup(self):
+
+        do_cleanup()
+
     # implement run method
     def run(self):
 
@@ -115,7 +127,7 @@ if __name__ == "__main__":
         if arg in ('start'):
             logger.info(msg)
         if arg in ('start', 'stop', 'restart'):
-            d = fpnDaemon(pid_file, home_dir=home, verbose=0)
+            d = fpnDaemon(pid_file, home_dir=home, verbose=0, use_cleanup=True)
             getattr(d, arg)()
     else:
         print("usage: %s start|stop|restart" % sys.argv[0])

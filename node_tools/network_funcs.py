@@ -12,6 +12,38 @@ from node_tools.sched_funcs import run_until_success
 logger = logging.getLogger(__name__)
 
 
+def do_peer_check(ztaddr):
+    """
+    ADHOC MODE
+    Try and ping the gateway/peer and goose the network if down.
+    :param addr: target addr
+    """
+    import os
+    from node_tools.ctlr_funcs import netcfg_get_ipnet
+
+    addr = ztaddr
+
+    try:
+        netobj = netcfg_get_ipnet(ztaddr)
+    except ValueError as exc:
+        logger.error('netobj error is {}'.format(exc))
+        raise exc
+
+    for host in list(netobj.hosts()):
+        if str(host) != ztaddr:
+            addr = str(host)
+            break
+            logger.debug('ADHOC: found target IP addr {}'.format(addr))
+
+    home = NODE_SETTINGS['home_dir']
+    cmd_file = os.path.join(home, 'ping_gateway.sh')
+    cmd = [cmd_file, addr]
+
+    result = do_net_cmd(cmd)
+    logger.debug('do_gateway_check {} returned: {}'.format(cmd, result))
+    return result
+
+
 def drain_reg_queue(reg_q, addr=None):
     import time
     from nanoservice import Publisher
@@ -93,6 +125,18 @@ def get_net_cmds(bin_dir, iface=None, state=False):
 
 @run_until_success()
 def run_net_cmd(cmd):
+    """
+    Command wrapper for decorated fpn0/fpn1 net command.
+    """
+    result = do_net_cmd(cmd)
+    logger.debug('run net cmd {} returned tuple: {}'.format(cmd, result))
+    return result
+
+
+def do_net_cmd(cmd):
+    """
+    Actual net command runner (see above).
+    """
     import os
     import subprocess
 
@@ -107,7 +151,8 @@ def run_net_cmd(cmd):
         b = subprocess.Popen(cmd,
                              stderr=subprocess.PIPE,
                              stdout=subprocess.PIPE,
-                             shell=False)
+                             shell=False,
+                             env={'VERBOSE': ''})
 
         out, err = b.communicate()
         retcode = b.returncode
@@ -119,6 +164,12 @@ def run_net_cmd(cmd):
             state = True
             res = out
             logger.info('net cmd {} result: {}'.format(tail, out.decode().strip()))
+        elif retcode == 1:
+            if 'setup' in tail:
+                msg = out
+            else:
+                msg = err
+            logger.error('net cmd {} msg: {}'.format(tail, msg.decode().strip()))
 
     except Exception as exc:
         logger.error('net cmd {} exception: {}'.format(tail, exc))
