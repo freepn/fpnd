@@ -35,6 +35,8 @@ setup(
                       'bin/fpn1-down.sh',
                       'bin/fpn1-setup.sh',
                       'bin/show-geoip.sh',
+                      'bin/ping_google.sh',
+                      'bin/ping_gateway.sh',
                       'etc/fpnd.ini',
                       'scripts/fpnd.py',
                       'scripts/msg_responder.py',
