@@ -39,6 +39,7 @@ from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import handle_node_queues
 from node_tools.msg_queues import manage_incoming_nodes
 from node_tools.msg_queues import valid_announce_msg
+from node_tools.network_funcs import do_peer_check
 from node_tools.network_funcs import get_net_cmds
 from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import run_subscriber_daemon
@@ -215,6 +216,27 @@ class NetCmdTest(unittest.TestCase):
         cmd = get_net_cmds(self.bin_dir, 'fpn1', True)
         path, name = os.path.split(cmd[0])
         self.assertEqual(name, 'fpn1-setup.sh')
+
+
+class NetPeerCheckTest(unittest.TestCase):
+    """
+    Running an actual ``ping`` in a unittest is somewhat problematic
+    """
+    def setUp(self):
+        super(NetPeerCheckTest, self).setUp()
+        NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'bin')
+        # self.bin_dir = os.path.join(os.getcwd(), 'bin')
+
+    def test_do_peer_check_bad_addr(self):
+        """Raise IPv4 address error"""
+        with self.assertRaises(ipaddress.AddressValueError):
+            res = do_peer_check('192.168.0.261')
+
+    def test_do_peer_check_good_addr(self):
+        """Permission error in test env"""
+        res = do_peer_check('172.16.0.1')
+        self.assertIsInstance(res, tuple)
+        self.assertEqual(res, (False, b'', 1))
 
 
 class QueueHandlingTest(unittest.TestCase):
@@ -470,6 +492,13 @@ class StateChangeTest(unittest.TestCase):
         self.assertTrue(self.state['online'])
         self.assertFalse(self.state['fpn0'])
         self.assertTrue(self.state['fpn1'])
+
+    def test_state_string_vars(self):
+        self.state.update(online=True, fpn1=True)
+        for iface in ['fpn0', 'fpn1']:
+            if self.state[iface]:
+                self.assertEqual(iface, 'fpn1')
+                # print(iface)
 
 
 class XformStateDataTest(unittest.TestCase):

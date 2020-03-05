@@ -8,9 +8,10 @@ except ImportError:
     from distutils.core import setup
 
 
-__version__ = '0.7.2-4'
+__version__ = '0.7.2-6'
 
 # make setuptools happy with PEP 440-compliant post version
+# (enable this for patch releases)
 REL_TAG = __version__.replace('-', 'p')
 
 FPND_DOWNLOAD_URL = (
@@ -35,6 +36,8 @@ setup(
                       'bin/fpn1-down.sh',
                       'bin/fpn1-setup.sh',
                       'bin/show-geoip.sh',
+                      'bin/ping_google.sh',
+                      'bin/ping_gateway.sh',
                       'etc/fpnd.ini',
                       'scripts/fpnd.py',
                       'scripts/msg_responder.py',

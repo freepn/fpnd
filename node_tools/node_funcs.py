@@ -41,6 +41,74 @@ def control_daemon(action, script='msg_responder.py'):
     return result
 
 
+def cycle_adhoc_net(nwid):
+    """
+    Run the leave/join cycle on adhoc network ID
+    """
+    import time
+
+    actions = ['leave', 'join']
+
+    for act in actions:
+        res = run_ztcli_cmd(action=act, extra=nwid)
+        logger.debug('action {} returned: {}'.format(act, res))
+        time.sleep(1)
+
+
+def do_cleanup():
+    """
+    Run network cleanup commands via daemon cleanup hook.
+    """
+    from node_tools.helper_funcs import AttrDict
+    from node_tools.network_funcs import do_net_cmd
+    from node_tools.network_funcs import get_net_cmds
+
+    from node_tools import state_data as st
+
+    state = AttrDict.from_nested_dict(st.fpnState)
+    fpn_home = NODE_SETTINGS['home_dir']
+    nets = ['fpn_id0', 'fpn_id1']
+    ifaces = ['fpn0', 'fpn1']
+
+    for iface, net in zip(ifaces, nets):
+        if state[iface]:
+            logger.debug('CLEANUP: shutting down {}'.format(iface))
+            cmd = get_net_cmds(fpn_home, iface)
+            res = do_net_cmd(cmd)
+            logger.debug('CLEANUP: leaving network ID: {}'.format(net))
+            res = run_ztcli_cmd(action='leave', extra=state[net])
+            logger.debug('CLEANUP: action leave returned: {}'.format(res))
+
+
+def do_startup(nwid):
+    """
+    Run network startup command once before the state runner is
+    available (if we have a network and interface up).
+    """
+    import time
+
+    from node_tools.helper_funcs import AttrDict
+    from node_tools.network_funcs import do_net_cmd
+    from node_tools.network_funcs import get_net_cmds
+
+    from node_tools import state_data as st
+
+    run_ztcli_cmd(action='join', extra=nwid)
+    # time.sleep(1)
+
+    state = AttrDict.from_nested_dict(st.fpnState)
+    fpn_home = NODE_SETTINGS['home_dir']
+    nets = ['fpn_id0', 'fpn_id1']
+    ifaces = ['fpn0', 'fpn1']
+
+    for iface, net in zip(ifaces, nets):
+        if st.fpnState[iface] and net == nwid:
+            logger.debug('STARTUP: running setup on {}'.format(iface))
+            cmd = get_net_cmds(fpn_home, iface, True)
+            logger.debug('run_net_cmd using cmd: {}'.format(cmd))
+            schedule.every(1).seconds.do(run_net_cmd, cmd).tag('net-change')
+
+
 def run_ztcli_cmd(command='zerotier-cli', action='listmoons', extra=None):
     """
     Command wrapper for zerotier commands ``listmoons``, ``info``, etc,
