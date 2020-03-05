@@ -80,7 +80,7 @@ async def main():
                     logger.debug('ADHOC: found network ID {}'.format(NODE_SETTINGS['nwid']))
                 if netStatus != []:
                     nwid = netStatus[0]['identity']
-                    addr = netStatus[0]['gateway']
+                    addr = netStatus[0]['ztaddress']
                     nwstat = netStatus[0]['status']
                     logger.debug('ADHOC: found network with ID {}'.format(nwid))
                     logger.debug('ADHOC: network status is {}'.format(nwstat))
