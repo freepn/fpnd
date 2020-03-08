@@ -10,8 +10,8 @@ Setup process for adhoc mode
 
 * install fpnd, set adhoc mode (both hosts)
 
-  + gentoo: add the overlay and ``emerge fpnd`` (``USE="adhoc"`` should be enabled by default)
-  + ubuntu: add the PPA and ``apt-get install fpnd``
+  + gentoo: `add the overlay`_ and ``emerge fpnd`` (``USE="adhoc"`` should be enabled by default)
+  + ubuntu: `add the PPA`_ and ``apt-get install fpnd``
 
     - edit ``/etc/fpnd.ini`` and change ``mode = peer`` to ``mode = adhoc``
 
@@ -42,6 +42,8 @@ Setup process for adhoc mode
       * repeat the above steps with your **mobile** node ID
 
 
+.. _add the PPA: https://github.com/freepn/fpnd/blob/master/README.rst#getting-started
+.. _add the overlay: https://github.com/freepn/python-overlay/blob/master/README.rst
 .. _my.zerotier.com: https://my.zerotier.com/
 
 .. note:: The above network Members will continue to show **Never** in the
