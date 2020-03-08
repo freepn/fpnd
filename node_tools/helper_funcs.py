@@ -34,7 +34,7 @@ NODE_SETTINGS = {
     u'node_runner': 'nodestate.py',
     u'mode': 'peer',
     u'use_exitnode': [],  # edit to populate with ID: ['exitnode']
-    u'nwid': None  # populated automatically in adhoc mode
+    u'nwid': None  # adhoc mode network ID goes here
 }
 
 

@@ -20,26 +20,79 @@
     :target: https://codeclimate.com/github/freepn/fpnd
 
 
-What is FreePN?  FreePN is aiming to be the first free, fast, anonymous,
-unlimited-bandwidth peer-to-peer proxy application.
+What FreePN is (and is not)
+===========================
 
-Yes, it's "free" (as in FOSS) and it's sort of like a VPN (except p2p).
-FreePN is essentially an anonymizing p2p internet proxy using a "virtual
-private cloud" of peers.
+Yes, it's "free" (as in FOSS) and it's sort of like a VPN.  FreePN is
+essentially an anonymizing p2p internet proxy using a "virtual private
+cloud" of peers, and the ``fpnd`` tools are the automation layer on top
+of the ZeroTier network virtualization engine that makes it happen.
+
+Freepn is *not* a full VPN solution (eg, openvpn or vpnc) and does not
+require setup of any pre-shared keys or certs.  Traffic over Freepn
+network links is always encrypted, however, since each network link is
+independent, the traffic must be decrypted as it passes through each
+peer host.  When running in "peer" mode, each peer is assumed to be an
+untrusted host; when running in "adhoc" mode, the hosts can be assumed
+to be trusted hosts (as they belong to the user).
+
+For now, the prototype daemon ``fpnd`` runs as root, since we require
+access to the following privileged interfaces on each peer host:
+
+* zerotier API via access token (requires tun/tap on Linux)
+* kernel routing and iptables/netfilter
 
 
-.. note:: This project is currently in a pre-Alpha state, with the
-          requisite level of churn.  Stay tuned for the Alpha release!
+Prototype release targets
+-------------------------
+
+The Alpha release target is "peer mode", which puts the above cloud of
+peers between you and the internet.  Each peer link provides an isolated,
+private, and encrypted path to the internet, with a new/random peer for
+each session.
+
+The pre-Alpha release target (starting with 0.7.2.p6) is "adhoc mode",
+which addresses a more specific use case for routing (your own) remote
+traffic through (your own) trusted internet connection.  In (older) jargon
+this may have been called a `kluge`_ or involve some `ad-hockery`_ (or could
+even be a `Rube-Goldberg Device`_) but in today's "agile" world this is
+called a feature!
+
+
+.. note:: Adhoc mode requires a one-time `manual setup`_ of your devices and
+          a ZeroTier network; be sure and stay tuned for the (fully automated)
+          Alpha release!
+
+
+.. _kluge: https://web.archive.org/web/20130827121341/http://cosman246.com/jargon.html#kluge
+.. _ad-hockery: https://web.archive.org/web/20130827121341/http://cosman246.com/jargon.html#ad-hockery
+.. _Rube-Goldberg Device: https://en.wikipedia.org/wiki/Rube_Goldberg_machine
+.. _manual setup: README_adhoc-mode.rst
+
+
+What does it do?
+----------------
+
+Currently all web traffic (ie, ports 80 and 443) is routed over virtual
+network links to an "exit" peer (although other ports may be added/dropped
+in future releases).  In adhoc mode, the default network rules allow all
+traffic, however, only the ports above are automatically routed over FPN
+network links.  **Do** use ``https`` for everything (*especially* anything
+sensitive/private) and **don't** use ``http`` for anything.  At all.  Period.
+
+* adhoc mode - *you* own the network link and the peers
+* peer mode - *you* only control your own host (peers are random,
+  networks are auto-assigned and configured)
 
 
 Getting Started
 ===============
 
-Not much to see here yet except test output; at this point we only target
+Adhoc mode is now enabled in the current release; at this point we only target
 Linux with at least `Python`_ 3.5.  Packages are available for Ubuntu and
 Gentoo using the live ebuild in our `python overlay`_ and a `PPA on Launchpad`_.
 The PPA sources can also be used to build Debian packages, however, we
-don't (yet) support any "official" Debian packages.
+don't (yet) support any "official" Debian releases.
 
 
 .. _PPA on Launchpad: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
@@ -88,6 +141,13 @@ this PPA to your system", eg, ``41113ed57774ed19`` for `Embedded device ppa`_.
 .. _Embedded device ppa: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
 
 
+Finally, install fpnd:
+
+::
+
+  $ sudo apt-get install python3-fpnd
+
+
 Dev Install
 -----------
 
@@ -126,6 +186,7 @@ of fpnd, then just install the package after doing the above:
 
 .. _Install the overlay: https://github.com/freepn/python-overlay/blob/master/README.rst
 
+
 Standards and Coding Style
 --------------------------
 
@@ -145,12 +206,15 @@ all arch-specific packages should support at least the following:
 * x86_64/amd64
 * i686/x86
 
+See the `Prerequisites`_ above.
+
 
 Software Stack and Tool Dependencies
 ====================================
 
 * `python`_ - at least version 3.5
-* `schedule`_ - scheduling engine
+* `datrie`_ - python interface to libdatrie
+* `schedule`_ - python scheduling engine
 * `python-diskcache`_ - various cache types
 * `python-daemon`_ - python daemon class
 * `nanoservice`_ - python micro-messaging services
@@ -158,18 +222,20 @@ Software Stack and Tool Dependencies
 * `nanomsg`_ - library for messaging protocols
 * `ztcli-async`_ - python async client for zerotier API
 * `ZeroTier`_ - network virtualization engine
-* `tox`_ - needed for local testing
+* `tox`_ and `pytest`_- needed for local testing
 
 .. _Python: https://docs.python.org/3.5/index.html
-.. _schedule: https://github.com/sarnold/schedule
+.. _datrie: https://github.com/pytries/datrie
+.. _schedule: https://github.com/freepn/schedule
 .. _python-diskcache: https://github.com/grantjenks/python-diskcache
-.. _python-daemon: https://github.com/sarnold/python-daemon
+.. _python-daemon: https://github.com/freepn/python-daemon
 .. _nanoservice: https://github.com/freepn/nanoservice
 .. _nanomsg-python: https://github.com/freepn/nanomsg-python
 .. _nanomsg: https://github.com/nanomsg/nanomsg
 .. _ztcli-async: https://github.com/freepn/ztcli-async
 .. _ZeroTier: https://www.zerotier.com/
 .. _tox: https://github.com/tox-dev/tox
+.. _pytest: https://github.com/pytest-dev/pytest
 
 
 Currently we also require a recent Linux kernel with ``iptables`` and
