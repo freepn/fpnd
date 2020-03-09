@@ -23,7 +23,11 @@
 What FreePN is (and is not)
 ===========================
 
-Yes, it's "free" (as in FOSS) and it's sort of like a VPN.  FreePN is
+FreePN is a set of open source (see `FLOSS`_ definition) privacy tools for an
+improved online `user experiience`_ (and yes, there's even `an ISO standard`_
+for that).  The current prototype implementation is mainly this repository.
+
+Yes, it's "free" (as in FLOSS) and it's sort of like a VPN.  FreePN is
 essentially an anonymizing p2p internet proxy using a "virtual private
 cloud" of peers, and the ``fpnd`` tools are the automation layer on top
 of the ZeroTier network virtualization engine that makes it happen.
@@ -41,6 +45,11 @@ access to the following privileged interfaces on each peer host:
 
 * zerotier API via access token (requires tun/tap on Linux)
 * kernel routing and iptables/netfilter
+
+
+.. _FLOSS: https://www.gnu.org/philosophy/floss-and-foss.en.html
+.. _user experiience: https://en.wikipedia.org/wiki/User_experience
+.. _an ISO standard: https://en.wikipedia.org/wiki/ISO_9241#ISO_9241-210
 
 
 Prototype release targets

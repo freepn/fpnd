@@ -199,6 +199,36 @@ You should see something like this after startup on both peers:
 
 Note the lines above are truncated/wrapped for readability ;)
 
+Lastly, you can verify the command results using the ``iptables`` command.
+
+Once you see the above log message on the "exit" node, run the following
+command from a terminal prompt::
+
+  $ sudo iptables -L -t nat
+
+and check the ``POSTROUTING`` chain; you should see one ``SNAT`` rule:
+
+::
+
+  Chain POSTROUTING (policy ACCEPT)
+  target     prot opt source               destination
+  SNAT       all  --  172.16.0.240/28      anywhere      to:<exit IP>
+
+
+Similarly on the "mobile" node, run the same command::
+
+  $ sudo iptables -L -t nat
+
+and check the ``POSTROUTING`` chain; you should see two ``SNAT`` rules
+for http/https:
+
+::
+
+  Chain POSTROUTING (policy ACCEPT)
+  target     prot opt source               destination
+  SNAT       tcp  --  <your host>  anywhere    tcp dpt:https to:172.16.0.242
+  SNAT       tcp  --  <your host>  anywhere    tcp dpt:http to:172.16.0.242
+
 
 What we test on
 ===============

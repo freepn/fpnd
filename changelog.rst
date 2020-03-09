@@ -1,3 +1,21 @@
+0.7.2p6 (2020-03-05, pre-Alpha) [Stephen Arnold]
+------------------------------------------------
+- Merge pull request #20 from freepn/adhoc-testing.
+
+  * Adhoc testing updates, still needs a new doc and more tests.
+
+- Rev-bump patch release version in setup.py.
+- .travis.yml: install datrie build deps (should fix nightly fail)
+- Node_tools/nodestate.py: update input addr for new do_peer_check()
+- Setup.py: add new bin/ scripts (and re-gen patch for ebuild)
+- Adhooc mode testing updates, including update/add netscript tools/tests.
+- Add list of service ports to bin/fpn* (pre-test WIP)
+- Update geoip script and add to setup.py (and re-gen patch for ebuild)
+- Add tests, update test data and versions in setup.py.
+- Update/rename get_ztcli_data and allow "extra" args, eg, <nwid>
+- Bin/fpn1-geoip.sh: add script to check geoip via https.
+- Add nwid arg for adhoc mode and clean up netscripts.
+
 0.7.2p4 (2020-02-27, pre-Alpha) [Stephen Arnold]
 ------------------------------------------------
 
