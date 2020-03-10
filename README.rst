@@ -24,7 +24,7 @@ What FreePN is (and is not)
 ===========================
 
 FreePN is a set of open source (see `FLOSS`_ definition) privacy tools for an
-improved online `user experiience`_ (and yes, there's even `an ISO standard`_
+improved online `user experience`_ (and yes, there's even `an ISO standard`_
 for that).  The current prototype implementation is mainly this repository.
 
 Yes, it's "free" (as in FLOSS) and it's sort of like a VPN.  FreePN is
@@ -48,7 +48,7 @@ access to the following privileged interfaces on each peer host:
 
 
 .. _FLOSS: https://www.gnu.org/philosophy/floss-and-foss.en.html
-.. _user experiience: https://en.wikipedia.org/wiki/User_experience
+.. _user experience: https://en.wikipedia.org/wiki/User_experience
 .. _an ISO standard: https://en.wikipedia.org/wiki/ISO_9241#ISO_9241-210
 
 
