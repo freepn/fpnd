@@ -107,7 +107,7 @@ def exec_full(filepath):
 
 def find_ipv4_iface(addr_string, strip=True):
     """
-    This is intended only for picking the IPv4 address from the list
+    This is intended mainly for picking the IPv4 address from the list
     of 'assignedAddresses' in the JSON network data payload for a
     single ZT network.
     :param addr_string: IPv4 address in CIDR format
@@ -283,7 +283,7 @@ def set_initial_role():
                     NODE_SETTINGS['node_role'] = 'moon'
                 elif node_id in NODE_SETTINGS['ctlr_list']:
                     NODE_SETTINGS['node_role'] = 'controller'
-            logger.debug('INITROLE: mode is {}'.format(NODE_SETTINGS['node_role']))
+            logger.debug('INITROLE: role is {}'.format(NODE_SETTINGS['node_role']))
             logger.debug('INITMODE: mode is {}'.format(NODE_SETTINGS['mode']))
 
     except Exception as exc:

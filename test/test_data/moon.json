@@ -13,5 +13,20 @@
   "timestamp": 1580444938525,
   "updatesMustBeSignedBy": "deadd738e6b6f431e23cdde985741b20203fcef20e143dcbeb3dede0a691602c82c4d22bda08fe8cda538e6642a503458636436ad46dcd0bbda104fcd8729746",
   "waiting": false
+ },
+ {
+  "id": "000000beefa7b693",
+  "roots": [
+   {
+    "identity": "beefa7b693:0:c6665cf93443a15bd0427226d36d2d55c05a762c5feb9407d4c236f792b9dd79f5c7856b19a9adff5d1fa00fb59437bbcad29e9bdb9634fa1661bf9bd749e309",
+    "stableEndpoints": [
+     "192.168.0.66/9993"
+    ]
+   }
+  ],
+  "signature": "ae3fc69f8ecfbeb675acb5307689521a35f8d79b37ae8af2255d10ab651ece05c704c7a15e7013f8a5975084210ab25907f46e55f4d98b4d22cbb531dc058b0389f720e3e58fa4247ec13f08c07f245b3cb4eab452f459db013e9483f43a8e12",
+  "timestamp": 1580508439519,
+  "updatesMustBeSignedBy": "90cba232fa8f8c820d0f4b27aaeb059956f9fa0c9346fd81988dd805f242705fe34fdec33a016bf8058448c7c25a65ae4bff6827476b42c6ca52aba33bb551a6",
+  "waiting": false
  }
 ]

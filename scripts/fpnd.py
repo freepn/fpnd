@@ -126,9 +126,9 @@ if __name__ == "__main__":
         arg = sys.argv[1]
         if arg in ('start'):
             logger.info(msg)
-        if arg in ('start', 'stop', 'restart'):
+        if arg in ('start', 'stop', 'restart', 'status'):
             d = fpnDaemon(pid_file, home_dir=home, verbose=0, use_cleanup=True)
             getattr(d, arg)()
     else:
-        print("usage: %s start|stop|restart" % sys.argv[0])
+        print("usage: %s start|stop|restart|status" % sys.argv[0])
         sys.exit(2)

@@ -1,6 +1,7 @@
 # coding: utf-8
 """Main fpnd node module"""
 
+
 from node_tools.async_funcs import add_network_object as add_network_object
 from node_tools.async_funcs import delete_network_object as delete_network_object
 from node_tools.async_funcs import get_network_object_data as get_network_object_data
@@ -37,12 +38,14 @@ from node_tools.node_funcs import wait_for_moon as wait_for_moon
 from node_tools.exceptions import MemberNodeError as MemberNodeError
 from node_tools.exceptions import MemberNodeNoDataError as MemberNodeNoDataError
 
+
 __all__ = [
     'AttrDict',
     'ENODATA',
     'MemberNodeError',
     'MemberNodeNoDataError',
     'NODE_SETTINGS',
+    'check_daemon',
     'drain_reg_queue',
     'find_keys',
     'get_cachedir',

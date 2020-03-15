@@ -41,6 +41,7 @@ from node_tools.msg_queues import manage_incoming_nodes
 from node_tools.msg_queues import valid_announce_msg
 from node_tools.network_funcs import do_peer_check
 from node_tools.network_funcs import get_net_cmds
+from node_tools.node_funcs import check_daemon
 from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import run_subscriber_daemon
 from node_tools.sched_funcs import check_return_status
@@ -533,79 +534,85 @@ class XformStateDataTest(unittest.TestCase):
         self.assertEqual(diff.fpn_id0, 'bb8dead3c63cea29')
 
 
-# pytest-based test cases using capture
-# NOTE these tests cannot be run using unittest.TestCase since the
-# function under test is actually calling a separate daemon with its
-# own context (thus capsys will not work either, so we use capfd)
-def test_file_is_found(capfd):
+def test_file_is_found():
     """
     Test if we can find the msg_responder daemon.
     """
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = control_daemon('fart')
-    captured = capfd.readouterr()
-    assert res == 2
-    assert 'Unknown command' in captured.out
+    assert res is False
 
 
-def test_daemon_can_start(capfd):
+def test_check_daemon():
+    """
+    Test status return from check_daemon().
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
+    res = check_daemon()
+    assert type(res) is bool
+    res = check_daemon('msg_subscriber.py')
+    assert type(res) is bool
+
+
+def test_daemon_can_start():
     """
     Test if we can start the msg_responder daemon.
     """
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = control_daemon('start')
-    captured = capfd.readouterr()
-    assert res == 0
-    assert 'Starting' in captured.out
+    assert res.returncode == 0
+    assert 'Starting' in res.stdout
 
 
-def test_daemon_can_stop(capfd):
+def test_daemon_can_stop():
     """
     Test if we can stop the msg_responder daemon.
     """
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = control_daemon('stop')
-    captured = capfd.readouterr()
-    assert res == 0
-    assert 'Stopped' in captured.out
+    assert res.returncode == 0
+    assert 'Stopped' in res.stdout
 
 
-def test_daemon_subscriber_start(capfd):
+def test_daemon_has_status():
+    """
+    Test if we can get status from msg_responder daemon.
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
+    res = control_daemon('status')
+    assert res.returncode == 0
+    assert 'False' in res.stdout
+
+
+def test_daemon_subscriber_restart():
     """
     Test if we can (re)start the msg_subscriber daemon.
     """
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
-    res = run_subscriber_daemon()
-    captured = capfd.readouterr()
-    assert res == 0
-    # print(captured.out)
-    assert 'Stopping' in captured.out
-    assert 'Starting' in captured.out
+    res = run_subscriber_daemon('restart')
+    assert 'Stopping' in res.stdout
+    assert 'Starting' in res.stdout
 
 
-def test_daemon_subscriber_stop(capfd):
+def test_daemon_subscriber_stop():
     """
     Test if we can stop the msg_subscriber daemon.
     """
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = run_subscriber_daemon('stop')
-    captured = capfd.readouterr()
-    assert res == 0
-    assert 'Stopping' in captured.out
-    assert 'Stopped' in captured.out
+    assert 'Stopping' in res.stdout
+    assert 'Stopped' in res.stdout
 
 
 # @pytest.mark.xfail(raises=PermissionError)
-def test_path_ecxeption(capfd):
+def test_path_ecxeption():
     """
     Test if we can generate an exception (yes we can, so now we don't
     need to raise it).
     """
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), '/root')
     res = control_daemon('restart')
-    captured = capfd.readouterr()
     assert not res
-    assert not captured.out
 
 
 def test_state_trie_load_save():
