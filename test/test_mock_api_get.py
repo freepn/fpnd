@@ -108,6 +108,7 @@ def test_dump_and_load_json():
     json_check(node_dump)
     json_check(peer_data)
     json_check(net_data)
+    json_check(moon_data)
 
 
 def test_node_client_status():
@@ -173,9 +174,9 @@ def test_unorbit_moon():
     assert res is False
 
 
-@pytest.mark.xfail(raises=MemberNodeError)
 def test_wait_for_moon():
-    wait_for_moon(timeout=1)
+    res = wait_for_moon(timeout=1)
+    assert res == []
 
 
 def test_should_be_enodata():

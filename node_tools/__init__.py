@@ -33,6 +33,7 @@ from node_tools.msg_queues import valid_announce_msg as valid_announce_msg
 from node_tools.network_funcs import drain_reg_queue as drain_reg_queue
 from node_tools.network_funcs import get_net_cmds as get_net_cmds
 from node_tools.network_funcs import run_net_cmd as run_net_cmd
+from node_tools.node_funcs import handle_moon_data as handle_moon_data
 from node_tools.node_funcs import run_ztcli_cmd as run_ztcli_cmd
 from node_tools.node_funcs import wait_for_moon as wait_for_moon
 from node_tools.exceptions import MemberNodeError as MemberNodeError
@@ -61,6 +62,7 @@ __all__ = [
     'get_state',
     'get_token',
     'handle_announce_msg',
+    'handle_moon_data',
     'handle_node_queues',
     'json_dump_file',
     'json_load_file',

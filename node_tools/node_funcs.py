@@ -145,6 +145,36 @@ def do_startup(nwid):
             schedule.every(1).seconds.do(run_net_cmd, cmd).tag('net-change')
 
 
+def handle_moon_data(data):
+    """
+    Handle moon data from wait_for_moon() and update state vars.
+    :param data: list of moon data (one tuple per moon)
+    """
+    import time
+    from node_tools import state_data as st
+
+    moons = NODE_SETTINGS['moon_list']
+    if len(data) == 0:
+        # raise an exception?
+        raise MemberNodeError('moon result should not be empty!')
+        # logger.error('moon result should not be empty: {}'.format(result))
+    elif len(data) > 0:
+        for moon in data:
+            ident, addr, port = moon
+            if ident not in moons:
+                res = run_moon_cmd(ident, action='deorbit')
+                logger.debug('deorbit cmd returned: {}'.format(res))
+
+    # time.sleep(2)
+
+    for moon in data:
+        ident, addr, port = moon
+        if ident in moons:
+            st.fpnState.update(moon_id0=ident, moon_addr=addr)
+            logger.debug('moon state has id {} addr {}'.format(st.fpnState['moon_id0'],
+                                                               st.fpnState['moon_addr']))
+
+
 def run_ztcli_cmd(command='zerotier-cli', action='listmoons', extra=None):
     """
     Command wrapper for zerotier commands ``listmoons``, ``info``, etc,
@@ -214,6 +244,7 @@ def parse_moon_data(data):
                     addr_obj = ipaddress.ip_address(addr[0])
                 except ValueError as exc:
                     logger.error('ipaddress exception: {}'.format(exc))
+                # filter out IPv6 addresses for now
                 if addr_obj.version == 4:
                     moon_addr = addr[0]
                     moon_port = addr[1]
@@ -256,7 +287,7 @@ def run_moon_cmd(moon_id, action='orbit'):
             logger.error('run_moon_cmd err result: {}'.format(err.decode().strip()))
         elif 'OK' in out.decode().strip():
             result = True
-            logger.debug('run_moon_cmd result: {}'.format(out.decode().strip()))
+            logger.debug('{} on {} result: {}'.format(action, moon_id, out.decode().strip()))
 
     except Exception as exc:
         logger.error('zerotier-cli exception: {}'.format(exc))
@@ -288,16 +319,16 @@ def wait_for_moon(timeout=15):
     :param timeout: Number of seconds to wait for the ``orbit`` command
                     to settle.  Note that it takes 8 or 9 seconds after
                     orbiting a new moon before moon data is returned.
-    :return None:
+    :return data: parsed moon data (list of one tuple per moon)
     """
     import time
-    from node_tools import state_data as st
 
     moons = NODE_SETTINGS['moon_list']
     for moon in moons:
         res = run_moon_cmd(moon, action='orbit')
         if res:
             break
+    time.sleep(2)
 
     count = 0
     moon_metadata = run_ztcli_cmd(action='listmoons')
@@ -312,24 +343,5 @@ def wait_for_moon(timeout=15):
 
     result = parse_moon_data(moon_metadata)
     logger.debug('Parse data returned: {}'.format(result))
+    return result
     # logger.debug('st.fpnState data is: {}'.format(st.fpnState))
-
-    if len(result) == 0:
-        # raise an exception?
-        raise MemberNodeError('moon result should not be empty!')
-        # logger.error('moon result should not be empty: {}'.format(result))
-    elif len(result) > 1:
-        for moon in result:
-            ident, addr, port = moon
-            if ident not in moons:
-                res = run_moon_cmd(ident, action='deorbit')
-                logger.debug('deorbit cmd returned: {}'.format(res))
-
-    time.sleep(2)
-
-    for moon in result:
-        ident, addr, port = moon
-        if ident in moons:
-            st.fpnState.update(moon_id0=ident, moon_addr=addr)
-            logger.debug('moon state has id {} addr {}'.format(st.fpnState['moon_id0'],
-                                                               st.fpnState['moon_addr']))

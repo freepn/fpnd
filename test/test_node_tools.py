@@ -25,11 +25,13 @@ from node_tools.ctlr_funcs import load_state_trie
 from node_tools.ctlr_funcs import name_generator
 from node_tools.ctlr_funcs import netcfg_get_ipnet
 from node_tools.ctlr_funcs import save_state_trie
+from node_tools.exceptions import MemberNodeError
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_filepath
+from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
@@ -43,6 +45,8 @@ from node_tools.network_funcs import do_peer_check
 from node_tools.network_funcs import get_net_cmds
 from node_tools.node_funcs import check_daemon
 from node_tools.node_funcs import control_daemon
+from node_tools.node_funcs import handle_moon_data
+from node_tools.node_funcs import parse_moon_data
 from node_tools.node_funcs import run_subscriber_daemon
 from node_tools.sched_funcs import check_return_status
 
@@ -53,6 +57,19 @@ try:
 except ImportError:
     from daemon.timezone import UTC
     utc = UTC()
+
+
+class mock_zt_api_client(object):
+    """
+    Client API to serve simple GET data endpoints
+    """
+    def __init__(self):
+        self.test_dir = 'test/test_data'
+        self.response = '200'
+
+    def get_data(self, endpoint):
+        self.endpoint = json_load_file(endpoint, self.test_dir)
+        return self.response, self.endpoint
 
 
 # unittest-based test cases
@@ -132,6 +149,51 @@ class CheckReturnsTest(unittest.TestCase):
     def test_multiple_returns(self):
         self.assertTrue(check_return_status((True, 'Success', 0)))
         self.assertFalse(check_return_status((False, 'blarg', 1)))
+
+
+class HandleMoonDataTest(unittest.TestCase):
+    """
+    Tests for handle_moon_data() state updates.
+    """
+    def setUp(self):
+        super(HandleMoonDataTest, self).setUp()
+        from node_tools import state_data as st
+
+        self.saved_state = AttrDict.from_nested_dict(st.fpnState)
+        self.default_state = AttrDict.from_nested_dict(st.defState)
+        self.state = st.fpnState
+        self.client = client = mock_zt_api_client()
+        _, moon_data = client.get_data('moon')
+        self.data = parse_moon_data(moon_data)
+        self.moons = ['deadd738e6']
+        NODE_SETTINGS['moon_list'] = self.moons
+
+    def tearDown(self):
+        from node_tools import state_data as st
+
+        st.fpnState = self.saved_state
+        NODE_SETTINGS['moon_list'] = ['9790eaaea1']
+        super(HandleMoonDataTest, self).tearDown()
+
+    def test_handle_empty_list(self):
+        """Raise MemberNodeError error"""
+        with self.assertRaises(MemberNodeError):
+            handle_moon_data([])
+
+    def test_handle_extra_moon(self):
+        """Handle a typical case with 2 moons"""
+        self.assertIn(self.state.moon_id0, self.moons)
+        self.assertEqual(self.state.moon_addr, '192.81.135.59')
+        handle_moon_data(self.data)
+        self.assertEqual(self.state.moon_addr, '10.0.1.66')
+
+    def test_handle_single_moon(self):
+        """Handle a single moon"""
+        self.data = [('deadd738e6', '10.0.1.66', '9993')]
+        self.assertIn(self.state.moon_id0, self.moons)
+        self.assertEqual(self.state.moon_addr, '192.81.135.59')
+        handle_moon_data(self.data)
+        self.assertEqual(self.state.moon_addr, '10.0.1.66')
 
 
 class IPv4InterfaceTest(unittest.TestCase):

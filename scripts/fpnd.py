@@ -25,6 +25,7 @@ from node_tools.helper_funcs import validate_role
 from node_tools.logger_config import setup_logging
 from node_tools.node_funcs import do_cleanup
 from node_tools.node_funcs import do_startup
+from node_tools.node_funcs import handle_moon_data
 from node_tools.node_funcs import run_subscriber_daemon
 from node_tools.node_funcs import wait_for_moon
 
@@ -73,9 +74,10 @@ def do_scheduling():
     if mode == 'peer':
         if node_role is None:
             try:
-                wait_for_moon()
+                data = wait_for_moon()
             except Exception as exc:
                 logger.error('ENODATA exception {}'.format(exc))
+            handle_moon_data(data)
             startup_handlers()
 
         elif node_role == 'controller':
