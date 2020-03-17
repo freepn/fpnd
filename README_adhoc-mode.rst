@@ -183,7 +183,7 @@ The last two items in ``NODE_SETTINGS`` should look something like this:
 .. code:: python
 
     u'use_exitnode': [],  # edit to populate with ID: ['exitnode']
-    u'nwid': 'b6079f73c63cea42'  # populated automatically in adhoc mode
+    u'nwid': 'b6079f73c63cea42'  # edit to populate with network ID
 
 
 .. note:: Your 16-digit network ID will be different than the example shown
