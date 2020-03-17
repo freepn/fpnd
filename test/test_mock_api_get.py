@@ -44,6 +44,7 @@ from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import validate_role
 from node_tools.msg_queues import populate_leaf_list
+from node_tools.node_funcs import do_cleanup
 from node_tools.node_funcs import parse_moon_data
 from node_tools.node_funcs import run_moon_cmd
 from node_tools.node_funcs import run_subscriber_daemon
@@ -94,17 +95,20 @@ def load_data():
     _, node = client.get_data('status')
     _, peers = client.get_data('peer')
     _, nets = client.get_data('network')
-    return node, peers, nets
+    _, moons = client.get_data('moon')
+
+    return node, peers, nets, moons
 
 
 def test_dump_and_load_json():
     data_dir = get_cachedir(dir_name='fpn_test')
-    (node_data, peer_data, net_data) = load_data()
+    (node_data, peer_data, net_data, moon_data) = load_data()
     json_dump_file('node', node_data, data_dir)
     node_dump = json_load_file('node', data_dir)
     json_check(node_dump)
     json_check(peer_data)
     json_check(net_data)
+    json_check(moon_data)
 
 
 def test_node_client_status():
@@ -146,7 +150,8 @@ def test_parse_moon_data():
     _, moon_data = client.get_data('moon')
     result = parse_moon_data(moon_data)
     # print(result)
-    assert result == [('deadd738e6', '10.0.1.66', '9993')]
+    assert result == [('deadd738e6', '10.0.1.66', '9993'),
+                      ('beefa7b693', '192.168.0.66', '9993')]
 
 
 def test_get_node_info():
@@ -169,9 +174,9 @@ def test_unorbit_moon():
     assert res is False
 
 
-@pytest.mark.xfail(raises=MemberNodeError)
 def test_wait_for_moon():
-    wait_for_moon(timeout=1)
+    res = wait_for_moon(timeout=1)
+    assert res == []
 
 
 def test_should_be_enodata():
@@ -331,9 +336,10 @@ def test_load_node_state():
 
 def test_load_moon_state():
     moonStatus = []
+    fpn_moons = ['deadd738e6']
     peers = get_peer_status(cache)
     for peer in peers:
-        if peer['role'] == 'MOON':
+        if peer['role'] == 'MOON' and peer['identity'] in fpn_moons:
             moonStatus.append(peer)
             break
     load_cache_by_type(cache, moonStatus, 'mstate')
@@ -386,16 +392,13 @@ def test_get_state():
     assert nodeState['fpn_id1'] == 'b6079f73ca8129ad'
 
 
-# def test_role_state():
-    # from node_tools import state_data as stest
+def test_do_cleanup():
+    from node_tools import state_data as stest
 
-    # get_state(cache)
-    # nodeState = AttrDict.from_nested_dict(stest.fpnState)
-    # res = set_initial_role()
-    # assert res is None
-    # assert nodeState.fpn_role is None
+    get_state(cache)
+    nodeState = AttrDict.from_nested_dict(stest.fpnState)
     # print(nodeState)
-    # print(NODE_SETTINGS)
+    do_cleanup('./bin')
 
 
 def test_get_state_values():

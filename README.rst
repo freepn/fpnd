@@ -44,7 +44,7 @@ For now, the prototype daemon ``fpnd`` runs as root, since we require
 access to the following privileged interfaces on each peer host:
 
 * zerotier API via access token (requires tun/tap on Linux)
-* kernel routing and iptables/netfilter
+* sysctl, kernel routing, and iptables/netfilter interfaces
 
 
 .. _FLOSS: https://www.gnu.org/philosophy/floss-and-foss.en.html
@@ -92,6 +92,15 @@ sensitive/private) and **don't** use ``http`` for anything.  At all.  Period.
 * adhoc mode - *you* own the network link and the peers
 * peer mode - *you* only control your own host (peers are random,
   networks are auto-assigned and configured)
+
+
+Note about release tags
+-----------------------
+
+* current "adhoc mode" release is ``0.7.3``
+* any updates to adhoc mode will stay in the ``0.7.x`` series
+* peer mode development continues using ``0.8.x`` for pre-release
+* current Alpha release target for peer mode is ``0.9.0``
 
 
 Getting Started

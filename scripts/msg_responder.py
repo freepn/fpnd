@@ -89,10 +89,13 @@ if __name__ == "__main__":
         elif 'restart' == sys.argv[1]:
             syslog.syslog(syslog.LOG_INFO, "Restarting")
             daemon.restart()
+        elif 'status' == sys.argv[1]:
+            res = daemon.status()
+            syslog.syslog(syslog.LOG_INFO, "Status is {}".format(res))
         else:
             print("Unknown command")
             sys.exit(2)
         sys.exit(0)
     else:
-        print("usage: {} start|stop|restart".format(sys.argv[0]))
+        print("usage: {} start|stop|restart|status".format(sys.argv[0]))
         sys.exit(2)

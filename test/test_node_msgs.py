@@ -5,7 +5,6 @@ from nanoservice import Subscriber
 from nanoservice import Publisher
 
 from node_tools.network_funcs import drain_reg_queue
-from node_tools.node_funcs import control_daemon
 
 
 class BaseTestCase(unittest.TestCase):

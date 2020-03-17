@@ -8,6 +8,61 @@ Setup process for adhoc mode
   + "exit" host can be any (Linux) hardware/VM with decent gigabit ethernet
 
 
+Note about network configuration
+--------------------------------
+
+The requirement for two hosts (as well as the steps that follow) is based
+on the smallest possible private subnet, with only two free IPv4 addresses.
+In `CIDR notation`_ this is a ``/30`` subnet, but you are free to add more
+of your own hosts and use a different config.  But *don't worry*, this is
+simple in python. Try this at a python prompt:
+
+::
+
+  Python 3.6.10 (default, Dec  6 2019, 21:16:24)
+  [GCC 9.2.0] on linux
+  Type "help", "copyright", "credits" or "license" for more information.
+  >>> import ipaddress
+  >>> netobj = ipaddress.ip_network('172.16.0.241/30', strict=False)
+  >>> netobj
+  IPv4Network('172.16.0.240/30')
+  >>> list(netobj)
+  [IPv4Address('172.16.0.240'), IPv4Address('172.16.0.241'), IPv4Address('172.16.0.242'),
+      IPv4Address('172.16.0.243')]
+  >>> list(netobj.hosts())
+  [IPv4Address('172.16.0.241'), IPv4Address('172.16.0.242')]
+
+
+The above demonstrates how Python "calculates" IPv4 subnets for the
+(very) private 2-host network configured below.  Since every IPv4 subnet
+needs both a network address and a broadcast address, this leaves only
+two addresses for actual host addresses on the network.  If you want more
+hosts on your adhoc network, simply use a larger subnet (eg, a ``/28``).
+Keep in mind each mobile node on your adhoc network will all use the
+same exit node; also note that a ``/28`` allows 14 host addresses:
+
+::
+
+  >>> netobj = ipaddress.ip_network('172.16.0.30/28', strict=False)
+  >>> list(netobj)
+  [IPv4Address('172.16.0.16'), IPv4Address('172.16.0.17'), IPv4Address('172.16.0.18'),
+      IPv4Address('172.16.0.19'), IPv4Address('172.16.0.20'), IPv4Address('172.16.0.21'),
+      IPv4Address('172.16.0.22'), IPv4Address('172.16.0.23'), IPv4Address('172.16.0.24'),
+      IPv4Address('172.16.0.25'), IPv4Address('172.16.0.26'), IPv4Address('172.16.0.27'),
+      IPv4Address('172.16.0.28'), IPv4Address('172.16.0.29'), IPv4Address('172.16.0.30'),
+      IPv4Address('172.16.0.31')]
+  >>> len(list(netobj.hosts()))
+  14
+
+
+.. _CIDR notation: https://en.wikipedia.org/wiki/CIDR_notation
+
+
+Configuration steps
+-------------------
+
+The following steps are for a "personal" network (single "mobile" node).
+
 * install fpnd, set adhoc mode (both hosts)
 
   + gentoo: `add the overlay`_ and ``emerge fpnd`` (``USE="adhoc"`` should be enabled by default)
@@ -236,7 +291,7 @@ What we test on
 * various x86_64 instances (both hardware and virtual machines)
   some with resources as low as 1 GB of ram
 * several embedded arm/arm64 devices, mainly chromebooks and
-  (better than rpi) clones, eg, nanopi-k2 and allwinner a64 devices
+  (better than rpi) clones, eg, nanopi-k2 and rockchip/allwinner devices
 
 For chromebooks we use mainly Gentoo and Ubuntu on bootable media
 built using `this chromebook build script`_ for developer mode.

@@ -21,6 +21,7 @@ from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import manage_incoming_nodes
 from node_tools.msg_queues import populate_leaf_list
 from node_tools.network_funcs import drain_reg_queue
+from node_tools.node_funcs import check_daemon
 from node_tools.node_funcs import control_daemon
 
 
@@ -52,6 +53,7 @@ async def main():
             if len(reg_q) > 0:
                 drain_reg_queue(reg_q, addr='127.0.0.1')
 
+            num_leaves = 0
             peerStatus = get_peer_status(cache)
             for peer in peerStatus:
                 if peer['role'] == 'LEAF':
@@ -60,19 +62,26 @@ async def main():
                             node_q.append(peer['identity'])
                             logger.debug('Adding LEAF node id: {}'.format(peer['identity']))
                     populate_leaf_list(node_q, wait_q, peer)
-            logger.debug('Collected leaf nodes: {}'.format(st.leaf_nodes))
+                    num_leaves = num_leaves + 1
+            if num_leaves == 0 and st.leaf_nodes != []:
+                st.leaf_nodes = []
+            if st.leaf_nodes != []:
+                logger.debug('Found leaf nodes: {}'.format(st.leaf_nodes))
             logger.debug('{} nodes in node queue: {}'.format(len(node_q), list(node_q)))
 
+            res = check_daemon()
+            logger.debug('resp daemon status is {}'.format(res))
             if len(node_q) > 0:
-                res = control_daemon('restart')
-                logger.debug('Listening for peer msg')
+                if not res:
+                    control_daemon('start')
+                    logger.debug('Listening for peer msg')
             else:
-                logger.debug('Stopping msg responder')
-                res = control_daemon('stop')
-            logger.debug('msg daemon response: {}'.format(res))
+                if res:
+                    control_daemon('stop')
+                    logger.debug('Stopping msg responder')
 
         except Exception as exc:
-            logger.error(str(exc))
+            logger.error('peerstate exception was: {}'.format(exc))
             raise exc
 
 

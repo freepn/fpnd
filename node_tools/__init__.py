@@ -1,6 +1,7 @@
 # coding: utf-8
 """Main fpnd node module"""
 
+
 from node_tools.async_funcs import add_network_object as add_network_object
 from node_tools.async_funcs import delete_network_object as delete_network_object
 from node_tools.async_funcs import get_network_object_data as get_network_object_data
@@ -32,10 +33,12 @@ from node_tools.msg_queues import valid_announce_msg as valid_announce_msg
 from node_tools.network_funcs import drain_reg_queue as drain_reg_queue
 from node_tools.network_funcs import get_net_cmds as get_net_cmds
 from node_tools.network_funcs import run_net_cmd as run_net_cmd
+from node_tools.node_funcs import handle_moon_data as handle_moon_data
 from node_tools.node_funcs import run_ztcli_cmd as run_ztcli_cmd
 from node_tools.node_funcs import wait_for_moon as wait_for_moon
 from node_tools.exceptions import MemberNodeError as MemberNodeError
 from node_tools.exceptions import MemberNodeNoDataError as MemberNodeNoDataError
+
 
 __all__ = [
     'AttrDict',
@@ -43,6 +46,7 @@ __all__ = [
     'MemberNodeError',
     'MemberNodeNoDataError',
     'NODE_SETTINGS',
+    'check_daemon',
     'drain_reg_queue',
     'find_keys',
     'get_cachedir',
@@ -58,6 +62,7 @@ __all__ = [
     'get_state',
     'get_token',
     'handle_announce_msg',
+    'handle_moon_data',
     'handle_node_queues',
     'json_dump_file',
     'json_load_file',

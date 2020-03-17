@@ -17,7 +17,7 @@ from node_tools.cache_funcs import handle_node_status
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import handle_node_queues
-
+from node_tools.node_funcs import check_daemon
 
 logger = logging.getLogger('netstate2')
 
@@ -63,9 +63,11 @@ async def main():
                                                                  list(node_q)))
             logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
                                                                 list(staging_q)))
+            res = check_daemon('msg_subscriber.py')
+            logger.debug('sub daemon status is {}'.format(res))
 
         except Exception as exc:
-            logger.error('netstate2 exception was: {}'.format(exc))
+            logger.error('netstate exception was: {}'.format(exc))
             raise exc
 
 

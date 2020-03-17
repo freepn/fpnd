@@ -8,7 +8,7 @@ except ImportError:
     from distutils.core import setup
 
 
-__version__ = '0.7.3'
+__version__ = '0.8.0'
 
 # make setuptools happy with PEP 440-compliant post version
 # (enable this for patch releases)
@@ -53,10 +53,10 @@ setup(
     download_url=FPND_DOWNLOAD_URL,
     keywords=['freepn', 'vpn', 'p2p'],
     install_requires=[
-        'datrie',
+        'datrie @ git+https://github.com/freepn/datrie@0.8.1',
         'diskcache @ git+https://github.com/grantjenks/python-diskcache@v4.1.0',
         'nanoservice @ git+https://github.com/freepn/nanoservice@0.7.2p1',
-        'python-daemon @ git+https://github.com/freepn/python-daemon@0.2.2',
+        'python-daemon @ git+https://github.com/freepn/python-daemon@0.2.3',
         'schedule @ git+https://github.com/freepn/schedule@0.6.0p2',
         'ztcli-async @ git+https://github.com/freepn/ztcli-async@0.0.7',
     ],

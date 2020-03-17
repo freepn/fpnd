@@ -12,17 +12,43 @@ from node_tools.helper_funcs import NODE_SETTINGS
 logger = logging.getLogger(__name__)
 
 
-def control_daemon(action, script='msg_responder.py'):
+def check_daemon(script=None):
+    """
+    Check status of a messaging daemon script
+    :param script: daemon script (defaults to msg_responder.py)
+    :return status: boolean result or None for unknown status
+    """
+
+    if not script:
+        cmd = control_daemon('status')
+    else:
+        cmd = control_daemon('status', script)
+
+    res = cmd
+
+    if 'False' in res.stdout:
+        result = False
+    elif 'True' in res.stdout:
+        result = True
+    else:
+        result = None
+        logger.error('EROOR: bad status result is'.format(res.stdout))
+    return result
+
+
+def control_daemon(action='status', script='msg_responder.py'):
     """
     Controller function for messaging daemon.
     :param action: one of <start|stop|restart>
+    :param script: daemon script to control
+    :return result: command result|False|None
     """
     import os
     import subprocess
 
     result = ''
     home = NODE_SETTINGS['home_dir']
-    commands = ['start', 'stop', 'restart']
+    commands = ['start', 'stop', 'restart', 'status']
     daemon_file = os.path.join(home, script)
 
     if not os.path.isfile(daemon_file):
@@ -30,18 +56,22 @@ def control_daemon(action, script='msg_responder.py'):
     if action not in commands:
         result = False
 
+    logger.debug('sending action {} to script: {}'.format(action, daemon_file))
+
     try:
-        result = subprocess.call([daemon_file, action], shell=False)
-        if result < 0:
-            logger.error('cmd terminated by signal: {}'.format(result))
-        else:
-            logger.debug('cmd returned: {}'.format(result))
-    except OSError as exc:
+        result = subprocess.run([daemon_file, action],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                universal_newlines=True,
+                                check=True,
+                                shell=False)
+    except Exception as exc:
         logger.error('cmd exception: {}'.format(exc))
+    # logger.debug('cmd {} got result: {}'.format(action, result.stdout))
     return result
 
 
-def cycle_adhoc_net(nwid):
+def cycle_adhoc_net(nwid, nap=5):
     """
     Run the leave/join cycle on adhoc network ID
     """
@@ -52,12 +82,13 @@ def cycle_adhoc_net(nwid):
     for act in actions:
         res = run_ztcli_cmd(action=act, extra=nwid)
         logger.debug('action {} returned: {}'.format(act, res))
-        time.sleep(1)
+        time.sleep(nap)
 
 
-def do_cleanup():
+def do_cleanup(path=None):
     """
     Run network cleanup commands via daemon cleanup hook.
+    :param path: path to scripts dir
     """
     from node_tools.helper_funcs import AttrDict
     from node_tools.network_funcs import do_net_cmd
@@ -66,18 +97,23 @@ def do_cleanup():
     from node_tools import state_data as st
 
     state = AttrDict.from_nested_dict(st.fpnState)
-    fpn_home = NODE_SETTINGS['home_dir']
+    moon_id = state.moon_id0
+    if not path:
+        path = NODE_SETTINGS['home_dir']
     nets = ['fpn_id0', 'fpn_id1']
     ifaces = ['fpn0', 'fpn1']
 
     for iface, net in zip(ifaces, nets):
         if state[iface]:
             logger.debug('CLEANUP: shutting down {}'.format(iface))
-            cmd = get_net_cmds(fpn_home, iface)
+            cmd = get_net_cmds(path, iface)
             res = do_net_cmd(cmd)
             logger.debug('CLEANUP: leaving network ID: {}'.format(net))
             res = run_ztcli_cmd(action='leave', extra=state[net])
             logger.debug('CLEANUP: action leave returned: {}'.format(res))
+
+    if moon_id is not None:
+        run_moon_cmd(moon_id, action='deorbit')
 
 
 def do_startup(nwid):
@@ -107,6 +143,36 @@ def do_startup(nwid):
             cmd = get_net_cmds(fpn_home, iface, True)
             logger.debug('run_net_cmd using cmd: {}'.format(cmd))
             schedule.every(1).seconds.do(run_net_cmd, cmd).tag('net-change')
+
+
+def handle_moon_data(data):
+    """
+    Handle moon data from wait_for_moon() and update state vars.
+    :param data: list of moon data (one tuple per moon)
+    """
+    import time
+    from node_tools import state_data as st
+
+    moons = NODE_SETTINGS['moon_list']
+    if len(data) == 0:
+        # raise an exception?
+        raise MemberNodeError('moon result should not be empty!')
+        # logger.error('moon result should not be empty: {}'.format(result))
+    elif len(data) > 0:
+        for moon in data:
+            ident, addr, port = moon
+            if ident not in moons:
+                res = run_moon_cmd(ident, action='deorbit')
+                logger.debug('deorbit cmd returned: {}'.format(res))
+
+    # time.sleep(2)
+
+    for moon in data:
+        ident, addr, port = moon
+        if ident in moons:
+            st.fpnState.update(moon_id0=ident, moon_addr=addr)
+            logger.debug('moon state has id {} addr {}'.format(st.fpnState['moon_id0'],
+                                                               st.fpnState['moon_addr']))
 
 
 def run_ztcli_cmd(command='zerotier-cli', action='listmoons', extra=None):
@@ -178,6 +244,7 @@ def parse_moon_data(data):
                     addr_obj = ipaddress.ip_address(addr[0])
                 except ValueError as exc:
                     logger.error('ipaddress exception: {}'.format(exc))
+                # filter out IPv6 addresses for now
                 if addr_obj.version == 4:
                     moon_addr = addr[0]
                     moon_port = addr[1]
@@ -220,7 +287,7 @@ def run_moon_cmd(moon_id, action='orbit'):
             logger.error('run_moon_cmd err result: {}'.format(err.decode().strip()))
         elif 'OK' in out.decode().strip():
             result = True
-            logger.debug('run_moon_cmd result: {}'.format(out.decode().strip()))
+            logger.debug('{} on {} result: {}'.format(action, moon_id, out.decode().strip()))
 
     except Exception as exc:
         logger.error('zerotier-cli exception: {}'.format(exc))
@@ -229,7 +296,7 @@ def run_moon_cmd(moon_id, action='orbit'):
     return result
 
 
-def run_subscriber_daemon(cmd='restart'):
+def run_subscriber_daemon(cmd='start'):
     """
     Command wrapper for msg subscriber daemon to log status.
     :param cmd: command to pass to the msg_subscriber daemon
@@ -238,9 +305,9 @@ def run_subscriber_daemon(cmd='restart'):
 
     subscriber = 'msg_subscriber.py'
 
-    logger.debug('Subscribing to node msgs: {}'.format(subscriber))
+    # logger.debug('Subscribing to node msgs: {}'.format(subscriber))
     res = control_daemon(cmd, script=subscriber)
-    logger.debug('sub daemon response: {}'.format(res))
+    logger.debug('sub daemon retcode was: {}'.format(res.returncode))
 
     return res
 
@@ -252,16 +319,16 @@ def wait_for_moon(timeout=15):
     :param timeout: Number of seconds to wait for the ``orbit`` command
                     to settle.  Note that it takes 8 or 9 seconds after
                     orbiting a new moon before moon data is returned.
-    :return None:
+    :return data: parsed moon data (list of one tuple per moon)
     """
     import time
-    from node_tools import state_data as st
 
     moons = NODE_SETTINGS['moon_list']
     for moon in moons:
         res = run_moon_cmd(moon, action='orbit')
         if res:
             break
+    time.sleep(2)
 
     count = 0
     moon_metadata = run_ztcli_cmd(action='listmoons')
@@ -276,14 +343,5 @@ def wait_for_moon(timeout=15):
 
     result = parse_moon_data(moon_metadata)
     logger.debug('Parse data returned: {}'.format(result))
+    return result
     # logger.debug('st.fpnState data is: {}'.format(st.fpnState))
-
-    if len(result) == 0:
-        # raise an exception?
-        raise MemberNodeError('moon result should not be empty!')
-        # logger.error('moon result should not be empty: {}'.format(result))
-    else:
-        ident, addr, port = result[0]
-        st.fpnState.update(moon_id0=ident, moon_addr=addr)
-        logger.debug('moon state has id {} addr {}'.format(st.fpnState['moon_id0'],
-                                                           st.fpnState['moon_addr']))

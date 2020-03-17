@@ -53,9 +53,10 @@ async def main():
                     load_cache_by_type(cache, moon_data, 'moon')
 
                 moonStatus = []
+                fpn_moons = NODE_SETTINGS['moon_list']
                 peerStatus = get_peer_status(cache)
                 for peer in peerStatus:
-                    if peer['role'] == 'MOON':
+                    if peer['role'] == 'MOON' and peer['identity'] in fpn_moons:
                         moonStatus.append(peer)
                         break
                 logger.debug('Got moon state: {}'.format(moonStatus))
@@ -91,7 +92,7 @@ async def main():
                 #     run_ztcli_cmd(action='join', extra=NODE_SETTINGS['nwid'])
 
         except Exception as exc:
-            logger.error(str(exc))
+            logger.error('nodestate exception was: {}'.format(exc))
             raise exc
 
 
