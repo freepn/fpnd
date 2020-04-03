@@ -51,7 +51,7 @@ async def main():
             logger.debug('{} nodes in reg queue: {}'.format(len(reg_q), list(reg_q)))
             logger.debug('{} nodes in wait queue: {}'.format(len(wait_q), list(wait_q)))
             if len(reg_q) > 0:
-                drain_reg_queue(reg_q, addr='127.0.0.1')
+                drain_reg_queue(reg_q, pub_q, addr='127.0.0.1')
 
             num_leaves = 0
             peerStatus = get_peer_status(cache)
@@ -87,6 +87,7 @@ async def main():
 
 cache = dc.Index(get_cachedir())
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
+pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
 reg_q = dc.Deque(directory=get_cachedir('reg_queue'))
 wait_q = dc.Deque(directory=get_cachedir('wait_queue'))
 loop = asyncio.get_event_loop()

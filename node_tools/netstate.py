@@ -19,7 +19,7 @@ from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import handle_node_queues
 from node_tools.node_funcs import check_daemon
 
-logger = logging.getLogger('netstate2')
+logger = logging.getLogger('netstate')
 
 
 async def main():

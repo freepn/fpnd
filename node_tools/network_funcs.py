@@ -44,7 +44,7 @@ def do_peer_check(ztaddr):
     return result
 
 
-def drain_reg_queue(reg_q, addr=None):
+def drain_reg_queue(reg_q, pub_q, addr=None):
     import time
     from nanoservice import Publisher
 
@@ -60,6 +60,7 @@ def drain_reg_queue(reg_q, addr=None):
     for _ in id_list:
         node_id = reg_q.popleft()
         pub.publish('handle_node', node_id)
+        pub_q.append(node_id)
         logger.debug('Published msg {} to {}'.format(node_id, addr))
 
 

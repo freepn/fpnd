@@ -2,9 +2,8 @@
 
 """
     Default fpn ctlr state variables.
-    :var mbr_data:
-    :var net_data:
-    :var net_trie: a Trie of JSON state objects
+    :var net_trie: a Trie of JSON network/member state objects
+    :var id_trie: a Trie of JSON member node net_id objects
 """
 import string
 
@@ -12,3 +11,4 @@ import datrie
 
 
 net_trie = datrie.Trie(string.hexdigits)
+id_trie = datrie.Trie(string.hexdigits)
