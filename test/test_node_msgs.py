@@ -15,7 +15,9 @@ class BaseTestCase(unittest.TestCase):
         self.node1 = 'deadbeef01'
         self.node2 = '20beefdead'
         self.node_q = dc.Deque(directory='/tmp/test-nq')
+        self.pub_q = dc.Deque(directory='/tmp/test-pq')
         self.node_q.clear()
+        self.pub_q.clear()
 
         self.addr = '127.0.0.1'
         self.tcp_addr = 'tcp://{}:9442'.format(self.addr)
@@ -30,6 +32,7 @@ class BaseTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.node_q.clear()
+        self.pub_q.clear()
         self.service.socket.close()
 
 
@@ -40,12 +43,13 @@ class TestPubSub(BaseTestCase):
         self.node_q.append(self.node2)
 
         # Client side
-        drain_reg_queue(self.node_q)
+        drain_reg_queue(self.node_q, self.pub_q)
 
         # server side
         res = self.service.process()
         res = self.service.process()
         self.assertEqual(list(self.node_q), [])
+        self.assertEqual(list(self.pub_q), ['deadbeef01', '20beefdead'])
         self.assertEqual(res, [self.node1, self.node2])
 
     def test_node_pub_addr(self):
@@ -53,10 +57,11 @@ class TestPubSub(BaseTestCase):
         self.node_q.append(self.node2)
 
         # Client side
-        drain_reg_queue(self.node_q, addr=self.addr)
+        drain_reg_queue(self.node_q, self.pub_q, self.addr)
 
         # server side
         res = self.service.process()
         res = self.service.process()
         self.assertEqual(list(self.node_q), [])
+        self.assertEqual(list(self.pub_q), ['deadbeef01', '20beefdead'])
         self.assertEqual(res, [self.node1, self.node2])
