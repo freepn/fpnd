@@ -253,16 +253,23 @@ def run_event_handlers(diff=None):
                 net_change_handler(iface, state)
 
 
-def send_announce_msg(fpn_id, addr):
+def send_mbr_node_msg(fpn_id, addr, call_func=None, interval=1):
     """
-    Send node announcement message (hey, this is my id).
+    Send node message (hey, this is my id or hey, i need a network id).
     """
     import schedule
     from node_tools.network_funcs import echo_client
 
+    if not call_func:
+        args = echo_client, fpn_id, addr
+        job_tag = 'echo-msg'
+    else:
+        args = echo_client, fpn_id, addr, call_func
+        job_tag = 'cfg-msg'
+
     if fpn_id:
-        logger.debug('Sending msg: {} to addr {}'.format(fpn_id, addr))
-        schedule.every(1).seconds.do(echo_client, fpn_id, addr).tag('hey-moon')
+        logger.debug('Sending msg type {} to addr {}'.format(job_tag, addr))
+        schedule.every(interval).seconds.do(args).tag(job_tag)
 
 
 def set_initial_role():
@@ -306,9 +313,9 @@ def startup_handlers():
         addr = '127.0.0.1'
 
     try:
-        send_announce_msg(nsState.fpn_id, addr)
+        send_mbr_node_msg(nsState.fpn_id, addr)
     except Exception as exc:
-        logger.warning('send_announce_msg exception: {}'.format(exc))
+        logger.warning('send_mbr_node_msg exception: {}'.format(exc))
 
 
 def update_state(scr=None):

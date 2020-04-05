@@ -65,22 +65,25 @@ def drain_reg_queue(reg_q, pub_q, addr=None):
 
 
 @run_until_success(max_retry=3)
-def echo_client(fpn_id, addr):
+def echo_client(fpn_id, addr, call_func=None):
     from nanoservice import Requester
     from node_tools import state_data as st
 
     if NODE_SETTINGS['use_localhost'] or not addr:
         addr = '127.0.0.1'
+    if not call_func:
+        call_func = 'echo'
+        node_data = st.fpnState
 
-    node_data = st.fpnState
     reply_list = []
     reciept = False
     c = Requester('tcp://{}:9443'.format(addr), timeouts=(1000, 1000))
 
     try:
-        reply_list = c.call('echo', fpn_id)
+        reply_list = c.call(call_func, fpn_id)
         reciept = True
-        node_data['moon_ref0'] = reply_list[0]['ref']
+        if not call_func:
+            node_data['moon_ref0'] = reply_list[0]['ref']
         logger.debug('Send result is {}'.format(reply_list))
     except Exception as exc:
         logger.warning('Send error is {}'.format(exc))

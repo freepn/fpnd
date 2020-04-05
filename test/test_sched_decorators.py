@@ -14,7 +14,7 @@ import schedule
 from schedule import every
 
 from node_tools.helper_funcs import AttrDict
-from node_tools.helper_funcs import send_announce_msg
+from node_tools.helper_funcs import send_mbr_node_msg
 from node_tools.network_funcs import echo_client
 from node_tools.network_funcs import get_net_cmds
 from node_tools.network_funcs import run_net_cmd
@@ -158,7 +158,7 @@ class SendMsgTest(unittest.TestCase):
         st.fpnState = self.default_state
         super(SendMsgTest, self).tearDown()
 
-    def test_send_no_responder(self):
+    def test_send_echo_no_responder(self):
 
         nodeState = AttrDict.from_nested_dict(self.state)
         fpn_id = nodeState.fpn_id
@@ -166,10 +166,25 @@ class SendMsgTest(unittest.TestCase):
         # result for echo_client() is actually None
         mock_job = make_mock_job()
         tj = every().second.do(mock_job)
-        send_announce_msg(fpn_id, None)
+        send_mbr_node_msg(fpn_id, None)
 
         with self.assertWarns(RuntimeWarning) as err:
             result = echo_client(fpn_id, self.addr)
+        # print(err.warning)
+        self.assertEqual('Connection timed out', '{}'.format(err.warning))
+
+    def test_send_cfg_no_responder(self):
+
+        nodeState = AttrDict.from_nested_dict(self.state)
+        fpn_id = nodeState.fpn_id
+        # expected command result is a list so the return
+        # result for echo_client() is actually None
+        mock_job = make_mock_job()
+        tj = every().second.do(mock_job)
+        send_mbr_node_msg(fpn_id, None, 'node_cfg')
+
+        with self.assertWarns(RuntimeWarning) as err:
+            result = echo_client(fpn_id, self.addr, 'node_cfg')
         # print(err.warning)
         self.assertEqual('Connection timed out', '{}'.format(err.warning))
 

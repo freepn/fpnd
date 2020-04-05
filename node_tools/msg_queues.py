@@ -2,6 +2,11 @@
 
 """msg queue-specific helper functions."""
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 def handle_announce_msg(node_q, reg_q, wait_q, msg):
     for node in list(wait_q):
@@ -62,3 +67,30 @@ def valid_announce_msg(msg):
     except:
         return False
     return True
+
+
+def wait_for_cfg_msg(pub_q, active_q, msg):
+    """
+    Handle valid member node request for network ID(s) and return
+    the result (or `None`).  Expects responder daemon to raise the
+    nanoservice exception if result is `None`.
+    :param pub_q: queue of published node IDs
+    :param active_q: queue of active nodes with net IDs
+    :param msg: net_id cfg message needing a response
+    :return: JSON str (net_id cfg msg) or None
+    """
+    import json
+
+    result = None
+
+    if msg not in list(pub_q):
+        logger.error('Node ID {} not in pub_queue'.format(msg))
+    else:
+        for item in list(active_q):
+            node_cfg = json.loads(item)
+            if msg == node_cfg['node_id']:
+                result = node_cfg
+                with pub_q.transact():
+                    pub_q.remove(msg)
+                logger.debug('Node ID {} removed from pub_q'.format(msg))
+    return result

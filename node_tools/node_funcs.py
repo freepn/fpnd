@@ -16,7 +16,7 @@ def check_daemon(script=None):
     """
     Check status of a messaging daemon script
     :param script: daemon script (defaults to msg_responder.py)
-    :return status: boolean result or None for unknown status
+    :return: boolean result or None for unknown status
     """
 
     if not script:
@@ -32,7 +32,7 @@ def check_daemon(script=None):
         result = True
     else:
         result = None
-        logger.error('EROOR: bad status result is'.format(res.stdout))
+        logger.error('ERROR: bad status result is'.format(res.stdout))
     return result
 
 

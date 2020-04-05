@@ -12,16 +12,22 @@ import diskcache as dc
 from daemon import Daemon
 from nanoservice import Responder
 
+from nanoservice.error import ServiceError
+
 from node_tools import state_data as st
 
 from node_tools.helper_funcs import get_cachedir
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import valid_announce_msg
+from node_tools.msg_queues import wait_for_cfg_msg
 
 
 pid_file = '/tmp/responder.pid'
 stdout = '/tmp/responder.log'
 stderr = '/tmp/responder_err.log'
+
+active_q = dc.Deque(directory=get_cachedir('act_queue'))
+pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
 
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
 reg_q = dc.Deque(directory=get_cachedir('reg_queue'))
@@ -51,16 +57,37 @@ def timerfunc(func):
 def echo(msg):
     """
     Process valid node msg/queues, ie, msg must be a valid node ID.
-    :param node ID: zerotier node identity
-    :return node ID: zerotier node identity
+    :param str node ID: zerotier node identity
+    :return: str node ID
     """
     if valid_announce_msg(msg):
-        syslog.syslog(syslog.LOG_INFO, "Got valid msg: {}".format(msg))
+        syslog.syslog(syslog.LOG_INFO, "Got valid announce msg: {}".format(msg))
         handle_announce_msg(node_q, reg_q, wait_q, msg)
-        # print("Echoing message: {}".format(msg))
         return msg
     else:
-        syslog.syslog(syslog.LOG_ERROR, "Bad msg recieved!")
+        syslog.syslog(syslog.LOG_ERROR, "Bad announce msg: {}".format(msg))
+
+
+@timerfunc
+def get_node_cfg(msg):
+    """
+    Process valid cfg msg, ie, msg must be a valid node ID.
+    :param str node ID: zerotier node identity
+    :return: str JSON object with node ID and network ID(s)
+    """
+    import json
+
+    if valid_announce_msg(msg):
+        syslog.syslog(syslog.LOG_INFO, "Got valid net_id request: {}".format(msg))
+        result = wait_for_cfg_msg(pub_q, active_q, msg)
+        if result:
+            syslog.syslog(syslog.LOG_INFO, "Got net_id result: {}".format(result))
+            return json.dumps(result)
+        else:
+            syslog.syslog(syslog.LOG_INFO, "No result for ID: {}".format(msg))
+            raise ServiceError
+    else:
+        syslog.syslog(syslog.LOG_ERROR, "Bad net_id msg: {}".format(msg))
 
 
 # Inherit from Daemon class
@@ -73,6 +100,7 @@ class rspDaemon(Daemon):
 
         s = Responder(self.tcp_addr, timeouts=(None, None))
         s.register('echo', echo)
+        s.register('node_cfg', get_node_cfg)
         s.start()
 
 
