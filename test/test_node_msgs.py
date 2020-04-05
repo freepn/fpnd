@@ -271,3 +271,6 @@ class WaitForMsgHandlingTest(unittest.TestCase):
     def test_wait_for_cfg_none(self):
         res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node3)
         self.assertIsNone(res)
+        self.pub_q.remove(self.node2)
+        res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node2)
+        self.assertEqual(res['node_id'], self.node2)

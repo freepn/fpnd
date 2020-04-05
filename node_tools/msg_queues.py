@@ -83,14 +83,16 @@ def wait_for_cfg_msg(pub_q, active_q, msg):
 
     result = None
 
-    if msg not in list(pub_q):
-        logger.error('Node ID {} not in pub_queue'.format(msg))
-    else:
-        for item in list(active_q):
-            node_cfg = json.loads(item)
-            if msg == node_cfg['node_id']:
-                result = node_cfg
+    for item in list(active_q):
+        node_cfg = json.loads(item)
+        if msg == node_cfg['node_id']:
+            result = node_cfg
+            if msg in list(pub_q):
                 with pub_q.transact():
                     pub_q.remove(msg)
                 logger.debug('Node ID {} removed from pub_q'.format(msg))
+            else:
+                logger.debug('Node ID {} not in pub_queue'.format(msg))
+    if not result:
+        logger.debug('Node ID {} not found'.format(msg))
     return result
