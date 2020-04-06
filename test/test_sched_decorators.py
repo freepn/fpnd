@@ -14,7 +14,7 @@ import schedule
 from schedule import every
 
 from node_tools.helper_funcs import AttrDict
-from node_tools.helper_funcs import send_mbr_node_msg
+from node_tools.helper_funcs import send_announce_msg
 from node_tools.network_funcs import echo_client
 from node_tools.network_funcs import get_net_cmds
 from node_tools.network_funcs import run_net_cmd
@@ -166,7 +166,7 @@ class SendMsgTest(unittest.TestCase):
         # result for echo_client() is actually None
         mock_job = make_mock_job()
         tj = every().second.do(mock_job)
-        send_mbr_node_msg(fpn_id, None)
+        send_announce_msg(fpn_id, None)
 
         with self.assertWarns(RuntimeWarning) as err:
             result = echo_client(fpn_id, self.addr)
@@ -181,10 +181,10 @@ class SendMsgTest(unittest.TestCase):
         # result for echo_client() is actually None
         mock_job = make_mock_job()
         tj = every().second.do(mock_job)
-        send_mbr_node_msg(fpn_id, None, 'node_cfg')
+        send_announce_msg(fpn_id, None)
 
         with self.assertWarns(RuntimeWarning) as err:
-            result = echo_client(fpn_id, self.addr, 'node_cfg')
+            result = echo_client(fpn_id, self.addr)
         # print(err.warning)
         self.assertEqual('Connection timed out', '{}'.format(err.warning))
 
