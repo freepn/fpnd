@@ -23,6 +23,21 @@ stderr = '/tmp/subscriber_err.log'
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
 
 
+def handle_msg(msg):
+    if valid_announce_msg(msg):
+        print('Node ID is: {}'.format(msg))
+        if msg not in node_q:
+            with node_q.transact():
+                node_q.append(msg)
+            syslog.syslog(syslog.LOG_INFO,
+                          'Adding node id: {}'.format(msg))
+        syslog.syslog(syslog.LOG_INFO,
+                      '{} nodes in node queue'.format(len(node_q)))
+
+    else:
+        syslog.syslog(syslog.LOG_ERROR, "Bad msg recieved!")
+
+
 # Inherit from Daemon class
 class subDaemon(Daemon):
     # implement run method
@@ -30,20 +45,6 @@ class subDaemon(Daemon):
 
         self.sock_addr = 'ipc:///tmp/service.sock'
         self.tcp_addr = 'tcp://0.0.0.0:9442'
-
-        def handle_msg(msg):
-            if valid_announce_msg(msg):
-                print('Node ID is: {}'.format(msg))
-                if msg not in node_q:
-                    with node_q.transact():
-                        node_q.append(msg)
-                    syslog.syslog(syslog.LOG_INFO,
-                                  'Adding node id: {}'.format(msg))
-                syslog.syslog(syslog.LOG_INFO,
-                              '{} nodes in node queue'.format(len(node_q)))
-
-            else:
-                syslog.syslog(syslog.LOG_ERROR, "Bad msg recieved!")
 
         s = Subscriber(self.tcp_addr)
         s.subscribe('handle_node', handle_msg)
