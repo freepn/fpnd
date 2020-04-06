@@ -69,6 +69,20 @@ def valid_announce_msg(msg):
     return True
 
 
+def valid_cfg_msg(msg):
+    import json
+
+    try:
+        assert type(msg) is str
+        cfg_msg = json.loads(msg)
+        assert valid_announce_msg(cfg_msg['node_id'])
+        assert len(cfg_msg) > 1
+        assert len(cfg_msg) < 4
+    except:
+        return False
+    return True
+
+
 def wait_for_cfg_msg(pub_q, active_q, msg):
     """
     Handle valid member node request for network ID(s) and return

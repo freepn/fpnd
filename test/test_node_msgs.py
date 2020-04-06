@@ -9,6 +9,7 @@ from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import handle_node_queues
 from node_tools.msg_queues import manage_incoming_nodes
 from node_tools.msg_queues import valid_announce_msg
+from node_tools.msg_queues import valid_cfg_msg
 from node_tools.msg_queues import wait_for_cfg_msg
 from node_tools.sched_funcs import check_return_status
 
@@ -21,6 +22,22 @@ def test_invalid_msg():
 
 def test_valid_msg():
     res = valid_announce_msg('deadbeef00')
+    assert res is True
+
+
+def test_invalid_cfg_msg():
+    msg_list = [
+                '{"node": "deadbeef00"}',
+                '{"node_id": "02beefdead"}',
+                '{"node_id": "02beefhead", "net0_id": "7ac4235ec5d3d938"}'
+               ]
+    for msg in msg_list:
+        res = valid_cfg_msg(msg)
+        assert res is False
+
+
+def test_valid_cfg_msg():
+    res = valid_cfg_msg('{"node_id": "02beefdead", "net0_id": "7ac4235ec5d3d938"}')
     assert res is True
 
 
@@ -263,10 +280,13 @@ class WaitForMsgHandlingTest(unittest.TestCase):
         super(WaitForMsgHandlingTest, self).tearDown()
 
     def test_wait_for_cfg(self):
+        import json
         res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node1)
         self.assertIsInstance(res, dict)
         self.assertEqual(res['node_id'], self.node1)
         self.assertEqual(res['net0_id'], 'bb8dead3c63cea29')
+        # print(len(json.loads(self.cfg1)))
+        # print(len(json.loads(self.cfg2)))
 
     def test_wait_for_cfg_none(self):
         res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node3)

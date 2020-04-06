@@ -167,6 +167,7 @@ class SendMsgTest(unittest.TestCase):
         mock_job = make_mock_job()
         tj = every().second.do(mock_job)
         send_announce_msg(fpn_id, None)
+        schedule.run_all()
 
         with self.assertWarns(RuntimeWarning) as err:
             result = echo_client(fpn_id, self.addr)
@@ -181,10 +182,11 @@ class SendMsgTest(unittest.TestCase):
         # result for echo_client() is actually None
         mock_job = make_mock_job()
         tj = every().second.do(mock_job)
-        send_announce_msg(fpn_id, None)
+        send_announce_msg(fpn_id, None, send_cfg=True)
+        schedule.run_all()
 
         with self.assertWarns(RuntimeWarning) as err:
-            result = echo_client(fpn_id, self.addr)
+            result = echo_client(fpn_id, self.addr, send_cfg=True)
         # print(err.warning)
         self.assertEqual('Connection timed out', '{}'.format(err.warning))
 

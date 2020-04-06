@@ -253,7 +253,7 @@ def run_event_handlers(diff=None):
                 net_change_handler(iface, state)
 
 
-def send_announce_msg(fpn_id, addr):
+def send_announce_msg(fpn_id, addr, send_cfg=False):
     """
     Send node announcement message (hey, this is my id).
     """
@@ -261,8 +261,12 @@ def send_announce_msg(fpn_id, addr):
     from node_tools.network_funcs import echo_client
 
     if fpn_id:
-        logger.debug('Sending msg: {} to addr {}'.format(fpn_id, addr))
-        schedule.every(1).seconds.do(echo_client, fpn_id, addr).tag('hey-moon')
+        if send_cfg:
+            logger.debug('Sending cfg msg: {} to addr {}'.format(fpn_id, addr))
+            schedule.every(3).seconds.do(echo_client, fpn_id, addr, send_cfg=True).tag('need-net')
+        else:
+            logger.debug('Sending msg: {} to addr {}'.format(fpn_id, addr))
+            schedule.every(1).seconds.do(echo_client, fpn_id, addr).tag('hey-moon')
 
 
 def set_initial_role():
