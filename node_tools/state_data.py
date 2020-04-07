@@ -34,6 +34,6 @@ fpnState = {'online': False,
 
 leaf_nodes = []
 
-cfg_msgs = []
+cfg_msgs = {}
 
 changes = []

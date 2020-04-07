@@ -34,6 +34,26 @@ def handle_node_queues(node_q, staging_q):
                 staging_q.append(node_id)
 
 
+def make_cfg_msg(trie, node_id):
+    """
+    Create the net_cfg msg for a node and return cfg string.  Node
+    IDs come from the node/active queues.
+    :param trie: state trie of nodes and their network IDs
+    :param node_id: node ID
+    :return: JSON str (net_id cfg msg)
+    """
+    import json
+
+    d = {
+        "node_id": "{}".format(node_id),
+        "networks": []
+    }
+
+    d["networks"] = trie[node_id]
+
+    return json.dumps(d)
+
+
 def manage_incoming_nodes(node_q, reg_q, wait_q):
     for node in list(reg_q):
         if node in list(node_q):

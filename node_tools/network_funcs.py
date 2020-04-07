@@ -66,12 +66,14 @@ def drain_reg_queue(reg_q, pub_q, addr=None):
 
 @run_until_success(max_retry=4)
 def echo_client(fpn_id, addr, send_cfg=False):
+    import json
     from nanoservice import Requester
     from node_tools import state_data as st
 
     if NODE_SETTINGS['use_localhost'] or not addr:
         addr = '127.0.0.1'
 
+    cfg = st.cfg_msgs
     node_data = st.fpnState
     reply_list = []
     reciept = False
@@ -81,6 +83,7 @@ def echo_client(fpn_id, addr, send_cfg=False):
         if send_cfg:
             reply_list = c.call('node_cfg', fpn_id)
             node_data['cfg_ref'] = reply_list[0]['ref']
+            cfg = json.loads(reply_list[0]['result'])
         else:
             reply_list = c.call('echo', fpn_id)
             node_data['msg_ref'] = reply_list[0]['ref']

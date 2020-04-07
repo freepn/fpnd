@@ -8,10 +8,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def check_net_trie(trie):
+def trie_is_empty(trie):
     """
-    Check shared state Trie is fresh and empty (mainly on startup)
-    :param trie: newly instantiated ``datrie.Trie(alpha_set)``
+    Check shared state Trie is fresh and empty (mainly on startup).
+    :param trie: newly instantiated `datrie.Trie(alpha_set)`
     """
     try:
         assert trie.is_dirty()
