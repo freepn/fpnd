@@ -17,7 +17,6 @@ import pytest
 
 from diskcache import Index
 
-from node_tools.ctlr_funcs import check_net_trie
 from node_tools.ctlr_funcs import create_state_trie
 from node_tools.ctlr_funcs import gen_netobj_queue
 from node_tools.ctlr_funcs import ipnet_get_netcfg
@@ -25,6 +24,7 @@ from node_tools.ctlr_funcs import load_state_trie
 from node_tools.ctlr_funcs import name_generator
 from node_tools.ctlr_funcs import netcfg_get_ipnet
 from node_tools.ctlr_funcs import save_state_trie
+from node_tools.ctlr_funcs import trie_is_empty
 from node_tools.exceptions import MemberNodeError
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
@@ -545,9 +545,9 @@ def test_state_trie_load_save():
         assert trie2['foobar'] == 2
 
 
-def test_check_net_trie():
+def test_trie_is_empty():
     from node_tools import ctlr_data as ct
-    res = check_net_trie(ct.net_trie)
+    res = trie_is_empty(ct.net_trie)
     assert res is True
 
 

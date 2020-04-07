@@ -148,6 +148,7 @@ class SendMsgTest(unittest.TestCase):
         schedule.clear()
         self.default_state = st.defState
         self.state = st.fpnState
+        self.cfg = st.cfg_msgs
         self.addr = '127.0.0.1'
 
     def tearDown(self):

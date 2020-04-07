@@ -4,9 +4,11 @@ import unittest
 from nanoservice import Subscriber
 from nanoservice import Publisher
 
+from node_tools.ctlr_funcs import trie_is_empty
 from node_tools.network_funcs import drain_reg_queue
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import handle_node_queues
+from node_tools.msg_queues import make_cfg_msg
 from node_tools.msg_queues import manage_incoming_nodes
 from node_tools.msg_queues import valid_announce_msg
 from node_tools.msg_queues import valid_cfg_msg
@@ -39,6 +41,20 @@ def test_invalid_cfg_msg():
 def test_valid_cfg_msg():
     res = valid_cfg_msg('{"node_id": "02beefdead", "net0_id": "7ac4235ec5d3d938"}')
     assert res is True
+
+
+def test_make_cfg_msg():
+    from node_tools import ctlr_data as ct
+    assert trie_is_empty(ct.id_trie) is True
+
+    node_id = '02beefdead'
+    net_list = ['7ac4235ec5d3d938']
+    ct.id_trie[node_id] = net_list
+    cfg_msg = '{"node_id": "02beefdead", "networks": ["7ac4235ec5d3d938"]}'
+
+    res = make_cfg_msg(ct.id_trie, node_id)
+    assert type(res) is str
+    assert res == cfg_msg
 
 
 class BaseTestCase(unittest.TestCase):
