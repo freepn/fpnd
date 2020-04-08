@@ -32,7 +32,7 @@ def check_daemon(script=None):
         result = True
     else:
         result = None
-        logger.error('ERROR: bad status result is'.format(res.stdout))
+        logger.error('ERROR: bad cmd result is {}'.format(res.stdout))
     return result
 
 

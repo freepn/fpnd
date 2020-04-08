@@ -317,7 +317,16 @@ class SetRolesTest(unittest.TestCase):
 
         st.fpnState = self.saved_state
         NODE_SETTINGS['node_role'] = None
+        NODE_SETTINGS['mode'] = 'peer'
         super(SetRolesTest, self).tearDown()
+
+    def test_adhoc_mode(self):
+        NODE_SETTINGS['mode'] = 'adhoc'
+        self.assertIsNone(self.role)
+
+        set_initial_role()
+        validate_role()
+        self.assertIsNone(NODE_SETTINGS['node_role'])
 
     def test_ctlr_role(self):
         self.assertIsNone(self.role)
