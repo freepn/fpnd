@@ -32,6 +32,7 @@ from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_filepath
 from node_tools.helper_funcs import json_load_file
+from node_tools.helper_funcs import send_cfg_handler
 from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
@@ -43,7 +44,6 @@ from node_tools.node_funcs import check_daemon
 from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import handle_moon_data
 from node_tools.node_funcs import parse_moon_data
-from node_tools.node_funcs import run_subscriber_daemon
 from node_tools.sched_funcs import check_return_status
 
 
@@ -491,27 +491,6 @@ def test_daemon_has_status():
     assert 'False' in res.stdout
 
 
-def test_daemon_subscriber_restart():
-    """
-    Test if we can (re)start the msg_subscriber daemon.
-    """
-    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
-    res = run_subscriber_daemon('restart')
-    assert 'Stopping' in res.stdout
-    assert 'Starting' in res.stdout
-
-
-def test_daemon_subscriber_stop():
-    """
-    Test if we can stop the msg_subscriber daemon.
-    """
-    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
-    res = check_daemon('msg_subscriber.py')
-    res = run_subscriber_daemon('stop')
-    assert 'Stopping' in res.stdout
-    assert 'Stopped' in res.stdout
-
-
 # @pytest.mark.xfail(raises=PermissionError)
 def test_path_ecxeption():
     """
@@ -567,6 +546,10 @@ def test_name_generator_chars():
 
 def test_set_initial_role():
     set_initial_role()
+
+
+def test_send_cfg_handler():
+    send_cfg_handler()
 
 
 def test_startup_handlers():

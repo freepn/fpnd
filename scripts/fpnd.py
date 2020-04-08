@@ -26,7 +26,6 @@ from node_tools.logger_config import setup_logging
 from node_tools.node_funcs import do_cleanup
 from node_tools.node_funcs import do_startup
 from node_tools.node_funcs import handle_moon_data
-from node_tools.node_funcs import run_subscriber_daemon
 from node_tools.node_funcs import wait_for_moon
 
 try:
@@ -51,6 +50,38 @@ def show_scheduled_jobs():
         logger.debug('JOBS: {}'.format(job))
         if 'base' in str(job.tags):
             logger.debug('TAGS: {}'.format(job.tags))
+
+
+def check_daemon_status(script='msg_responder.py'):
+    """
+    Scheduling wrapper for managing rsp/sub daemons.
+    """
+    import diskcache as dc
+
+    from node_tools.helper_funcs import get_cachedir
+    from node_tools.node_funcs import check_daemon
+    from node_tools.node_funcs import control_daemon
+
+    res = check_daemon(script)
+    logger.debug('{} daemon status is {}'.format(script, res))
+
+    if script == 'msg_responder.py':
+        node_q = dc.Deque(directory=get_cachedir('node_queue'))
+
+        if len(node_q) > 0:
+            if not res:
+                res = control_daemon('start', script)
+                logger.debug('Starting {} daemon'.format(script))
+        else:
+            if res:
+                res = control_daemon('stop', script)
+                logger.debug('Stopping {} daemon'.format(script))
+    else:
+        if not res:
+            res = control_daemon('start', script)
+            logger.debug('Starting {} daemon'.format(script))
+
+    return res
 
 
 def setup_scheduling(max_age):
@@ -80,13 +111,19 @@ def do_scheduling():
             handle_moon_data(data)
             startup_handlers()
 
-        elif node_role == 'controller':
-            netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
-            gen_netobj_queue(netobj_q, ipnet='192.168.10.0/24')
-            cache = dc.Index(get_cachedir())
-            for key_str in ['peer', 'moon', 'mstate']:
-                delete_cache_entry(cache, key_str)
-            run_subscriber_daemon()
+        else:
+            if node_role == 'controller':
+                netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
+                gen_netobj_queue(netobj_q, ipnet='192.168.10.0/24')
+                cache = dc.Index(get_cachedir())
+                for key_str in ['peer', 'moon', 'mstate']:
+                    delete_cache_entry(cache, key_str)
+
+            elif node_role == 'moon':
+                schedule.every(1).minutes.do(check_daemon_status).tag('chk-tasks', 'responder')
+
+            schedule.every(30).minutes.do(check_daemon_status, script='msg_subscriber.py').tag('chk-tasks', 'subscriber')
+            schedule.run_all(1, 'chk-tasks')
 
     elif mode == 'adhoc':
         logger.debug('Running in adhoc mode...')

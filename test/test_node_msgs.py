@@ -44,6 +44,7 @@ def test_valid_cfg_msg():
 
 
 def test_make_cfg_msg():
+    import json
     from node_tools import ctlr_data as ct
     assert trie_is_empty(ct.id_trie) is True
 
@@ -54,7 +55,7 @@ def test_make_cfg_msg():
 
     res = make_cfg_msg(ct.id_trie, node_id)
     assert type(res) is str
-    assert res == cfg_msg
+    assert json.loads(res) == json.loads(cfg_msg)
 
 
 class BaseTestCase(unittest.TestCase):

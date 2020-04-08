@@ -21,8 +21,6 @@ from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import manage_incoming_nodes
 from node_tools.msg_queues import populate_leaf_list
 from node_tools.network_funcs import drain_reg_queue
-from node_tools.node_funcs import check_daemon
-from node_tools.node_funcs import control_daemon
 
 
 logger = logging.getLogger('peerstate')
@@ -68,17 +66,6 @@ async def main():
             if st.leaf_nodes != []:
                 logger.debug('Found leaf nodes: {}'.format(st.leaf_nodes))
             logger.debug('{} nodes in node queue: {}'.format(len(node_q), list(node_q)))
-
-            res = check_daemon()
-            logger.debug('resp daemon status is {}'.format(res))
-            if len(node_q) > 0:
-                if not res:
-                    control_daemon('start')
-                    logger.debug('Listening for peer msg')
-            else:
-                if res:
-                    control_daemon('stop')
-                    logger.debug('Stopping msg responder')
 
         except Exception as exc:
             logger.error('peerstate exception was: {}'.format(exc))

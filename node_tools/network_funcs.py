@@ -81,9 +81,12 @@ def echo_client(fpn_id, addr, send_cfg=False):
 
     try:
         if send_cfg:
-            reply_list = c.call('node_cfg', fpn_id)
-            node_data['cfg_ref'] = reply_list[0]['ref']
-            cfg = json.loads(reply_list[0]['result'])
+            reply_list, err = c.call('node_cfg', fpn_id)
+            if err:
+                logger.error('Send err is {}'.format(err))
+            else:
+                node_data['cfg_ref'] = reply_list[0]['ref']
+                cfg = json.loads(reply_list[0]['result'])
         else:
             reply_list = c.call('echo', fpn_id)
             node_data['msg_ref'] = reply_list[0]['ref']

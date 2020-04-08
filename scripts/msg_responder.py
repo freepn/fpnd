@@ -61,11 +61,11 @@ def echo(msg):
     :return: str node ID
     """
     if valid_announce_msg(msg):
-        syslog.syslog(syslog.LOG_INFO, "Got valid announce msg: {}".format(msg))
+        syslog.syslog(syslog.LOG_INFO, "RSP: Got valid announce msg: {}".format(msg))
         handle_announce_msg(node_q, reg_q, wait_q, msg)
         return msg
     else:
-        syslog.syslog(syslog.LOG_ERROR, "Bad announce msg: {}".format(msg))
+        syslog.syslog(syslog.LOG_ERROR, "RSP: Bad announce msg is {}".format(msg))
 
 
 @timerfunc
@@ -78,16 +78,16 @@ def get_node_cfg(msg):
     import json
 
     if valid_announce_msg(msg):
-        syslog.syslog(syslog.LOG_INFO, "Got valid net_id request: {}".format(msg))
+        syslog.syslog(syslog.LOG_INFO, "RSP: Got valid cfg request from {}".format(msg))
         result = wait_for_cfg_msg(pub_q, active_q, msg)
         if result:
-            syslog.syslog(syslog.LOG_INFO, "Got net_id result: {}".format(result))
+            syslog.syslog(syslog.LOG_INFO, "RSP: Got cfg result: {}".format(result))
             return json.dumps(result)
         else:
-            syslog.syslog(syslog.LOG_INFO, "No result for ID: {}".format(msg))
+            syslog.syslog(syslog.LOG_ERROR, "RSP: Null result for ID: {}".format(result))
             raise ServiceError
     else:
-        syslog.syslog(syslog.LOG_ERROR, "Bad net_id msg: {}".format(msg))
+        syslog.syslog(syslog.LOG_ERROR, "RSP: Bad cfg msg is {}".format(msg))
 
 
 # Inherit from Daemon class
@@ -109,17 +109,17 @@ if __name__ == "__main__":
     daemon = rspDaemon(pid_file, stdout=stdout, stderr=stderr, verbose=1)
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
-            syslog.syslog(syslog.LOG_INFO, "Starting")
+            syslog.syslog(syslog.LOG_INFO, "RSP: Starting")
             daemon.start()
         elif 'stop' == sys.argv[1]:
-            syslog.syslog(syslog.LOG_INFO, "Stopping")
+            syslog.syslog(syslog.LOG_INFO, "RSP: Stopping")
             daemon.stop()
         elif 'restart' == sys.argv[1]:
-            syslog.syslog(syslog.LOG_INFO, "Restarting")
+            syslog.syslog(syslog.LOG_INFO, "RSP: Restarting")
             daemon.restart()
         elif 'status' == sys.argv[1]:
             res = daemon.status()
-            syslog.syslog(syslog.LOG_INFO, "Status is {}".format(res))
+            syslog.syslog(syslog.LOG_INFO, "RSP: Status is {}".format(res))
         else:
             print("Unknown command")
             sys.exit(2)

@@ -296,22 +296,6 @@ def run_moon_cmd(moon_id, action='orbit'):
     return result
 
 
-def run_subscriber_daemon(cmd='start'):
-    """
-    Command wrapper for msg subscriber daemon to log status.
-    :param cmd: command to pass to the msg_subscriber daemon
-                <start|stop|restart>
-    """
-
-    subscriber = 'msg_subscriber.py'
-
-    # logger.debug('Subscribing to node msgs: {}'.format(subscriber))
-    res = control_daemon(cmd, script=subscriber)
-    logger.debug('sub daemon retcode was: {}'.format(res.returncode))
-
-    return res
-
-
 def wait_for_moon(timeout=15):
     """
     Wait for moon data on startup before sending any messages.

@@ -40,14 +40,12 @@ from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import log_fpn_state
 from node_tools.helper_funcs import run_event_handlers
 from node_tools.helper_funcs import set_initial_role
-from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import validate_role
 from node_tools.msg_queues import populate_leaf_list
 from node_tools.node_funcs import do_cleanup
 from node_tools.node_funcs import parse_moon_data
 from node_tools.node_funcs import run_moon_cmd
-from node_tools.node_funcs import run_subscriber_daemon
 from node_tools.node_funcs import run_ztcli_cmd
 from node_tools.node_funcs import wait_for_moon
 from node_tools.sched_funcs import check_return_status
