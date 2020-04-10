@@ -20,6 +20,7 @@ async def add_network_object(client, net_id=None, mbr_id=None, ctlr_id=None):
     :param net_id: network ID endpoint path
     :param mbr_id: member ID endpoint path
     :param ctlr_id: network controller ID
+    :returns: client object/data
     """
     from node_tools.ctlr_funcs import name_generator
 
@@ -35,6 +36,22 @@ async def add_network_object(client, net_id=None, mbr_id=None, ctlr_id=None):
         return
 
     await client.set_value(cfg_dict, endpoint)
+
+
+async def config_network_object(client, cfg_dict, net_id=None, mbr_id=None):
+    """
+    Command wrapper for configuring ZT objects under the ``controller`` endpoint.
+    Required arguments are ``client`` and ``cfg_dict``, plus either one of
+    the following:
+        ``net_id`` *and* ``mbr_id`` to configure a member object *or* just
+        ``net_id`` to configure a network object.
+    :param client: ztcli_api client object
+    :param cfg_dict: dictionary of configuration fragments
+    :param net_id: network ID endpoint path
+    :param mbr_id: member ID endpoint path
+    :returns: client object/data
+    """
+    pass
 
 
 async def delete_network_object(client, net_id, mbr_id=None):
@@ -69,6 +86,7 @@ async def get_network_object_data(client, net_id, mbr_id=None):
     :param client: ztcli_api client object
     :param net_id: network ID endpoint path
     :param mbr_id: member ID endpoint path
+    :returns: client object/data
     """
     if mbr_id and net_id:
         endpoint = 'controller/network/{}/member/{}'.format(net_id, mbr_id)
@@ -89,6 +107,7 @@ async def get_network_object_ids(client, net_id=None):
     member IDs from a network.
     :param client: ztcli_api client object
     :param net_id: network ID endpoint path
+    :returns: client object/data
     """
     if net_id:
         endpoint = 'controller/network/{}/member'.format(net_id)

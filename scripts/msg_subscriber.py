@@ -14,13 +14,45 @@ from nanoservice import Subscriber
 
 from node_tools.helper_funcs import get_cachedir
 from node_tools.msg_queues import valid_announce_msg
+from node_tools.msg_queues import valid_cfg_msg
 
 
 pid_file = '/tmp/subscriber.pid'
-stdout = '/tmp/subscriber.log'
-stderr = '/tmp/subscriber_err.log'
+std_out = '/tmp/subscriber.log'
+std_err = '/tmp/subscriber_err.log'
 
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
+active_q = dc.Deque(directory=get_cachedir('act_queue'))
+
+
+def handle_msg(msg):
+    if valid_announce_msg(msg):
+        print('SUB: Valid node ID: {}'.format(msg))
+        if msg not in node_q:
+            with node_q.transact():
+                node_q.append(msg)
+            syslog.syslog(syslog.LOG_INFO,
+                          'SUB: Adding node id: {}'.format(msg))
+        syslog.syslog(syslog.LOG_INFO,
+                      'SUB: {} nodes in node queue'.format(len(node_q)))
+
+    else:
+        syslog.syslog(syslog.LOG_ERROR, 'SUB: Bad node msg is {}'.format(msg))
+
+
+def handle_cfg(msg):
+    if valid_cfg_msg(msg):
+        print('SUB: Valid cfg msg: {}'.format(msg))
+        if msg not in node_q:
+            with active_q.transact():
+                active_q.append(msg)
+            syslog.syslog(syslog.LOG_INFO,
+                          'SUB: Adding node cfg: {}'.format(msg))
+        syslog.syslog(syslog.LOG_INFO,
+                      'SUB: {} cfgs in active queue'.format(len(active_q)))
+
+    else:
+        syslog.syslog(syslog.LOG_ERROR, 'SUB: Bad cfg msg is {}'.format(msg))
 
 
 # Inherit from Daemon class
@@ -31,41 +63,28 @@ class subDaemon(Daemon):
         self.sock_addr = 'ipc:///tmp/service.sock'
         self.tcp_addr = 'tcp://0.0.0.0:9442'
 
-        def handle_msg(msg):
-            if valid_announce_msg(msg):
-                print('Node ID is: {}'.format(msg))
-                if msg not in node_q:
-                    with node_q.transact():
-                        node_q.append(msg)
-                    syslog.syslog(syslog.LOG_INFO,
-                                  'Adding node id: {}'.format(msg))
-                syslog.syslog(syslog.LOG_INFO,
-                              '{} nodes in node queue'.format(len(node_q)))
-
-            else:
-                syslog.syslog(syslog.LOG_ERROR, "Bad msg recieved!")
-
         s = Subscriber(self.tcp_addr)
         s.subscribe('handle_node', handle_msg)
+        s.subscribe('cfg_msgs', handle_cfg)
         s.start()
 
 
 if __name__ == "__main__":
 
-    daemon = subDaemon(pid_file, stdout=stdout, stderr=stderr, verbose=1)
+    daemon = subDaemon(pid_file, stdout=std_out, stderr=std_err, verbose=1)
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
-            syslog.syslog(syslog.LOG_INFO, "Starting")
+            syslog.syslog(syslog.LOG_INFO, "SUB: Starting")
             daemon.start()
         elif 'stop' == sys.argv[1]:
-            syslog.syslog(syslog.LOG_INFO, "Stopping")
+            syslog.syslog(syslog.LOG_INFO, "SUB: Stopping")
             daemon.stop()
         elif 'restart' == sys.argv[1]:
-            syslog.syslog(syslog.LOG_INFO, "Restarting")
+            syslog.syslog(syslog.LOG_INFO, "SUB: Restarting")
             daemon.restart()
         elif 'status' == sys.argv[1]:
             res = daemon.status()
-            syslog.syslog(syslog.LOG_INFO, "Status is {}".format(res))
+            syslog.syslog(syslog.LOG_INFO, "SUB: Status is {}".format(res))
         else:
             print("Unknown command")
             sys.exit(2)

@@ -148,6 +148,7 @@ class SendMsgTest(unittest.TestCase):
         schedule.clear()
         self.default_state = st.defState
         self.state = st.fpnState
+        self.cfg = st.cfg_msgs
         self.addr = '127.0.0.1'
 
     def tearDown(self):
@@ -158,7 +159,7 @@ class SendMsgTest(unittest.TestCase):
         st.fpnState = self.default_state
         super(SendMsgTest, self).tearDown()
 
-    def test_send_no_responder(self):
+    def test_send_echo_no_responder(self):
 
         nodeState = AttrDict.from_nested_dict(self.state)
         fpn_id = nodeState.fpn_id
@@ -167,9 +168,26 @@ class SendMsgTest(unittest.TestCase):
         mock_job = make_mock_job()
         tj = every().second.do(mock_job)
         send_announce_msg(fpn_id, None)
+        schedule.run_all()
 
         with self.assertWarns(RuntimeWarning) as err:
             result = echo_client(fpn_id, self.addr)
+        # print(err.warning)
+        self.assertEqual('Connection timed out', '{}'.format(err.warning))
+
+    def test_send_cfg_no_responder(self):
+
+        nodeState = AttrDict.from_nested_dict(self.state)
+        fpn_id = nodeState.fpn_id
+        # expected command result is a list so the return
+        # result for echo_client() is actually None
+        mock_job = make_mock_job()
+        tj = every().second.do(mock_job)
+        send_announce_msg(fpn_id, None, send_cfg=True)
+        schedule.run_all()
+
+        with self.assertWarns(RuntimeWarning) as err:
+            result = echo_client(fpn_id, self.addr, send_cfg=True)
         # print(err.warning)
         self.assertEqual('Connection timed out', '{}'.format(err.warning))
 

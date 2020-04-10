@@ -16,7 +16,7 @@ def check_daemon(script=None):
     """
     Check status of a messaging daemon script
     :param script: daemon script (defaults to msg_responder.py)
-    :return status: boolean result or None for unknown status
+    :return: boolean result or None for unknown status
     """
 
     if not script:
@@ -32,7 +32,7 @@ def check_daemon(script=None):
         result = True
     else:
         result = None
-        logger.error('EROOR: bad status result is'.format(res.stdout))
+        logger.error('ERROR: bad cmd result is {}'.format(res.stdout))
     return result
 
 
@@ -96,6 +96,11 @@ def do_cleanup(path=None):
 
     from node_tools import state_data as st
 
+    if NODE_SETTINGS['node_role'] == 'moon':
+        for script in ['msg_responder.py', 'msg_subscriber.py']:
+            res = control_daemon('stop', script)
+            logger.info('CLEANUP: shutting down {}'.format(script))
+
     state = AttrDict.from_nested_dict(st.fpnState)
     moon_id = state.moon_id0
     if not path:
@@ -105,10 +110,10 @@ def do_cleanup(path=None):
 
     for iface, net in zip(ifaces, nets):
         if state[iface]:
-            logger.debug('CLEANUP: shutting down {}'.format(iface))
+            logger.info('CLEANUP: shutting down {}'.format(iface))
             cmd = get_net_cmds(path, iface)
             res = do_net_cmd(cmd)
-            logger.debug('CLEANUP: leaving network ID: {}'.format(net))
+            logger.info('CLEANUP: leaving network ID: {}'.format(net))
             res = run_ztcli_cmd(action='leave', extra=state[net])
             logger.debug('CLEANUP: action leave returned: {}'.format(res))
 
@@ -294,22 +299,6 @@ def run_moon_cmd(moon_id, action='orbit'):
         pass
 
     return result
-
-
-def run_subscriber_daemon(cmd='start'):
-    """
-    Command wrapper for msg subscriber daemon to log status.
-    :param cmd: command to pass to the msg_subscriber daemon
-                <start|stop|restart>
-    """
-
-    subscriber = 'msg_subscriber.py'
-
-    # logger.debug('Subscribing to node msgs: {}'.format(subscriber))
-    res = control_daemon(cmd, script=subscriber)
-    logger.debug('sub daemon retcode was: {}'.format(res.returncode))
-
-    return res
 
 
 def wait_for_moon(timeout=15):

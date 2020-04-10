@@ -253,7 +253,7 @@ def run_event_handlers(diff=None):
                 net_change_handler(iface, state)
 
 
-def send_announce_msg(fpn_id, addr):
+def send_announce_msg(fpn_id, addr, send_cfg=False):
     """
     Send node announcement message (hey, this is my id).
     """
@@ -261,8 +261,34 @@ def send_announce_msg(fpn_id, addr):
     from node_tools.network_funcs import echo_client
 
     if fpn_id:
-        logger.debug('Sending msg: {} to addr {}'.format(fpn_id, addr))
-        schedule.every(1).seconds.do(echo_client, fpn_id, addr).tag('hey-moon')
+        if send_cfg:
+            logger.debug('CFG: Sending cfg msg: {} to addr {}'.format(fpn_id, addr))
+            schedule.every(3).seconds.do(echo_client, fpn_id, addr, send_cfg=True).tag('need-net')
+        else:
+            logger.debug('MSG: Sending msg: {} to addr {}'.format(fpn_id, addr))
+            schedule.every(1).seconds.do(echo_client, fpn_id, addr).tag('hey-moon')
+
+
+def send_cfg_handler():
+    """
+    Event handler for cfg request message (somewhat analogous to the
+    startup_handlers func).  Runs *after* the announce msg succeeds.
+    """
+    from node_tools import state_data as st
+
+    nsState = AttrDict.from_nested_dict(st.fpnState)
+    addr = nsState.moon_addr
+
+    if NODE_SETTINGS['use_localhost'] or not addr:
+        addr = '127.0.0.1'
+
+    if nsState.msg_ref:
+        try:
+            send_announce_msg(nsState.fpn_id, addr, send_cfg=True)
+        except Exception as exc:
+            logger.warning('send_cfg_msg exception: {}'.format(exc))
+    else:
+        logger.error('CFG: missing msg ref for {}'.format(nsState.fpn_id))
 
 
 def set_initial_role():
@@ -293,7 +319,7 @@ def set_initial_role():
 def startup_handlers():
     """
     Event handlers that need to run at, well, startup (currently only
-    the moon announcement message).
+    the node announcement message).
     """
     from node_tools import state_data as st
 

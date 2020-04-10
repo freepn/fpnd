@@ -44,7 +44,7 @@ def do_peer_check(ztaddr):
     return result
 
 
-def drain_reg_queue(reg_q, addr=None):
+def drain_reg_queue(reg_q, pub_q, addr=None):
     import time
     from nanoservice import Publisher
 
@@ -60,26 +60,37 @@ def drain_reg_queue(reg_q, addr=None):
     for _ in id_list:
         node_id = reg_q.popleft()
         pub.publish('handle_node', node_id)
+        pub_q.append(node_id)
         logger.debug('Published msg {} to {}'.format(node_id, addr))
 
 
-@run_until_success(max_retry=3)
-def echo_client(fpn_id, addr):
+@run_until_success(max_retry=4)
+def echo_client(fpn_id, addr, send_cfg=False):
+    import json
     from nanoservice import Requester
     from node_tools import state_data as st
 
     if NODE_SETTINGS['use_localhost'] or not addr:
         addr = '127.0.0.1'
 
+    cfg = st.cfg_msgs
     node_data = st.fpnState
     reply_list = []
     reciept = False
     c = Requester('tcp://{}:9443'.format(addr), timeouts=(1000, 1000))
 
     try:
-        reply_list = c.call('echo', fpn_id)
+        if send_cfg:
+            reply_list, err = c.call('node_cfg', fpn_id)
+            if err:
+                logger.error('Send err is {}'.format(err))
+            else:
+                node_data['cfg_ref'] = reply_list[0]['ref']
+                cfg = json.loads(reply_list[0]['result'])
+        else:
+            reply_list = c.call('echo', fpn_id)
+            node_data['msg_ref'] = reply_list[0]['ref']
         reciept = True
-        node_data['moon_ref0'] = reply_list[0]['ref']
         logger.debug('Send result is {}'.format(reply_list))
     except Exception as exc:
         logger.warning('Send error is {}'.format(exc))

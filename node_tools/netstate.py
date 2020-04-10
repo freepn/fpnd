@@ -12,14 +12,16 @@ from ztcli_api import ZeroTierConnectionError
 
 from node_tools import ctlr_data as ct
 
+from node_tools.async_funcs import add_network_object
+from node_tools.async_funcs import get_network_object_data
+from node_tools.async_funcs import get_network_object_ids
 from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import handle_node_status
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import handle_node_queues
-from node_tools.node_funcs import check_daemon
 
-logger = logging.getLogger('netstate2')
+logger = logging.getLogger('netstate')
 
 
 async def main():
@@ -33,8 +35,8 @@ async def main():
             await client.get_data('status')
             ctlr_id = handle_node_status(client.data, cache)
 
-            # get all available ctlr network data
-            await client.get_data('controller/network')
+            # get/display all available network data
+            await get_network_object_ids(client)
             logger.debug('{} networks found'.format(len(client.data)))
             net_list = client.data
             mbrs = []
@@ -63,8 +65,6 @@ async def main():
                                                                  list(node_q)))
             logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
                                                                 list(staging_q)))
-            res = check_daemon('msg_subscriber.py')
-            logger.debug('sub daemon status is {}'.format(res))
 
         except Exception as exc:
             logger.error('netstate exception was: {}'.format(exc))

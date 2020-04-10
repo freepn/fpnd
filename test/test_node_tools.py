@@ -17,14 +17,10 @@ import pytest
 
 from diskcache import Index
 
-from node_tools.ctlr_funcs import check_net_trie
-from node_tools.ctlr_funcs import create_state_trie
 from node_tools.ctlr_funcs import gen_netobj_queue
 from node_tools.ctlr_funcs import ipnet_get_netcfg
-from node_tools.ctlr_funcs import load_state_trie
 from node_tools.ctlr_funcs import name_generator
 from node_tools.ctlr_funcs import netcfg_get_ipnet
-from node_tools.ctlr_funcs import save_state_trie
 from node_tools.exceptions import MemberNodeError
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
@@ -32,23 +28,23 @@ from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_filepath
 from node_tools.helper_funcs import json_load_file
+from node_tools.helper_funcs import send_cfg_handler
 from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
 from node_tools.helper_funcs import xform_state_diff
 from node_tools.logger_config import setup_logging
-from node_tools.msg_queues import handle_announce_msg
-from node_tools.msg_queues import handle_node_queues
-from node_tools.msg_queues import manage_incoming_nodes
-from node_tools.msg_queues import valid_announce_msg
 from node_tools.network_funcs import do_peer_check
 from node_tools.network_funcs import get_net_cmds
 from node_tools.node_funcs import check_daemon
 from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import handle_moon_data
 from node_tools.node_funcs import parse_moon_data
-from node_tools.node_funcs import run_subscriber_daemon
 from node_tools.sched_funcs import check_return_status
+from node_tools.trie_funcs import create_state_trie
+from node_tools.trie_funcs import load_state_trie
+from node_tools.trie_funcs import save_state_trie
+from node_tools.trie_funcs import trie_is_empty
 
 
 try:
@@ -302,157 +298,6 @@ class NetPeerCheckTest(unittest.TestCase):
         self.assertEqual(res, (False, b'', 1))
 
 
-class QueueHandlingTest(unittest.TestCase):
-    """
-    Test managing node queues.
-    """
-    def setUp(self):
-        super(QueueHandlingTest, self).setUp()
-        import diskcache as dc
-
-        self.node_q = dc.Deque(directory='/tmp/test-nq')
-        self.reg_q = dc.Deque(directory='/tmp/test-rq')
-        self.wait_q = dc.Deque(directory='/tmp/test-wq')
-        self.node1 = 'deadbeef01'
-        self.node2 = '20beefdead'
-        self.node3 = 'beef03dead'
-
-    def tearDown(self):
-
-        self.node_q.clear()
-        self.reg_q.clear()
-        self.wait_q.clear()
-        super(QueueHandlingTest, self).tearDown()
-
-    def test_handle_node_queues(self):
-        self.node_q.append(self.node1)
-        self.node_q.append(self.node2)
-
-        self.assertEqual(list(self.node_q), [self.node1, self.node2])
-        self.assertEqual(list(self.reg_q), [])
-        self.assertEqual(list(self.wait_q), [])
-
-        handle_node_queues(self.node_q, self.wait_q)
-        self.assertEqual(list(self.node_q), [])
-        self.assertEqual(list(self.wait_q), [self.node1, self.node2])
-
-    def test_manage_fpn_nodes(self):
-        self.node_q.append(self.node1)
-        self.node_q.append(self.node2)
-
-        self.assertEqual(list(self.node_q), [self.node1, self.node2])
-        self.assertEqual(list(self.reg_q), [])
-        self.assertEqual(list(self.wait_q), [])
-
-        # register node1
-        self.reg_q.append(self.node1)
-
-        manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
-        self.assertEqual(list(self.node_q), [])
-        self.assertEqual(list(self.reg_q), [self.node1])
-        self.assertEqual(list(self.wait_q), [self.node2])
-
-        # register node2
-        self.reg_q.append(self.node2)
-
-        manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
-        self.assertEqual(list(self.node_q), [])
-        self.assertEqual(list(self.reg_q), [self.node1, self.node2])
-        self.assertEqual(list(self.wait_q), [])
-
-    def test_manage_other_nodes(self):
-        self.assertFalse(check_return_status(self.node_q))
-        self.node_q.append(self.node1)
-        self.node_q.append(self.node2)
-
-        self.assertEqual(list(self.node_q), [self.node1, self.node2])
-        self.assertEqual(list(self.reg_q), [])
-        self.assertEqual(list(self.wait_q), [])
-
-        manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
-        self.assertEqual(list(self.node_q), [])
-        self.assertEqual(list(self.reg_q), [])
-        self.assertEqual(list(self.wait_q), [self.node1, self.node2])
-
-        # unregistered nodes are still peers
-        self.node_q.append(self.node1)
-        self.node_q.append(self.node2)
-
-        manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
-        self.assertEqual(list(self.node_q), [])
-        self.assertEqual(list(self.reg_q), [])
-        self.assertEqual(list(self.wait_q), [self.node1,
-                                             self.node2,
-                                             self.node1,
-                                             self.node2])
-
-        # node1 still not seen yet, late register from node2
-        self.node_q.append(self.node1)
-        self.reg_q.append(self.node2)
-
-        manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
-        self.assertEqual(list(self.node_q), [])
-        self.assertEqual(list(self.reg_q), [self.node2])
-        self.assertEqual(list(self.wait_q), [self.node1,
-                                             self.node1,
-                                             self.node1])
-
-        # node2 registered and node1 expired
-        manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
-        self.assertEqual(list(self.node_q), [])
-        self.assertEqual(list(self.reg_q), [self.node2])
-        self.assertEqual(list(self.wait_q), [])
-
-
-class QueueMsgHandlingTest(unittest.TestCase):
-    """
-    Test announce msg handling/node queueing.
-    """
-    def setUp(self):
-        super(QueueMsgHandlingTest, self).setUp()
-        import diskcache as dc
-
-        self.node_q = dc.Deque(directory='/tmp/test-nq')
-        self.reg_q = dc.Deque(directory='/tmp/test-rq')
-        self.wait_q = dc.Deque(directory='/tmp/test-wq')
-        self.node1 = 'beef01dead'
-        self.node2 = '02beefdead'
-        self.node3 = 'deadbeef03'
-
-    def tearDown(self):
-
-        self.node_q.clear()
-        self.reg_q.clear()
-        self.wait_q.clear()
-        super(QueueMsgHandlingTest, self).tearDown()
-
-    def test_handle_msgs(self):
-        self.assertEqual(list(self.node_q), [])
-        self.node_q.append(self.node1)
-        self.node_q.append(self.node2)
-        self.node_q.append(self.node3)
-        self.wait_q.append(self.node3)
-
-        self.assertEqual(list(self.node_q), [self.node1, self.node2, self.node3])
-        self.assertEqual(list(self.reg_q), [])
-        self.assertEqual(list(self.wait_q), [self.node3])
-
-        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node1)
-        self.assertEqual(list(self.node_q), [self.node1, self.node2, self.node3])
-        self.assertEqual(list(self.reg_q), [self.node1])
-        self.assertEqual(list(self.wait_q), [self.node3])
-
-        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node2)
-        self.assertEqual(list(self.node_q), [self.node1, self.node2, self.node3])
-        self.assertEqual(list(self.reg_q), [self.node1, self.node2])
-        self.assertEqual(list(self.wait_q), [self.node3])
-
-        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node3)
-        self.assertEqual(list(self.node_q), list(self.reg_q))
-        self.assertEqual(list(self.wait_q), [self.node3])
-        # print(list(self.node_q), list(self.reg_q), list(self.wait_q))
-
-
 class SetRolesTest(unittest.TestCase):
     """
     Tests for check_and_set_role() and validate_role().
@@ -472,7 +317,16 @@ class SetRolesTest(unittest.TestCase):
 
         st.fpnState = self.saved_state
         NODE_SETTINGS['node_role'] = None
+        NODE_SETTINGS['mode'] = 'peer'
         super(SetRolesTest, self).tearDown()
+
+    def test_adhoc_mode(self):
+        NODE_SETTINGS['mode'] = 'adhoc'
+        self.assertIsNone(self.role)
+
+        set_initial_role()
+        validate_role()
+        self.assertIsNone(NODE_SETTINGS['node_role'])
 
     def test_ctlr_role(self):
         self.assertIsNone(self.role)
@@ -646,26 +500,6 @@ def test_daemon_has_status():
     assert 'False' in res.stdout
 
 
-def test_daemon_subscriber_restart():
-    """
-    Test if we can (re)start the msg_subscriber daemon.
-    """
-    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
-    res = run_subscriber_daemon('restart')
-    assert 'Stopping' in res.stdout
-    assert 'Starting' in res.stdout
-
-
-def test_daemon_subscriber_stop():
-    """
-    Test if we can stop the msg_subscriber daemon.
-    """
-    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
-    res = run_subscriber_daemon('stop')
-    assert 'Stopping' in res.stdout
-    assert 'Stopped' in res.stdout
-
-
 # @pytest.mark.xfail(raises=PermissionError)
 def test_path_ecxeption():
     """
@@ -699,10 +533,18 @@ def test_state_trie_load_save():
         assert trie2['foobar'] == 2
 
 
-def test_check_net_trie():
+def test_trie_is_empty():
+    # the char set under test is string.hexdigits
     from node_tools import ctlr_data as ct
-    res = check_net_trie(ct.net_trie)
+
+    res = trie_is_empty(ct.id_trie)
     assert res is True
+
+    ct.id_trie.setdefault(u'f00b', 42)
+    res = trie_is_empty(ct.id_trie)
+
+    with pytest.raises(AssertionError):
+        assert res is True
 
 
 def test_name_generator():
@@ -723,22 +565,12 @@ def test_set_initial_role():
     set_initial_role()
 
 
+def test_send_cfg_handler():
+    send_cfg_handler()
+
+
 def test_startup_handlers():
     startup_handlers()
-
-
-def test_invalid_msg():
-    res = valid_announce_msg('deadbeeh00')
-    assert res is False
-    res = valid_announce_msg('deadbeef0')
-    assert res is False
-    res = valid_announce_msg('deadbeef000')
-    assert res is False
-
-
-def test_valid_msg():
-    res = valid_announce_msg('deadbeef00')
-    assert res is True
 
 
 def test_api_warning_msg():

@@ -9,6 +9,8 @@ from diskcache import Index
 from ztcli_api import ZeroTier
 from ztcli_api import ZeroTierConnectionError
 
+from node_tools import state_data as st
+
 from node_tools.async_funcs import add_network_object
 from node_tools.async_funcs import get_network_object_data
 from node_tools.async_funcs import get_network_object_ids
@@ -17,9 +19,11 @@ from node_tools.cache_funcs import get_net_status
 from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import handle_node_status
 from node_tools.cache_funcs import load_cache_by_type
+from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
+from node_tools.helper_funcs import send_cfg_handler
 from node_tools.network_funcs import do_peer_check
 from node_tools.node_funcs import run_ztcli_cmd
 
@@ -32,6 +36,7 @@ async def main():
     async with aiohttp.ClientSession() as session:
         ZT_API = get_token()
         client = ZeroTier(ZT_API, loop, session)
+        nsState = AttrDict.from_nested_dict(st.fpnState)
 
         try:
             # get status details of the local node and update state
@@ -66,6 +71,8 @@ async def main():
             await client.get_data('network')
             net_data = client.data
             logger.info('Found {} networks'.format(len(net_data)))
+            if len(net_data) == 0 and not nsState.cfg_ref:
+                send_cfg_handler()
             net_keys = find_keys(cache, 'net')
             logger.debug('Returned network keys: {}'.format(net_keys))
             load_cache_by_type(cache, net_data, 'net')
