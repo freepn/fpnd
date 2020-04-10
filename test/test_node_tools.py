@@ -17,14 +17,10 @@ import pytest
 
 from diskcache import Index
 
-from node_tools.ctlr_funcs import create_state_trie
 from node_tools.ctlr_funcs import gen_netobj_queue
 from node_tools.ctlr_funcs import ipnet_get_netcfg
-from node_tools.ctlr_funcs import load_state_trie
 from node_tools.ctlr_funcs import name_generator
 from node_tools.ctlr_funcs import netcfg_get_ipnet
-from node_tools.ctlr_funcs import save_state_trie
-from node_tools.ctlr_funcs import trie_is_empty
 from node_tools.exceptions import MemberNodeError
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
@@ -45,6 +41,10 @@ from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import handle_moon_data
 from node_tools.node_funcs import parse_moon_data
 from node_tools.sched_funcs import check_return_status
+from node_tools.trie_funcs import create_state_trie
+from node_tools.trie_funcs import load_state_trie
+from node_tools.trie_funcs import save_state_trie
+from node_tools.trie_funcs import trie_is_empty
 
 
 try:
@@ -534,9 +534,17 @@ def test_state_trie_load_save():
 
 
 def test_trie_is_empty():
+    # the char set under test is string.hexdigits
     from node_tools import ctlr_data as ct
-    res = trie_is_empty(ct.net_trie)
+
+    res = trie_is_empty(ct.id_trie)
     assert res is True
+
+    ct.id_trie.setdefault(u'f00b', 42)
+    res = trie_is_empty(ct.id_trie)
+
+    with pytest.raises(AssertionError):
+        assert res is True
 
 
 def test_name_generator():

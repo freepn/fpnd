@@ -12,6 +12,9 @@ from ztcli_api import ZeroTierConnectionError
 
 from node_tools import ctlr_data as ct
 
+from node_tools.async_funcs import add_network_object
+from node_tools.async_funcs import get_network_object_data
+from node_tools.async_funcs import get_network_object_ids
 from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import handle_node_status
 from node_tools.helper_funcs import get_cachedir
@@ -32,8 +35,8 @@ async def main():
             await client.get_data('status')
             ctlr_id = handle_node_status(client.data, cache)
 
-            # get all available ctlr network data
-            await client.get_data('controller/network')
+            # get/display all available network data
+            await get_network_object_ids(client)
             logger.debug('{} networks found'.format(len(client.data)))
             net_list = client.data
             mbrs = []

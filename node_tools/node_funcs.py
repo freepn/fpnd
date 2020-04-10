@@ -96,6 +96,11 @@ def do_cleanup(path=None):
 
     from node_tools import state_data as st
 
+    if NODE_SETTINGS['node_role'] == 'moon':
+        for script in ['msg_responder.py', 'msg_subscriber.py']:
+            res = control_daemon('stop', script)
+            logger.info('CLEANUP: shutting down {}'.format(script))
+
     state = AttrDict.from_nested_dict(st.fpnState)
     moon_id = state.moon_id0
     if not path:
@@ -105,10 +110,10 @@ def do_cleanup(path=None):
 
     for iface, net in zip(ifaces, nets):
         if state[iface]:
-            logger.debug('CLEANUP: shutting down {}'.format(iface))
+            logger.info('CLEANUP: shutting down {}'.format(iface))
             cmd = get_net_cmds(path, iface)
             res = do_net_cmd(cmd)
-            logger.debug('CLEANUP: leaving network ID: {}'.format(net))
+            logger.info('CLEANUP: leaving network ID: {}'.format(net))
             res = run_ztcli_cmd(action='leave', extra=state[net])
             logger.debug('CLEANUP: action leave returned: {}'.format(res))
 

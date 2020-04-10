@@ -4,7 +4,6 @@ import unittest
 from nanoservice import Subscriber
 from nanoservice import Publisher
 
-from node_tools.ctlr_funcs import trie_is_empty
 from node_tools.network_funcs import drain_reg_queue
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import handle_node_queues
@@ -14,6 +13,7 @@ from node_tools.msg_queues import valid_announce_msg
 from node_tools.msg_queues import valid_cfg_msg
 from node_tools.msg_queues import wait_for_cfg_msg
 from node_tools.sched_funcs import check_return_status
+from node_tools.trie_funcs import trie_is_empty
 
 
 def test_invalid_msg():
@@ -44,6 +44,7 @@ def test_valid_cfg_msg():
 
 
 def test_make_cfg_msg():
+    # the char set used for trie keys is string.hexdigits
     import json
     from node_tools import ctlr_data as ct
     assert trie_is_empty(ct.id_trie) is True
@@ -56,6 +57,8 @@ def test_make_cfg_msg():
     res = make_cfg_msg(ct.id_trie, node_id)
     assert type(res) is str
     assert json.loads(res) == json.loads(cfg_msg)
+    ct.id_trie.clear()
+    assert trie_is_empty(ct.id_trie) is True
 
 
 class BaseTestCase(unittest.TestCase):
