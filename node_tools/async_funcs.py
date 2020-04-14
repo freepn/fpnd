@@ -12,15 +12,14 @@ logger = logging.getLogger(__name__)
 
 async def add_network_object(client, net_id=None, mbr_id=None, ctlr_id=None):
     """
-    Command wrapper for creating ZT objects under the ``controller`` endpoint.
-    Required arguments are ``client`` and either one of the following:
-        ``net_id`` *and* ``mbr_id`` to create a member object *or* just
-        ``ctlr_id`` to create a network object.
+    Command wrapper for creating ZT objects under the `controller` endpoint.
+    Required arguments are `client` and either one of the following:
+        `net_id` *and* `mbr_id` to create a member object *or* just
+        `ctlr_id` to create a network object.
     :param client: ztcli_api client object
     :param net_id: network ID endpoint path
     :param mbr_id: member ID endpoint path
     :param ctlr_id: network controller ID
-    :returns: client object/data
     """
     from node_tools.ctlr_funcs import name_generator
 
@@ -38,28 +37,35 @@ async def add_network_object(client, net_id=None, mbr_id=None, ctlr_id=None):
     await client.set_value(cfg_dict, endpoint)
 
 
-async def config_network_object(client, cfg_dict, net_id=None, mbr_id=None):
+async def config_network_object(client, cfg_dict, net_id, mbr_id=None):
     """
-    Command wrapper for configuring ZT objects under the ``controller`` endpoint.
-    Required arguments are ``client`` and ``cfg_dict``, plus either one of
+    Command wrapper for configuring ZT objects under the `controller` endpoint.
+    Required arguments are `client` and `cfg_dict`, plus either one of
     the following:
-        ``net_id`` *and* ``mbr_id`` to configure a member object *or* just
-        ``net_id`` to configure a network object.
+        `net_id` *and* `mbr_id` to configure a member object *or* just
+        `net_id` to configure a network object.
     :param client: ztcli_api client object
     :param cfg_dict: dictionary of configuration fragments
     :param net_id: network ID endpoint path
     :param mbr_id: member ID endpoint path
-    :returns: client object/data
     """
-    pass
+    if mbr_id and net_id:
+        endpoint = 'controller/network/{}/member/{}'.format(net_id, mbr_id)
+    elif net_id:
+        endpoint = 'controller/network/{}'.format(net_id)
+    else:
+        logger.error('One or more required arguments not found!')
+        return
+
+    await client.set_value(cfg_dict, endpoint)
 
 
 async def delete_network_object(client, net_id, mbr_id=None):
     """
-    Command wrapper for deleting ZT objects under the ``controller`` endpoint.
-    Required arguments are ``client`` and either one of the following:
-        ``net_id`` *and* ``mbr_id`` to delete a member object *or* just
-        ``net_id`` to delete a network object.
+    Command wrapper for deleting ZT objects under the `controller` endpoint.
+    Required arguments are `client` and either one of the following:
+        `net_id` *and* `mbr_id` to delete a member object *or* just
+        `net_id` to delete a network object.
     Warning: deleting a network object is permanent.
     :param client: ztcli_api client object
     :param net_id: network ID endpoint path
@@ -79,14 +85,13 @@ async def delete_network_object(client, net_id, mbr_id=None):
 async def get_network_object_data(client, net_id, mbr_id=None):
     """
     Command wrapper for getting ZT network/member data under the
-    ``controller`` endpoint.
-    Required arguments are ``client`` and either one of the following:
-        ``net_id`` *and* ``mbr_id`` to get member data *or* just
-        ``net_id`` to get network data.
+    `controller` endpoint.
+    Required arguments are `client` and either one of the following:
+        `net_id` *and* `mbr_id` to get member data *or* just
+        `net_id` to get network data.
     :param client: ztcli_api client object
     :param net_id: network ID endpoint path
     :param mbr_id: member ID endpoint path
-    :returns: client object/data
     """
     if mbr_id and net_id:
         endpoint = 'controller/network/{}/member/{}'.format(net_id, mbr_id)
@@ -102,12 +107,11 @@ async def get_network_object_data(client, net_id, mbr_id=None):
 async def get_network_object_ids(client, net_id=None):
     """
     Command wrapper for getting ZT network/member objects under the
-    ``controller`` endpoint.
-    Required arguments are ``client`` and optionally ``net_id`` to get
+    `controller` endpoint.
+    Required arguments are `client` and optionally `net_id` to get
     member IDs from a network.
     :param client: ztcli_api client object
     :param net_id: network ID endpoint path
-    :returns: client object/data
     """
     if net_id:
         endpoint = 'controller/network/{}/member'.format(net_id)

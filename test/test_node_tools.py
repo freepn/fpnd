@@ -596,9 +596,10 @@ def test_gen_netobj_queue():
 
     gen_netobj_queue(netobj_q, ipnet='192.168.0.0/24')
     assert len(netobj_q) == 64
-    net = netobj_q.peekleft()
+    net = netobj_q.popleft()
     assert isinstance(net, ipaddress.IPv4Network)
     assert len(list(net)) == 4
     assert len(list(net.hosts())) == 2
+    assert len(netobj_q) == 63
     gen_netobj_queue(netobj_q, ipnet='192.168.0.0/24')
     # netobj_q.clear()

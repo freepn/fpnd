@@ -17,6 +17,8 @@ from node_tools.async_funcs import get_network_object_data
 from node_tools.async_funcs import get_network_object_ids
 from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import handle_node_status
+from node_tools.helper_funcs import AttrDict
+from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import handle_node_queues
@@ -35,22 +37,51 @@ async def main():
             await client.get_data('status')
             ctlr_id = handle_node_status(client.data, cache)
 
-            # get/display all available network data
+            # get/display data for available networks
             await get_network_object_ids(client)
             logger.debug('{} networks found'.format(len(client.data)))
+
+            if len(client.data) == 0 and NODE_SETTINGS['use_exitnode'] != []:
+                await add_network_object(client, ctlr_id=ctlr_id)
+                logger.debug('BOOTSTRAP: added network {}'.format(client.data))
+                await get_network_object_ids(client)
+                logger.debug('BOOTSTRAP: got network list {}'.format(client.data))
+
+                net_list = client.data
+                for net_id in net_list:
+                    # Get details about each network
+                    await get_network_object_data(client, net_id)
+                    logger.debug('BOOTSTRAP: got network {}'.format(client.data))
+                    await get_network_object_ids(client, net_id)
+                    # pprint(client.data)
+                    logger.debug('BOOTSTRAP: {} members found'.format(len(client.data)))
+                    if len(client.data) == 0:
+                        for exit_id in NODE_SETTINGS['use_exitnode']:
+                            await add_network_object(client, net_id, exit_id)
+                            logger.debug('BOOTSTRAP: added exit node {}'.format(exit_id))
+                        await get_network_object_ids(client, net_id)
+                    member_dict = client.data
+                    logger.debug('BOOTSTRAP: got node dict {}'.format(member_dict))
+                    for mbr_id in member_dict.keys():
+                        await get_network_object_data(client, net_id, mbr_id)
+                        logger.debug('BOOTSTRAP: got exit node {}'.format(client.data))
+
+                # the last `get` command loads new data for the next block
+                # get/display data for available networks
+                await get_network_object_ids(client)
+                logger.debug('leaving bootstrap with {} network'.format(len(client.data)))
+
             net_list = client.data
-            mbrs = []
-            mbr_list = []
             for net_id in net_list:
                 # Get details about each network
-                await client.get_data('controller/network/{}'.format(net_id))
+                await get_network_object_data(client, net_id)
                 ct.net_trie[net_id] = client.data
-                await client.get_data('controller/network/{}/member'.format(net_id))
+                await get_network_object_ids(client, net_id)
                 logger.debug('network {} has {} member(s)'.format(net_id, len(client.data)))
                 member_dict = client.data
                 for mbr_id in member_dict.keys():
                     # get details about each network member
-                    await client.get_data('controller/network/{}/member/{}'.format(net_id, mbr_id))
+                    await get_network_object_data(client, net_id, mbr_id)
                     logger.debug('adding member: {}'.format(mbr_id))
                     ct.net_trie[net_id + mbr_id] = client.data
 
@@ -73,6 +104,7 @@ async def main():
 
 cache = dc.Index(get_cachedir())
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
+netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
 staging_q = dc.Deque(directory=get_cachedir('staging_queue'))
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())

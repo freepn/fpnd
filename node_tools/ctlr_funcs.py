@@ -27,8 +27,9 @@ def name_generator(size=10, char_set=None):
     name returned is two substrings of <size> concatenated together
     with an underscore. Default character set is lowercase ascii plus
     digits, default size is 10.
-    :param size: size of each substring
+    :param size: size of each substring in chars
     :param char_set: character set used for sub strings
+    :return: `str` network name
     """
     import random
 
@@ -46,8 +47,8 @@ def name_generator(size=10, char_set=None):
 def ipnet_get_netcfg(netobj):
     """
     Process a (python) network object into config Attrdict.
-    :param subnet object: python subnet object from the netobj queue
-    :return config dict: Attrdict of JSON config fragments
+    :param netobj: python subnet object from the netobj queue
+    :return: `dict` Attrdict of JSON config fragments
     """
     import ipaddress as ip
     from node_tools.helper_funcs import AttrDict
@@ -75,20 +76,21 @@ def ipnet_get_netcfg(netobj):
         raise ValueError('{} is not a valid IPv4Network object'.format(netobj))
 
 
-def netcfg_get_ipnet(addr):
+def netcfg_get_ipnet(addr, cidr='/30'):
     """
     Process member host or gateway addr string into the (python)
     network object it belongs to.  We also assume/require the CIDR
-    prefix for ``addr`` == /30 to be compatible with gen_netobj_queue().
-    :param host_addr: IPv4 address string without mask
-    :return <netobj>: network object for host_addr
-    :raises AddressValueError:
+    prefix for `addr` == /30 to be compatible with gen_netobj_queue().
+    :param addr: IPv4 address string without mask
+    :param cidr: network prefix
+    :return: <netobj> network object for host_addr
+    :raises: AddressValueError
     """
     import ipaddress as ip
     from node_tools.helper_funcs import find_ipv4_iface
 
-    if find_ipv4_iface(addr + '/30', strip=False):
-        netobj = ip.ip_network(addr + '/30', strict=False)
+    if find_ipv4_iface(addr + cidr, strip=False):
+        netobj = ip.ip_network(addr + cidr, strict=False)
         return netobj
     else:
         raise ip.AddressValueError

@@ -39,7 +39,7 @@ def test_invalid_cfg_msg():
 
 
 def test_valid_cfg_msg():
-    res = valid_cfg_msg('{"node_id": "02beefdead", "net0_id": "7ac4235ec5d3d938"}')
+    res = valid_cfg_msg('{"node_id": "02beefdead", "networks": ["7ac4235ec5d3d938"]}')
     assert res is True
 
 
@@ -57,6 +57,7 @@ def test_make_cfg_msg():
     res = make_cfg_msg(ct.id_trie, node_id)
     assert type(res) is str
     assert json.loads(res) == json.loads(cfg_msg)
+    assert valid_cfg_msg(res)
     ct.id_trie.clear()
     assert trie_is_empty(ct.id_trie) is True
 
@@ -285,8 +286,8 @@ class WaitForMsgHandlingTest(unittest.TestCase):
         self.node1 = 'beef01dead'
         self.node2 = '02beefdead'
         self.node3 = 'deadbeef03'
-        self.cfg1 = '{"node_id": "beef01dead", "net0_id": "bb8dead3c63cea29", "net1_id": "7ac4235ec5d3d938"}'
-        self.cfg2 = '{"node_id": "02beefdead", "net0_id": "7ac4235ec5d3d938"}'
+        self.cfg1 = '{"node_id": "beef01dead", "networks": ["7ac4235ec5d3d938", "bb8dead3c63cea29"]}'
+        self.cfg2 = '{"node_id": "02beefdead", "networks": ["7ac4235ec5d3d938"]}'
 
         self.pub_q.append(self.node1)
         self.pub_q.append(self.node2)
@@ -304,7 +305,7 @@ class WaitForMsgHandlingTest(unittest.TestCase):
         res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node1)
         self.assertIsInstance(res, dict)
         self.assertEqual(res['node_id'], self.node1)
-        self.assertEqual(res['net0_id'], 'bb8dead3c63cea29')
+        self.assertEqual(len(res['networks']), 2)
         # print(len(json.loads(self.cfg1)))
         # print(len(json.loads(self.cfg2)))
 
