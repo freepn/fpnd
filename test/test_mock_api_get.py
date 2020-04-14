@@ -43,6 +43,7 @@ from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import validate_role
 from node_tools.msg_queues import populate_leaf_list
+from node_tools.node_funcs import cycle_adhoc_net
 from node_tools.node_funcs import do_cleanup
 from node_tools.node_funcs import parse_moon_data
 from node_tools.node_funcs import run_moon_cmd
@@ -136,6 +137,8 @@ def test_node_info():
 
 def test_join_args():
     res = run_ztcli_cmd(action='join', extra='b6079f73ca8129ad')
+    assert res is None
+    res = cycle_adhoc_net('b6079f73ca8129ad', nap=1)
     assert res is None
 
 

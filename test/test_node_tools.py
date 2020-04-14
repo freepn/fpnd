@@ -145,6 +145,7 @@ class CheckReturnsTest(unittest.TestCase):
     def test_multiple_returns(self):
         self.assertTrue(check_return_status((True, 'Success', 0)))
         self.assertFalse(check_return_status((False, 'blarg', 1)))
+        self.assertTrue(check_return_status(['forecast is good', 'some clouds', 0]))
 
 
 class HandleMoonDataTest(unittest.TestCase):
@@ -478,6 +479,8 @@ def test_daemon_can_start():
     res = control_daemon('start')
     assert res.returncode == 0
     assert 'Starting' in res.stdout
+    res = check_daemon()
+    assert res is True
 
 
 def test_daemon_can_stop():
