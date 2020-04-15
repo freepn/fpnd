@@ -24,6 +24,7 @@ from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import get_state
 from node_tools.cache_funcs import handle_node_status
+from node_tools.ctlr_funcs import get_network_id
 from node_tools.data_funcs import get_state_values
 from node_tools.data_funcs import update_runner
 from node_tools.exceptions import MemberNodeError
@@ -73,6 +74,29 @@ class mock_zt_api_client(object):
         return self.response, self.endpoint
 
 
+add_net = {'authTokens': [{}],
+           'capabilities': [],
+           'creationTime': 1586844042713,
+           'enableBroadcast': True,
+           'id': 'b6079f73ca8129ad',
+           'ipAssignmentPools': [],
+           'mtu': 2800,
+           'multicastLimit': 32,
+           'name': 'gswpxcjojl_vs1hj68mve',
+           'nwid': 'b6079f73ca8129ad',
+           'objtype': 'network',
+           'private': True,
+           'remoteTraceLevel': 0,
+           'remoteTraceTarget': None,
+           'revision': 1,
+           'routes': [],
+           'rules': [{'not': False, 'or': False, 'type': 'ACTION_ACCEPT'}],
+           'rulesSource': '',
+           'tags': [],
+           'v4AssignMode': {'zt': False},
+           'v6AssignMode': {'6plane': False, 'rfc4193': False, 'zt': False}}
+
+
 # has_aging = False
 cache = Index(get_cachedir(dir_name='fpn_test'))
 max_age = NODE_SETTINGS['max_cache_age']
@@ -82,6 +106,13 @@ client = mock_zt_api_client()
 
 
 # special test cases
+def read_file(filename):
+    import codecs
+
+    with codecs.open(filename, 'r', 'utf8') as f:
+        return f.read()
+
+
 def json_check(data):
     import json
 
@@ -133,6 +164,11 @@ def test_net_client_status():
 def test_node_info():
     res = run_ztcli_cmd(action='info')
     assert res is None
+
+
+def test_get_network_id():
+    res = get_network_id(add_net)
+    assert res == 'b6079f73ca8129ad'
 
 
 def test_join_args():

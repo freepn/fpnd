@@ -21,6 +21,19 @@ def gen_netobj_queue(deque, ipnet='172.16.0.0/12'):
     logger.debug('{} IPNetwork objects in queue: {}'.format(len(deque), deque.directory))
 
 
+def get_network_id(data):
+    """
+    Get the network ID from the dict-ish client payload (ie, the content
+    of client.data) passed to/from `add_network_object`.
+    :param data: <dict> network attributres
+    :return: <str> network ID
+    """
+    from node_tools.helper_funcs import AttrDict
+
+    net_data = AttrDict.from_nested_dict(data)
+    return net_data.id
+
+
 def name_generator(size=10, char_set=None):
     """
     Generate a random network name for ZT add_network_object. The

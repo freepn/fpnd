@@ -26,6 +26,38 @@ from node_tools.msg_queues import handle_node_queues
 logger = logging.getLogger('netstate')
 
 
+async def bootstrap_exit_node(client, ctlr_id, exit_id):
+    """
+    Wrapper for bootstrapping an exit node; adds one network for each
+    exit node adds each exit node to its own network.
+    """
+    from node_tools.ctlr_funcs import get_network_id
+
+    await add_network_object(client, ctlr_id=ctlr_id)
+    net_id = get_network_id(client.data)
+    logger.debug('BOOTSTRAP: added network id {}'.format(net_id))
+    await get_network_object_ids(client)
+    logger.debug('BOOTSTRAP: got network list {}'.format(client.data))
+
+    net_list = client.data
+    if net_id in net_list:
+        # Get details about each network
+        await get_network_object_data(client, net_id)
+        logger.debug('BOOTSTRAP: got network data {}'.format(client.data))
+        await get_network_object_ids(client, net_id)
+        # pprint(client.data)
+        logger.debug('BOOTSTRAP: {} members found'.format(len(client.data)))
+        if len(client.data) == 0:
+            await add_network_object(client, net_id, exit_id)
+            logger.debug('BOOTSTRAP: added exit node id {}'.format(exit_id))
+            await get_network_object_ids(client, net_id)
+        member_dict = client.data
+        logger.debug('BOOTSTRAP: got node dict {}'.format(member_dict))
+        for mbr_id in member_dict.keys():
+            await get_network_object_data(client, net_id, mbr_id)
+            logger.debug('BOOTSTRAP: got node data {}'.format(client.data))
+
+
 async def main():
     """State cache updater to retrieve data from a local ZeroTier node."""
     async with aiohttp.ClientSession() as session:
@@ -40,37 +72,12 @@ async def main():
             # get/display data for available networks
             await get_network_object_ids(client)
             logger.debug('{} networks found'.format(len(client.data)))
-
             if len(client.data) == 0 and NODE_SETTINGS['use_exitnode'] != []:
-                await add_network_object(client, ctlr_id=ctlr_id)
-                logger.debug('BOOTSTRAP: added network {}'.format(client.data))
-                await get_network_object_ids(client)
-                logger.debug('BOOTSTRAP: got network list {}'.format(client.data))
+                for exit_id in NODE_SETTINGS['use_exitnode']:
+                    await bootstrap_exit_node(client, ctlr_id, exit_id)
 
-                net_list = client.data
-                for net_id in net_list:
-                    # Get details about each network
-                    await get_network_object_data(client, net_id)
-                    logger.debug('BOOTSTRAP: got network {}'.format(client.data))
-                    await get_network_object_ids(client, net_id)
-                    # pprint(client.data)
-                    logger.debug('BOOTSTRAP: {} members found'.format(len(client.data)))
-                    if len(client.data) == 0:
-                        for exit_id in NODE_SETTINGS['use_exitnode']:
-                            await add_network_object(client, net_id, exit_id)
-                            logger.debug('BOOTSTRAP: added exit node {}'.format(exit_id))
-                        await get_network_object_ids(client, net_id)
-                    member_dict = client.data
-                    logger.debug('BOOTSTRAP: got node dict {}'.format(member_dict))
-                    for mbr_id in member_dict.keys():
-                        await get_network_object_data(client, net_id, mbr_id)
-                        logger.debug('BOOTSTRAP: got exit node {}'.format(client.data))
-
-                # the last `get` command loads new data for the next block
-                # get/display data for available networks
-                await get_network_object_ids(client)
-                logger.debug('leaving bootstrap with {} network'.format(len(client.data)))
-
+            # get/display data for available networks
+            await get_network_object_ids(client)
             net_list = client.data
             for net_id in net_list:
                 # Get details about each network
