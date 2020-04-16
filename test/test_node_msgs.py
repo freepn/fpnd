@@ -14,6 +14,7 @@ from node_tools.msg_queues import valid_cfg_msg
 from node_tools.msg_queues import wait_for_cfg_msg
 from node_tools.sched_funcs import check_return_status
 from node_tools.trie_funcs import trie_is_empty
+from node_tools.trie_funcs import update_id_trie
 
 
 def test_invalid_msg():
@@ -50,8 +51,9 @@ def test_make_cfg_msg():
     assert trie_is_empty(ct.id_trie) is True
 
     node_id = '02beefdead'
+    needs = [False, True]
     net_list = ['7ac4235ec5d3d938']
-    ct.id_trie[node_id] = net_list
+    ct.id_trie[node_id] = (net_list, needs)
     cfg_msg = '{"node_id": "02beefdead", "networks": ["7ac4235ec5d3d938"]}'
 
     res = make_cfg_msg(ct.id_trie, node_id)
@@ -273,6 +275,52 @@ class QueueMsgHandlingTest(unittest.TestCase):
         # print(list(self.node_q), list(self.reg_q), list(self.wait_q))
 
 
+class TrieUpdateHandlingTest(unittest.TestCase):
+    """
+    Test net_id cfg msg handling/node queueing.
+    """
+    def setUp(self):
+        super(TrieUpdateHandlingTest, self).setUp()
+        from node_tools import ctlr_data as ct
+
+        self.trie = ct.id_trie
+        self.node1 = ['beef01dead']
+        self.node2 = '02beefdead'
+        self.nodes = ['01beefdead', 'beef02dead']
+        self.nodess = ['01beefdead', 'beef02dead', '02beefdead']
+        self.net1 = ['bb8dead3c63cea29']
+        self.nets = ['7ac4235ec5d3d938', '7ac4235ec5d3d947']
+        self.netss = ['7ac4235ec5d3d938', '7ac4235ec5d3d947', 'bb8dead3c64dfb30']
+
+    def tearDown(self):
+
+        self.trie.clear()
+        super(TrieUpdateHandlingTest, self).tearDown()
+
+    def test_update_id_trie_net(self):
+        update_id_trie(self.trie, self.net1, [self.node2], nw=True)
+        res = self.trie[self.net1[0]]
+        self.assertIsInstance(res, tuple)
+        self.assertEqual(len(res), 2)
+        for thing in res:
+            self.assertIsInstance(thing, list)
+        self.assertEqual(res, ([self.node2], []))
+
+    def test_update_id_trie_node(self):
+        update_id_trie(self.trie, self.nets, self.node1)
+        res = self.trie[self.node1[0]]
+        self.assertIsInstance(res, tuple)
+        self.assertEqual(len(res), 2)
+        for thing in res:
+            self.assertIsInstance(thing, list)
+        self.assertEqual(res, (self.nets, []))
+
+    def test_update_id_trie_none(self):
+        with self.assertRaises(AssertionError):
+            update_id_trie(self.trie, self.net1, self.node1, needs=[True])
+            update_id_trie(self.trie, self.netss, self.node1)
+
+
 class WaitForMsgHandlingTest(unittest.TestCase):
     """
     Test net_id cfg msg handling/node queueing.
@@ -306,8 +354,6 @@ class WaitForMsgHandlingTest(unittest.TestCase):
         self.assertIsInstance(res, dict)
         self.assertEqual(res['node_id'], self.node1)
         self.assertEqual(len(res['networks']), 2)
-        # print(len(json.loads(self.cfg1)))
-        # print(len(json.loads(self.cfg2)))
 
     def test_wait_for_cfg_none(self):
         res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node3)

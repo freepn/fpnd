@@ -46,8 +46,8 @@ async def main():
             load_cache_by_type(cache, peer_data, 'peer')
 
             manage_incoming_nodes(node_q, reg_q, wait_q)
-            logger.debug('{} nodes in reg queue: {}'.format(len(reg_q), list(reg_q)))
-            logger.debug('{} nodes in wait queue: {}'.format(len(wait_q), list(wait_q)))
+            logger.debug('{} node(s) in reg queue: {}'.format(len(reg_q), list(reg_q)))
+            logger.debug('{} node(s) in wait queue: {}'.format(len(wait_q), list(wait_q)))
             if len(reg_q) > 0:
                 drain_reg_queue(reg_q, pub_q, addr='127.0.0.1')
 
@@ -64,8 +64,9 @@ async def main():
             if num_leaves == 0 and st.leaf_nodes != []:
                 st.leaf_nodes = []
             if st.leaf_nodes != []:
-                logger.debug('Found leaf nodes: {}'.format(st.leaf_nodes))
-            logger.debug('{} nodes in node queue: {}'.format(len(node_q), list(node_q)))
+                logger.debug('Found leaf node(s): {}'.format(st.leaf_nodes))
+            logger.debug('{} node(s) in node queue: {}'.format(len(node_q), list(node_q)))
+            logger.debug('{} node(s) in pub queue: {}'.format(len(pub_q), list(pub_q)))
 
         except Exception as exc:
             logger.error('peerstate exception was: {}'.format(exc))

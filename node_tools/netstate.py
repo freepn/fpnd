@@ -22,14 +22,20 @@ from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import handle_node_queues
+from node_tools.trie_funcs import update_id_trie
 
 logger = logging.getLogger('netstate')
 
 
-async def bootstrap_exit_node(client, ctlr_id, exit_id):
+async def bootstrap_mbr_node(client, ctlr_id, node_id, ex=False):
     """
-    Wrapper for bootstrapping an exit node; adds one network for each
-    exit node adds each exit node to its own network.
+    Wrapper for bootstrapping a member node; adds one network for each
+    node and adds each node to its own network.  Updates net/id tries
+    with new data.
+    :param client: ztcli_api client object
+    :param ctlr_id: node ID of controller node
+    :param node_id: node ID
+    :param ex: True if node is an exit node
     """
     from node_tools.ctlr_funcs import get_network_id
 
@@ -45,17 +51,26 @@ async def bootstrap_exit_node(client, ctlr_id, exit_id):
         await get_network_object_data(client, net_id)
         logger.debug('BOOTSTRAP: got network data {}'.format(client.data))
         await get_network_object_ids(client, net_id)
-        # pprint(client.data)
         logger.debug('BOOTSTRAP: {} members found'.format(len(client.data)))
-        if len(client.data) == 0:
-            await add_network_object(client, net_id, exit_id)
-            logger.debug('BOOTSTRAP: added exit node id {}'.format(exit_id))
-            await get_network_object_ids(client, net_id)
+
+        await add_network_object(client, net_id, node_id)
+        logger.debug('BOOTSTRAP: added node id {}'.format(node_id))
+        await get_network_object_ids(client, net_id)
         member_dict = client.data
         logger.debug('BOOTSTRAP: got node dict {}'.format(member_dict))
-        for mbr_id in member_dict.keys():
-            await get_network_object_data(client, net_id, mbr_id)
-            logger.debug('BOOTSTRAP: got node data {}'.format(client.data))
+        await get_network_object_data(client, net_id, node_id)
+        logger.debug('BOOTSTRAP: got node data {}'.format(client.data))
+
+        # dedicated exit node is a special case
+        if ex:
+            node_needs = [False, False]
+        else:
+            node_needs = [False, True]
+        net_needs = [True, True]
+
+        update_id_trie(ct.id_trie, [net_id], [node_id], needs=node_needs)
+        update_id_trie(ct.id_trie, [net_id], [node_id], needs=net_needs, nw=True)
+        logger.debug('TRIE: id_trie has items: {}'.format(ct.id_trie.items()))
 
 
 async def main():
@@ -74,7 +89,7 @@ async def main():
             logger.debug('{} networks found'.format(len(client.data)))
             if len(client.data) == 0 and NODE_SETTINGS['use_exitnode'] != []:
                 for exit_id in NODE_SETTINGS['use_exitnode']:
-                    await bootstrap_exit_node(client, ctlr_id, exit_id)
+                    await bootstrap_mbr_node(client, ctlr_id, exit_id, ex=True)
 
             # get/display data for available networks
             await get_network_object_ids(client)
@@ -92,7 +107,8 @@ async def main():
                     logger.debug('adding member: {}'.format(mbr_id))
                     ct.net_trie[net_id + mbr_id] = client.data
 
-            logger.debug('TRIE: has keys: {}'.format(ct.net_trie.keys(ctlr_id)))
+            logger.debug('TRIE: net_trie has keys: {}'.format(list(ct.net_trie)))
+            logger.debug('TRIE: id_trie has keys: {}'.format(list(ct.id_trie)))
 
             # handle node queues
             logger.debug('{} nodes in node queue: {}'.format(len(node_q),

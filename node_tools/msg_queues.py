@@ -37,8 +37,9 @@ def handle_node_queues(node_q, staging_q):
 def make_cfg_msg(trie, node_id):
     """
     Create the net_cfg msg for a node and return cfg string.  Node
-    IDs come from the node/active queues.
-    :param trie: state trie of nodes and their network IDs
+    IDs come from the node/active queues and networks come from the
+    `id_trie`.
+    :param trie: state trie of nodes/nets
     :param node_id: node ID
     :return: JSON str (net_id cfg msg)
     """
@@ -49,7 +50,7 @@ def make_cfg_msg(trie, node_id):
         "networks": []
     }
 
-    d["networks"] = trie[node_id]
+    d["networks"] = trie[node_id][0]
 
     return json.dumps(d)
 
