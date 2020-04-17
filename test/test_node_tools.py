@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+import json
 import time
 import shutil
 import datetime
 import logging
 import ipaddress
-# import mock
 import string
 import tempfile
 import unittest
@@ -235,7 +235,7 @@ class IPv4NetObjectTest(unittest.TestCase):
         res = ipnet_get_netcfg(netobj)
         self.assertIsInstance(res, AttrDict)
         self.assertEqual(res.host, '172.16.0.2/30')
-        # print(res)
+        # print(json.dumps(res, separators=(',', ':')))
 
     def test_get_invalid_cfg(self):
         """Raise IPv4Network ValueError"""

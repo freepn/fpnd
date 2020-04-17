@@ -60,6 +60,8 @@ def name_generator(size=10, char_set=None):
 def ipnet_get_netcfg(netobj):
     """
     Process a (python) network object into config Attrdict.
+    :notes: Each item in the route list must be processed as a separate
+            config fragment.
     :param netobj: python subnet object from the netobj queue
     :return: `dict` Attrdict of JSON config fragments
     """

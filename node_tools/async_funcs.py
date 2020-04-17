@@ -10,6 +10,57 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+async def bootstrap_mbr_node(client, ctlr_id, node_id, ex=False):
+    """
+    Wrapper for bootstrapping a new member node; adds one network for
+    each node and adds each node to its (new) network.  Updates net/id
+    tries with new data.
+    :notes: Since we *always* provide a new (ZT) network, we do *not*
+            handle existing nodes here.
+    :param client: ztcli_api client object
+    :param ctlr_id: node ID of controller node
+    :param node_id: node ID
+    :param ex: True if node is an exit node
+    """
+    from node_tools import ctlr_data as ct
+
+    from node_tools.ctlr_funcs import get_network_id
+    from node_tools.trie_funcs import update_id_trie
+
+    await add_network_object(client, ctlr_id=ctlr_id)
+    net_id = get_network_id(client.data)
+    logger.debug('BOOTSTRAP: added network id {}'.format(net_id))
+    await get_network_object_ids(client)
+    logger.debug('BOOTSTRAP: got network list {}'.format(client.data))
+
+    net_list = client.data
+    if net_id in net_list:
+        # Get details about each network
+        await get_network_object_data(client, net_id)
+        logger.debug('BOOTSTRAP: got network data {}'.format(client.data))
+        await get_network_object_ids(client, net_id)
+        logger.debug('BOOTSTRAP: {} members found'.format(len(client.data)))
+
+        await add_network_object(client, net_id, node_id)
+        logger.debug('BOOTSTRAP: added node id {}'.format(node_id))
+        await get_network_object_ids(client, net_id)
+        member_dict = client.data
+        logger.debug('BOOTSTRAP: got node dict {}'.format(member_dict))
+        await get_network_object_data(client, net_id, node_id)
+        logger.debug('BOOTSTRAP: got node data {}'.format(client.data))
+
+        # dedicated exit node is a special case
+        if ex:
+            node_needs = [False, False]
+        else:
+            node_needs = [True, False]
+        net_needs = [True, True]
+
+        update_id_trie(ct.id_trie, [net_id], [node_id], needs=node_needs)
+        update_id_trie(ct.id_trie, [net_id], [node_id], needs=net_needs, nw=True)
+        logger.debug('TRIE: id_trie has items: {}'.format(ct.id_trie.items()))
+
+
 async def add_network_object(client, net_id=None, mbr_id=None, ctlr_id=None):
     """
     Command wrapper for creating ZT objects under the `controller` endpoint.
