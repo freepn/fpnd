@@ -67,6 +67,7 @@ async def main():
                 logger.debug('Found leaf node(s): {}'.format(st.leaf_nodes))
             logger.debug('{} node(s) in node queue: {}'.format(len(node_q), list(node_q)))
             logger.debug('{} node(s) in pub queue: {}'.format(len(pub_q), list(pub_q)))
+            logger.debug('{} node(s) in active queue: {}'.format(len(act_q), list(act_q)))
 
         except Exception as exc:
             logger.error('peerstate exception was: {}'.format(exc))
@@ -74,6 +75,7 @@ async def main():
 
 
 cache = dc.Index(get_cachedir())
+act_q = dc.Deque(directory=get_cachedir('act_queue'))
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
 pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
 reg_q = dc.Deque(directory=get_cachedir('reg_queue'))

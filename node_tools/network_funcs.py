@@ -81,18 +81,21 @@ def echo_client(fpn_id, addr, send_cfg=False):
 
     try:
         if send_cfg:
-            reply_list, err = c.call('node_cfg', fpn_id)
-            if err:
-                logger.error('Send err is {}'.format(err))
+            reply_list = c.call('node_cfg', fpn_id)
+            logger.debug('CFG: send_cfg reply is {}'.format(reply_list))
+            if 'result' not in reply_list[0]:
+                logger.warning('CFG: malformed reply {}'.format(reply_list))
             else:
                 node_data['cfg_ref'] = reply_list[0]['ref']
                 cfg = json.loads(reply_list[0]['result'])
+                logger.debug('CFG: state {} has payload {}'.format(type(cfg), cfg))
         else:
             reply_list = c.call('echo', fpn_id)
             node_data['msg_ref'] = reply_list[0]['ref']
         reciept = True
         logger.debug('Send result is {}'.format(reply_list))
     except Exception as exc:
+        # success wrapper needs a warning to catch
         logger.warning('Send error is {}'.format(exc))
         raise exc
 
@@ -132,6 +135,32 @@ def get_net_cmds(bin_dir, iface=None, state=False):
         res = cmds
 
     return res
+
+
+def publish_cfg_msg(trie, node_id, addr=None):
+    """
+    Publish node cfg message (to root node) with network ID to join.
+    Node data is already populated in the ID trie.
+    :param trie: `id_trie` state trie
+    :param node_id: ID of mbr node to configure
+    :param addr: IP address of subscriber
+    """
+    import time
+    from nanoservice import Publisher
+    from node_tools.msg_queues import make_cfg_msg
+
+    if NODE_SETTINGS['use_localhost'] or not addr:
+        addr = '127.0.0.1'
+
+    pub = Publisher('tcp://{}:9442'.format(addr))
+
+    # Need to wait a bit on connect to prevent lost messages
+    time.sleep(0.001)
+
+    msg = make_cfg_msg(trie, node_id)
+
+    pub.publish('cfg_msgs', msg)
+    logger.debug('CFG: sent cfg msg {} for node {} to {}'.format(msg, node_id, addr))
 
 
 @run_until_success()

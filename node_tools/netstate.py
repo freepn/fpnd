@@ -23,6 +23,7 @@ from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import handle_node_queues
+from node_tools.network_funcs import publish_cfg_msg
 from node_tools.trie_funcs import update_id_trie
 
 logger = logging.getLogger('netstate')
@@ -42,15 +43,9 @@ async def main():
             # get/display data for available networks
             await get_network_object_ids(client)
             logger.debug('{} networks found'.format(len(client.data)))
-            if len(client.data) == 0 and NODE_SETTINGS['use_exitnode'] != []:
-                for exit_id in NODE_SETTINGS['use_exitnode']:
-                    await bootstrap_mbr_node(client, ctlr_id, exit_id, ex=True)
-
-            # get/display data for available networks
-            await get_network_object_ids(client)
             net_list = client.data
             for net_id in net_list:
-                # Get details about each network
+                # get details about each network
                 await get_network_object_data(client, net_id)
                 ct.net_trie[net_id] = client.data
                 await get_network_object_ids(client, net_id)
@@ -65,7 +60,7 @@ async def main():
             logger.debug('TRIE: net_trie has keys: {}'.format(list(ct.net_trie)))
             logger.debug('TRIE: id_trie has keys: {}'.format(list(ct.id_trie)))
 
-            # handle node queues
+            # handle node queues and publish messages
             logger.debug('{} nodes in node queue: {}'.format(len(node_q),
                                                              list(node_q)))
             if len(node_q) > 0:
@@ -74,6 +69,15 @@ async def main():
                                                                  list(node_q)))
             logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
                                                                 list(staging_q)))
+            for mbr_id in [x for x in staging_q if x not in list(ct.id_trie)]:
+                if mbr_id in NODE_SETTINGS['use_exitnode']:
+                    await bootstrap_mbr_node(client, ctlr_id, mbr_id, ex=True)
+                else:
+                    await bootstrap_mbr_node(client, ctlr_id, mbr_id)
+                publish_cfg_msg(ct.id_trie, mbr_id, addr='127.0.0.1')
+                staging_q.remove(mbr_id)
+                logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
+                                                                    list(staging_q)))
 
         except Exception as exc:
             logger.error('netstate exception was: {}'.format(exc))

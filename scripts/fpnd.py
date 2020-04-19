@@ -23,6 +23,7 @@ from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
 from node_tools.logger_config import setup_logging
+from node_tools.node_funcs import check_daemon_status
 from node_tools.node_funcs import do_cleanup
 from node_tools.node_funcs import do_startup
 from node_tools.node_funcs import handle_moon_data
@@ -58,7 +59,7 @@ def check_daemon_status(script='msg_responder.py'):
     """
     import diskcache as dc
 
-    from node_tools.helper_funcs import get_cachedir
+    from node_tools import state_data as st
     from node_tools.node_funcs import check_daemon
     from node_tools.node_funcs import control_daemon
 
@@ -66,9 +67,8 @@ def check_daemon_status(script='msg_responder.py'):
     logger.debug('{} daemon status is {}'.format(script, res))
 
     if script == 'msg_responder.py':
-        node_q = dc.Deque(directory=get_cachedir('node_queue'))
 
-        if len(node_q) > 0:
+        if len(st.leaf_nodes) > 0:
             if not res:
                 res = control_daemon('start', script)
                 logger.debug('Starting {} daemon'.format(script))

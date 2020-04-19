@@ -12,6 +12,24 @@ from node_tools.helper_funcs import NODE_SETTINGS
 logger = logging.getLogger(__name__)
 
 
+def all_is_quiet(act_q, node_q, pub_q, reg_q):
+    """
+    """
+    from node_tools import state_data as st
+
+    leaves = st.leaf_nodes
+
+    try:
+        assert len(act_q) == 0
+        assert len(pub_q) == 0
+        assert len(node_q) == 0
+        assert len(reg_q) == 0
+        assert leaves == []
+    except:
+        return False
+    return True
+
+
 def check_daemon(script=None):
     """
     Check status of a messaging daemon script

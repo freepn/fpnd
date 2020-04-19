@@ -107,11 +107,11 @@ def valid_cfg_msg(msg):
 def wait_for_cfg_msg(pub_q, active_q, msg):
     """
     Handle valid member node request for network ID(s) and return
-    the result (or `None`).  Expects responder daemon to raise the
-    nanoservice exception if result is `None`.
+    the result (or `None`).  Expects client wrapper to raise the
+    nanoservice warning if no cfg result.
     :param pub_q: queue of published node IDs
-    :param active_q: queue of active nodes with net IDs
-    :param msg: net_id cfg message needing a response
+    :param active_q: queue of cfg msgs (nodes with net IDs)
+    :param msg: (outgoig) net_id cfg message needing a response
     :return: JSON str (net_id cfg msg) or None
     """
     import json
@@ -119,9 +119,11 @@ def wait_for_cfg_msg(pub_q, active_q, msg):
     result = None
 
     for item in list(active_q):
-        node_cfg = json.loads(item)
-        if msg == node_cfg['node_id']:
-            result = node_cfg
+        cfg_dict = json.loads(item)
+        if msg == cfg_dict['node_id']:
+            result = item
+            with active_q.transact():
+                active_q.remove(item)
             if msg in list(pub_q):
                 with pub_q.transact():
                     pub_q.remove(msg)

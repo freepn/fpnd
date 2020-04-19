@@ -4,7 +4,6 @@ import unittest
 from nanoservice import Subscriber
 from nanoservice import Publisher
 
-from node_tools.network_funcs import drain_reg_queue
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import handle_node_queues
 from node_tools.msg_queues import make_cfg_msg
@@ -12,6 +11,8 @@ from node_tools.msg_queues import manage_incoming_nodes
 from node_tools.msg_queues import valid_announce_msg
 from node_tools.msg_queues import valid_cfg_msg
 from node_tools.msg_queues import wait_for_cfg_msg
+from node_tools.network_funcs import drain_reg_queue
+from node_tools.network_funcs import publish_cfg_msg
 from node_tools.sched_funcs import check_return_status
 from node_tools.trie_funcs import trie_is_empty
 from node_tools.trie_funcs import update_id_trie
@@ -68,29 +69,61 @@ class BaseTestCase(unittest.TestCase):
 
     def setUp(self):
         import diskcache as dc
+        from node_tools import ctlr_data as ct
 
         self.node1 = 'deadbeef01'
         self.node2 = '20beefdead'
+        self.needs = [False, True]
+        self.net_list = ['7ac4235ec5d3d940']
+        self.trie = ct.id_trie
         self.node_q = dc.Deque(directory='/tmp/test-nq')
         self.pub_q = dc.Deque(directory='/tmp/test-pq')
         self.node_q.clear()
         self.pub_q.clear()
+        self.trie.clear()
 
         self.addr = '127.0.0.1'
         self.tcp_addr = 'tcp://{}:9442'.format(self.addr)
+        self.active_list = []
         self.sub_list = []
 
         def handle_msg(msg):
             self.sub_list.append(msg)
             return self.sub_list
 
+        def handle_cfg(msg):
+            self.active_list.append(msg)
+            return self.active_list
+
         self.service = Subscriber(self.tcp_addr)
         self.service.subscribe('handle_node', handle_msg)
+        self.service.subscribe('cfg_msgs', handle_cfg)
 
     def tearDown(self):
         self.node_q.clear()
         self.pub_q.clear()
         self.service.socket.close()
+
+
+class TestPubCfg(BaseTestCase):
+
+    def test_node_cfg(self):
+        import json
+        self.pub_q.append(self.node1)
+        self.pub_q.append(self.node2)
+        self.trie[self.node1] = (self.net_list, self.needs)
+        self.cfg_msg = '{"node_id": "deadbeef01", "networks": ["7ac4235ec5d3d940"]}'
+        self.cfg_dict = json.loads(self.cfg_msg)
+
+        # Client side
+        publish_cfg_msg(self.trie, self.node1)
+
+        # server side
+        self.assertEqual(list(self.pub_q), [self.node1, self.node2])
+        res = self.service.process()
+        self.assertEqual(res, self.active_list)
+        res_msg = json.loads(res[0])
+        self.assertEqual(res_msg, self.cfg_dict)
 
 
 class TestPubSub(BaseTestCase):
@@ -350,14 +383,20 @@ class WaitForMsgHandlingTest(unittest.TestCase):
 
     def test_wait_for_cfg(self):
         import json
+        self.assertIn(self.cfg1, self.active_q)
         res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node1)
-        self.assertIsInstance(res, dict)
-        self.assertEqual(res['node_id'], self.node1)
-        self.assertEqual(len(res['networks']), 2)
+        self.assertNotIn(self.cfg1, self.active_q)
+        self.assertIsInstance(res, str)
+        self.assertIn(self.node1, res)
+        self.assertEqual(len(json.loads(res)['networks']), 2)
 
     def test_wait_for_cfg_none(self):
+        import json
         res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node3)
         self.assertIsNone(res)
         self.pub_q.remove(self.node2)
+        self.assertIn(self.cfg2, self.active_q)
         res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node2)
-        self.assertEqual(res['node_id'], self.node2)
+        self.assertNotIn(self.cfg2, self.active_q)
+        self.assertIn(self.node2, res)
+        self.assertEqual(len(json.loads(res)['networks']), 1)
