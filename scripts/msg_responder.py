@@ -98,7 +98,7 @@ class rspDaemon(Daemon):
         self.sock_addr = 'ipc:///tmp/service.sock'
         self.tcp_addr = 'tcp://0.0.0.0:9443'
 
-        s = Responder(self.tcp_addr, timeouts=(500, 500))
+        s = Responder(self.tcp_addr, timeouts=(None, None))
         s.register('echo', echo)
         s.register('node_cfg', get_node_cfg)
         s.start()
