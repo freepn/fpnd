@@ -69,6 +69,7 @@ async def main():
                                                                  list(node_q)))
             logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
                                                                 list(staging_q)))
+
             for mbr_id in [x for x in staging_q if x not in list(ct.id_trie)]:
                 if mbr_id in NODE_SETTINGS['use_exitnode']:
                     await bootstrap_mbr_node(client, ctlr_id, mbr_id, ex=True)
@@ -76,8 +77,8 @@ async def main():
                     await bootstrap_mbr_node(client, ctlr_id, mbr_id)
                 publish_cfg_msg(ct.id_trie, mbr_id, addr='127.0.0.1')
                 staging_q.remove(mbr_id)
-                logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
-                                                                    list(staging_q)))
+            logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
+                                                                list(staging_q)))
 
         except Exception as exc:
             logger.error('netstate exception was: {}'.format(exc))

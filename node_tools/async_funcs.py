@@ -38,8 +38,6 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, ex=False):
         # Get details about each network
         await get_network_object_data(client, net_id)
         logger.debug('BOOTSTRAP: got network data {}'.format(client.data))
-        await get_network_object_ids(client, net_id)
-        logger.debug('BOOTSTRAP: {} members found'.format(len(client.data)))
 
         await add_network_object(client, net_id, node_id)
         logger.debug('BOOTSTRAP: added node id {}'.format(node_id))
@@ -49,12 +47,13 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, ex=False):
         await get_network_object_data(client, net_id, node_id)
         logger.debug('BOOTSTRAP: got node data {}'.format(client.data))
 
-        # dedicated exit node is a special case
+        # dedicated exit node is a special case, otherwise, each new node
+        # gets a src_net here, and still *needs* a gw_net
         if ex:
             node_needs = [False, False]
         else:
             node_needs = [True, False]
-        net_needs = [True, True]
+        net_needs = [False, True]
 
         update_id_trie(ct.id_trie, [net_id], [node_id], needs=node_needs)
         update_id_trie(ct.id_trie, [net_id], [node_id], needs=net_needs, nw=True)

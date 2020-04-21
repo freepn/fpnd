@@ -104,7 +104,7 @@ def do_scheduling():
         else:
             if node_role == 'controller':
                 netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
-                gen_netobj_queue(netobj_q, ipnet='192.168.10.0/24')
+                gen_netobj_queue(netobj_q)
                 cache = dc.Index(get_cachedir())
                 for key_str in ['peer', 'moon', 'mstate']:
                     delete_cache_entry(cache, key_str)

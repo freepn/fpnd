@@ -18,6 +18,7 @@ import pytest
 from diskcache import Index
 
 from node_tools.ctlr_funcs import gen_netobj_queue
+from node_tools.ctlr_funcs import handle_net_cfg
 from node_tools.ctlr_funcs import ipnet_get_netcfg
 from node_tools.ctlr_funcs import name_generator
 from node_tools.ctlr_funcs import netcfg_get_ipnet
@@ -234,7 +235,7 @@ class IPv4NetObjectTest(unittest.TestCase):
         netobj = ipaddress.ip_network('172.16.0.0/30')
         res = ipnet_get_netcfg(netobj)
         self.assertIsInstance(res, AttrDict)
-        self.assertEqual(res.host, '172.16.0.2/30')
+        self.assertEqual(res.host, ['172.16.0.2/30'])
         # print(json.dumps(res, separators=(',', ':')))
 
     def test_get_invalid_cfg(self):
@@ -605,6 +606,27 @@ def test_gen_netobj_queue():
     assert isinstance(net, ipaddress.IPv4Network)
     assert len(list(net)) == 4
     assert len(list(net.hosts())) == 2
+    gen_netobj_queue(netobj_q)
     assert len(netobj_q) == 63
-    gen_netobj_queue(netobj_q, ipnet='192.168.0.0/24')
-    # netobj_q.clear()
+
+
+def test_handle_net_cfg():
+    import diskcache as dc
+
+    netobj_q = dc.Deque(directory='/tmp/test-oq')
+
+    net1, pool1, mbr1, gw1 = handle_net_cfg(netobj_q)
+    for fragment in [net1, pool1, mbr1, gw1]:
+        assert isinstance(fragment, AttrDict)
+
+    net2, pool2, mbr2, gw2 = handle_net_cfg(netobj_q)
+    for fragment in [net2, pool2, mbr2, gw2]:
+        assert isinstance(fragment, AttrDict)
+        for item in fragment.values():
+            assert isinstance(item, list)
+
+    assert mbr1 != mbr2
+    assert mbr1.ipAssignments == ['192.168.0.6/30']
+    res = handle_net_cfg(netobj_q)
+    print(res)
+    netobj_q.clear()
