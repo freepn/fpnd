@@ -10,21 +10,24 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-async def bootstrap_mbr_node(client, ctlr_id, node_id, ex=False):
+async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
     """
     Wrapper for bootstrapping a new member node; adds one network for
     each node and adds each node to its (new) network.  Updates net/id
     tries with new data.
     :notes: Since we *always* provide a new (ZT) network, we do *not*
-            handle existing nodes here.
+            handle existing nodes here.  The `deque` parameter is
+            required for handle_net_cfg().
     :param client: ztcli_api client object
     :param ctlr_id: node ID of controller node
     :param node_id: node ID
+    :param deque: netobj queue
     :param ex: True if node is an exit node
     """
     from node_tools import ctlr_data as ct
 
     from node_tools.ctlr_funcs import get_network_id
+    from node_tools.ctlr_funcs import handle_net_cfg
     from node_tools.trie_funcs import update_id_trie
 
     await add_network_object(client, ctlr_id=ctlr_id)
@@ -47,11 +50,16 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, ex=False):
         await get_network_object_data(client, net_id, node_id)
         logger.debug('BOOTSTRAP: got node data {}'.format(client.data))
 
+        net, src, gw = handle_net_cfg(deque)
+        await config_network_object(client, net, net_id)
+
         # dedicated exit node is a special case, otherwise, each new node
         # gets a src_net here, and still *needs* a gw_net
         if ex:
+            await config_network_object(client, gw, net_id, node_id)
             node_needs = [False, False]
         else:
+            await config_network_object(client, src, net_id, node_id)
             node_needs = [True, False]
         net_needs = [False, True]
 

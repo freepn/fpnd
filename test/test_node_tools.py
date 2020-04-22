@@ -615,18 +615,18 @@ def test_handle_net_cfg():
 
     netobj_q = dc.Deque(directory='/tmp/test-oq')
 
-    net1, pool1, mbr1, gw1 = handle_net_cfg(netobj_q)
-    for fragment in [net1, pool1, mbr1, gw1]:
+    net1, mbr1, gw1 = handle_net_cfg(netobj_q)
+    for fragment in [net1, mbr1, gw1]:
         assert isinstance(fragment, AttrDict)
 
-    net2, pool2, mbr2, gw2 = handle_net_cfg(netobj_q)
-    for fragment in [net2, pool2, mbr2, gw2]:
+    net2, mbr2, gw2 = handle_net_cfg(netobj_q)
+    for fragment in [net2, mbr2, gw2]:
         assert isinstance(fragment, AttrDict)
-        for item in fragment.values():
-            assert isinstance(item, list)
 
     assert mbr1 != mbr2
     assert mbr1.ipAssignments == ['192.168.0.6/30']
+    assert mbr1.authorized is True
     res = handle_net_cfg(netobj_q)
+    assert len(res) is 3
     print(res)
     netobj_q.clear()

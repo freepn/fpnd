@@ -150,8 +150,8 @@ def test_node_client_status():
 def test_peer_client_status():
     _, peer_data = client.get_data('peer')
     for peer in peer_data:
-        assert peer['paths'][0]['active']
-        # assert active
+        if peer['paths'] != []:
+            assert peer['paths'][0]['active']
 
 
 def test_net_client_status():
@@ -243,11 +243,11 @@ def test_cache_loading():
         _, peer_data = client.get_data('peer')
         del peer_data[0]
         load_cache_by_type(cache, peer_data, 'peer')
-        assert len(list(cache)) == 5
+        assert len(list(cache)) == 6
 
     def test_delete_cache_entry_no_key():
         delete_cache_entry(cache, 'reep')
-        assert len(list(cache)) == 5
+        assert len(list(cache)) == 6
 
     def test_delete_cache_entry():
         delete_cache_entry(cache, 'peer')
@@ -256,21 +256,21 @@ def test_cache_loading():
     def test_update_cache_peer():
         _, peer_data = client.get_data('peer')
         load_cache_by_type(cache, peer_data, 'peer')
-        assert len(list(cache)) == 6
+        assert len(list(cache)) == 7
 
     def test_load_cache_net():
         _, net_data = client.get_data('network')
         load_cache_by_type(cache, net_data, 'net')
-        assert len(list(cache)) == 8
+        assert len(list(cache)) == 9
 
     def test_update_cache_net():
         _, net_data = client.get_data('network')
         del net_data[1]
         load_cache_by_type(cache, net_data, 'net')
-        assert len(list(cache)) == 7
+        assert len(list(cache)) == 8
         _, net_data = client.get_data('network')
         load_cache_by_type(cache, net_data, 'net')
-        assert len(list(cache)) == 8
+        assert len(list(cache)) == 9
 
     def test_find_keys_nonet():
         assert find_keys(cache, 'net') is None
@@ -281,7 +281,7 @@ def test_cache_loading():
         # print(res)
 
     def test_cache_size():
-        assert len(cache) == 8
+        assert len(cache) == 9
 
     def test_handle_node_status():
         _, node_data = client.get_data('status')
@@ -362,7 +362,7 @@ def test_populate_leaf_list():
 def test_load_node_state():
     Node = get_node_status(cache)
     load_cache_by_type(cache, Node, 'nstate')
-    assert len(cache) == 9
+    assert len(cache) == 10
     # print(list(cache))
 
 
@@ -375,19 +375,19 @@ def test_load_moon_state():
             moonStatus.append(peer)
             break
     load_cache_by_type(cache, moonStatus, 'mstate')
-    assert len(cache) == 10
+    assert len(cache) == 11
 
 
 def test_load_net_state():
     Node = get_net_status(cache)
     load_cache_by_type(cache, Node, 'istate')
-    assert len(cache) == 12
+    assert len(cache) == 13
 
 
 def test_load_new_state():
     Node = get_net_status(cache)
     load_cache_by_type(cache, Node, 'istate')
-    assert len(cache) == 12
+    assert len(cache) == 13
 
 
 def test_find_keys():

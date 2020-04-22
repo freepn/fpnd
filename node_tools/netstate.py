@@ -72,9 +72,9 @@ async def main():
 
             for mbr_id in [x for x in staging_q if x not in list(ct.id_trie)]:
                 if mbr_id in NODE_SETTINGS['use_exitnode']:
-                    await bootstrap_mbr_node(client, ctlr_id, mbr_id, ex=True)
+                    await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q, ex=True)
                 else:
-                    await bootstrap_mbr_node(client, ctlr_id, mbr_id)
+                    await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q)
                 publish_cfg_msg(ct.id_trie, mbr_id, addr='127.0.0.1')
                 staging_q.remove(mbr_id)
             logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),

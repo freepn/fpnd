@@ -54,27 +54,25 @@ def handle_net_cfg(deque):
                  'ipRangeEnd': '{}'.format(src_ip)}]
 
     src_addr = {
-        'ipAssignments': netcfg.host
+        'ipAssignments': netcfg.host,
+        'authorized': True
     }
 
     gw_addr = {
-        'ipAssignments': netcfg.gateway
+        'ipAssignments': netcfg.gateway,
+        'authorized': True
     }
 
-    pools = {
+    net_defs = {
+        'routes': netcfg.net_routes,
         'ipAssignmentPools': ip_range
-    }
-
-    routes = {
-        'routes': netcfg.net_routes
     }
 
     mbr_ip = AttrDict.from_nested_dict(src_addr)
     gw_ip = AttrDict.from_nested_dict(gw_addr)
-    ip_net = AttrDict.from_nested_dict(routes)
-    ip_pool = AttrDict.from_nested_dict(pools)
+    ip_net = AttrDict.from_nested_dict(net_defs)
 
-    return ip_net, ip_pool, mbr_ip, gw_ip
+    return ip_net, mbr_ip, gw_ip
 
 
 def ipnet_get_netcfg(netobj):
