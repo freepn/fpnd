@@ -113,7 +113,7 @@ def do_cleanup(path=None):
             logger.info('CLEANUP: shutting down {}'.format(iface))
             cmd = get_net_cmds(path, iface)
             res = do_net_cmd(cmd)
-            logger.info('CLEANUP: leaving network ID: {}'.format(net))
+            logger.info('CLEANUP: leaving network ID: {}'.format(state[net]))
             res = run_ztcli_cmd(action='leave', extra=state[net])
             logger.debug('CLEANUP: action leave returned: {}'.format(res))
 
@@ -178,6 +178,21 @@ def handle_moon_data(data):
             st.fpnState.update(moon_id0=ident, moon_addr=addr)
             logger.debug('moon state has id {} addr {}'.format(st.fpnState['moon_id0'],
                                                                st.fpnState['moon_addr']))
+
+
+def node_state_check():
+    """
+    Post-startup state check for moon data and msg_ref so we can deorbit.
+    :return: None or deorbit cmd result
+    """
+    from node_tools import state_data as st
+    from node_tools.helper_funcs import AttrDict
+
+    result = None
+    state = AttrDict.from_nested_dict(st.fpnState)
+    if state.moon_id0 and state.msg_ref:
+        result = run_moon_cmd(state.moon_id0, action='deorbit')
+    return result
 
 
 def run_ztcli_cmd(command='zerotier-cli', action='listmoons', extra=None):

@@ -9,16 +9,14 @@ logger = logging.getLogger(__name__)
 
 
 def handle_announce_msg(node_q, reg_q, wait_q, msg):
-    for node in list(wait_q):
-        if node not in list(reg_q):
-            if msg == node:
-                with reg_q.transact():
-                    reg_q.append(msg)
     for node in list(node_q):
-        if node not in list(reg_q):
-            if msg == node:
-                with reg_q.transact():
-                    reg_q.append(msg)
+        if msg == node:
+            with reg_q.transact():
+                reg_q.append(msg)
+    for node in list(wait_q):
+        if msg == node:
+            with reg_q.transact():
+                reg_q.append(msg)
 
 
 def handle_node_queues(node_q, staging_q):
@@ -56,9 +54,9 @@ def make_cfg_msg(trie, node_id):
 
 
 def manage_incoming_nodes(node_q, reg_q, wait_q):
-    for node in list(reg_q):
-        if node in list(node_q):
-            with node_q.transact():
+    with node_q.transact():
+        for node in list(reg_q):
+            if node in list(node_q):
                 node_q.remove(node)
     for node in list(wait_q):
         if wait_q.count(node) >= 3 or node in list(reg_q):
@@ -126,7 +124,8 @@ def wait_for_cfg_msg(pub_q, active_q, msg):
                 active_q.remove(item)
             if msg in list(pub_q):
                 with pub_q.transact():
-                    pub_q.remove(msg)
+                    while pub_q.count(msg) != 0:
+                        pub_q.remove(msg)
                 logger.debug('Node ID {} removed from pub_q'.format(msg))
             else:
                 logger.debug('Node ID {} not in pub_queue'.format(msg))

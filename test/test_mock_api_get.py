@@ -46,6 +46,7 @@ from node_tools.helper_funcs import validate_role
 from node_tools.msg_queues import populate_leaf_list
 from node_tools.node_funcs import cycle_adhoc_net
 from node_tools.node_funcs import do_cleanup
+from node_tools.node_funcs import node_state_check
 from node_tools.node_funcs import parse_moon_data
 from node_tools.node_funcs import run_moon_cmd
 from node_tools.node_funcs import run_ztcli_cmd
@@ -478,6 +479,18 @@ def test_get_state_values():
     assert len(stest.changes[0]) == 2
     # reset shared state vars
     stest.changes = []
+
+
+def test_node_state_check():
+    from node_tools import state_data as stest
+
+    state = AttrDict.from_nested_dict(stest.fpnState)
+    assert state.cfg_ref is None
+    res = node_state_check()
+    assert res is None
+    state.update(cfg_ref='7f5c6fc9-28d9-45d6-b210-1a08b958e219')
+    res = node_state_check()
+    state.update(cfg_ref=None)
 
 
 def test_run_event_handler():

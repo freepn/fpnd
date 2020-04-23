@@ -45,12 +45,6 @@ async def main():
             logger.debug('Returned peer keys: {}'.format(peer_keys))
             load_cache_by_type(cache, peer_data, 'peer')
 
-            manage_incoming_nodes(node_q, reg_q, wait_q)
-            logger.debug('{} node(s) in reg queue: {}'.format(len(reg_q), list(reg_q)))
-            logger.debug('{} node(s) in wait queue: {}'.format(len(wait_q), list(wait_q)))
-            if len(reg_q) > 0:
-                drain_reg_queue(reg_q, pub_q, addr='127.0.0.1')
-
             num_leaves = 0
             peerStatus = get_peer_status(cache)
             for peer in peerStatus:
@@ -65,6 +59,14 @@ async def main():
                 st.leaf_nodes = []
             if st.leaf_nodes != []:
                 logger.debug('Found leaf node(s): {}'.format(st.leaf_nodes))
+            logger.debug('{} node(s) in node queue: {}'.format(len(node_q), list(node_q)))
+
+            manage_incoming_nodes(node_q, reg_q, wait_q)
+            logger.debug('{} node(s) in reg queue: {}'.format(len(reg_q), list(reg_q)))
+            logger.debug('{} node(s) in wait queue: {}'.format(len(wait_q), list(wait_q)))
+            if len(reg_q) > 0:
+                drain_reg_queue(reg_q, pub_q, addr='127.0.0.1')
+
             logger.debug('{} node(s) in node queue: {}'.format(len(node_q), list(node_q)))
             logger.debug('{} node(s) in pub queue: {}'.format(len(pub_q), list(pub_q)))
             logger.debug('{} node(s) in active queue: {}'.format(len(act_q), list(act_q)))

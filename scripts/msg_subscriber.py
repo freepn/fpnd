@@ -29,11 +29,10 @@ pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
 def handle_msg(msg):
     if valid_announce_msg(msg):
         print('SUB: Valid node ID: {}'.format(msg))
-        if msg not in node_q:
-            with node_q.transact():
-                node_q.append(msg)
-            syslog.syslog(syslog.LOG_DEBUG,
-                          'SUB: Adding node id: {}'.format(msg))
+        with node_q.transact():
+            node_q.append(msg)
+        syslog.syslog(syslog.LOG_DEBUG,
+                      'SUB: Adding node id: {}'.format(msg))
         syslog.syslog(syslog.LOG_INFO,
                       'SUB: {} nodes in node queue'.format(len(node_q)))
 

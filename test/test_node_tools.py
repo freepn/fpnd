@@ -628,5 +628,5 @@ def test_handle_net_cfg():
     assert mbr1.authorized is True
     res = handle_net_cfg(netobj_q)
     assert len(res) is 3
-    print(res)
+    # print(res)
     netobj_q.clear()

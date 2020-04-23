@@ -71,6 +71,7 @@ async def main():
             await client.get_data('network')
             net_data = client.data
             logger.info('Found {} networks'.format(len(net_data)))
+            # this only handles the initial node bootstrap state
             if len(net_data) == 0 and not nsState.cfg_ref:
                 send_cfg_handler()
             net_keys = find_keys(cache, 'net')
