@@ -10,7 +10,6 @@ import ipaddress
 import string
 import tempfile
 
-import datrie
 import pytest
 
 from diskcache import Index

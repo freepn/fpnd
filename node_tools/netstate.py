@@ -24,6 +24,7 @@ from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import handle_node_queues
 from node_tools.network_funcs import publish_cfg_msg
+from node_tools.trie_funcs import load_id_trie
 from node_tools.trie_funcs import update_id_trie
 
 logger = logging.getLogger('netstate')
@@ -48,6 +49,7 @@ async def main():
                 # get details about each network
                 await get_network_object_data(client, net_id)
                 ct.net_trie[net_id] = client.data
+                load_id_trie(ct.net_trie, ct.id_trie, [net_id], [], nw=True)
                 await get_network_object_ids(client, net_id)
                 logger.debug('network {} has {} member(s)'.format(net_id, len(client.data)))
                 member_dict = client.data
@@ -56,8 +58,14 @@ async def main():
                     await get_network_object_data(client, net_id, mbr_id)
                     logger.debug('adding member: {}'.format(mbr_id))
                     ct.net_trie[net_id + mbr_id] = client.data
+                    load_id_trie(ct.net_trie, ct.id_trie, [], [mbr_id])
+                # logger.debug('member key suffixes: {}'.format(ct.net_trie.suffixes(net_id)))
 
             logger.debug('TRIE: net_trie has keys: {}'.format(list(ct.net_trie)))
+            # for net_id in list(ct.net_trie):
+            #     logger.debug('TRIE: net_key {} has paylod: {}'.format(net_id, ct.net_trie[net_id]))
+            # for net_id in net_list:
+            #     logger.debug('TRIE: net_id {} has keys: {}'.format(net_id, ct.net_trie.keys(net_id)))
             logger.debug('TRIE: id_trie has keys: {}'.format(list(ct.id_trie)))
 
             # handle node queues and publish messages
@@ -76,9 +84,10 @@ async def main():
                 else:
                     await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q)
                 publish_cfg_msg(ct.id_trie, mbr_id, addr='127.0.0.1')
+            for mbr_id in [x for x in staging_q if x in list(ct.id_trie)]:
                 staging_q.remove(mbr_id)
-            logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
-                                                                list(staging_q)))
+                logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
+                                                                    list(staging_q)))
 
         except Exception as exc:
             logger.error('netstate exception was: {}'.format(exc))

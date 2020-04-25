@@ -14,6 +14,7 @@ from node_tools.msg_queues import wait_for_cfg_msg
 from node_tools.network_funcs import drain_reg_queue
 from node_tools.network_funcs import publish_cfg_msg
 from node_tools.sched_funcs import check_return_status
+from node_tools.trie_funcs import find_dangling_nets
 from node_tools.trie_funcs import trie_is_empty
 from node_tools.trie_funcs import update_id_trie
 
@@ -302,18 +303,19 @@ class QueueMsgHandlingTest(unittest.TestCase):
         self.assertEqual(list(self.reg_q), [self.node1, self.node2])
         self.assertEqual(list(self.wait_q), [self.node3])
 
+        # we now allow duplicate IDs in the reg queue
         handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node3)
-        self.assertEqual(list(self.node_q), list(self.reg_q))
+        self.assertIn(self.node3, list(self.reg_q))
         self.assertEqual(list(self.wait_q), [self.node3])
         # print(list(self.node_q), list(self.reg_q), list(self.wait_q))
 
 
-class TrieUpdateHandlingTest(unittest.TestCase):
+class TrieHandlingTest(unittest.TestCase):
     """
     Test net_id cfg msg handling/node queueing.
     """
     def setUp(self):
-        super(TrieUpdateHandlingTest, self).setUp()
+        super(TrieHandlingTest, self).setUp()
         from node_tools import ctlr_data as ct
 
         self.trie = ct.id_trie
@@ -322,13 +324,26 @@ class TrieUpdateHandlingTest(unittest.TestCase):
         self.nodes = ['01beefdead', 'beef02dead']
         self.nodess = ['01beefdead', 'beef02dead', '02beefdead']
         self.net1 = ['bb8dead3c63cea29']
+        self.net2 = ['7ac4235ec5d3d947']
         self.nets = ['7ac4235ec5d3d938', '7ac4235ec5d3d947']
         self.netss = ['7ac4235ec5d3d938', '7ac4235ec5d3d947', 'bb8dead3c64dfb30']
 
     def tearDown(self):
 
         self.trie.clear()
-        super(TrieUpdateHandlingTest, self).tearDown()
+        super(TrieHandlingTest, self).tearDown()
+
+    def test_find_dangling_nets(self):
+        update_id_trie(self.trie, self.net1, self.node1, [False, False])
+        update_id_trie(self.trie, self.net2, self.nodes, [False, False], nw=True)
+        res = find_dangling_nets(self.trie)
+        self.assertEqual(res, [])
+        update_id_trie(self.trie, self.net1, self.node1, [False, True], nw=True)
+        res = find_dangling_nets(self.trie)
+        print(res)
+        self.assertEqual(res, [self.net1[0], self.node1[0]])
+        print(list(self.trie))
+        print(self.trie.items())
 
     def test_update_id_trie_net(self):
         update_id_trie(self.trie, self.net1, [self.node2], nw=True)

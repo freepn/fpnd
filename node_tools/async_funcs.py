@@ -28,6 +28,9 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
 
     from node_tools.ctlr_funcs import get_network_id
     from node_tools.ctlr_funcs import handle_net_cfg
+    from node_tools.ctlr_funcs import ipnet_get_netcfg
+    from node_tools.trie_funcs import find_dangling_nets
+    from node_tools.trie_funcs import get_dangling_net_data
     from node_tools.trie_funcs import update_id_trie
 
     await add_network_object(client, ctlr_id=ctlr_id)
@@ -41,6 +44,7 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
         # Get details about each network
         await get_network_object_data(client, net_id)
         logger.debug('BOOTSTRAP: got network data {}'.format(client.data))
+        trie_nets = [net_id]
 
         await add_network_object(client, net_id, node_id)
         logger.debug('BOOTSTRAP: added node id {}'.format(node_id))
@@ -57,13 +61,31 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
         # gets a src_net here, and still *needs* a gw_net
         if ex:
             await config_network_object(client, gw, net_id, node_id)
-            node_needs = [False, False]
         else:
-            await config_network_object(client, src, net_id, node_id)
-            node_needs = [True, False]
-        net_needs = [False, True]
+            data_list = find_dangling_nets(ct.id_trie)
+            logger.debug('BOOTSTRAP: got data list {}'.format(data_list))
+            if len(data_list) == 2:
+                gw_net = data_list[0]
+                gw_node = data_list[1]
+                await add_network_object(client, gw_net, node_id)
+                logger.debug('BOOTSTRAP: added node id {} to gateway net'.format(node_id))
+                ipnet = get_dangling_net_data(ct.net_trie, gw_net)
+                netcfg = ipnet_get_netcfg(ipnet)
+                gw_cfg = netcfg.host
+                logger.debug('BOOTSTRAP: got node addr {} for gateway net'.format(gw_cfg))
+                await config_network_object(client, gw_cfg, gw_net, node_id)
+                trie_nets = [gw_net, net_id]
 
-        update_id_trie(ct.id_trie, [net_id], [node_id], needs=node_needs)
+            await config_network_object(client, src, net_id, node_id)
+
+        node_needs = [False, False]
+        # if not exit node, we need to update the gw net needs after
+        # linking the next mbr node
+        net_needs = [False, True]
+        if not ex:
+            update_id_trie(ct.id_trie, [gw_net], [gw_node, node_id], needs=[False, False], nw=True)
+
+        update_id_trie(ct.id_trie, trie_nets, [node_id], needs=node_needs)
         update_id_trie(ct.id_trie, [net_id], [node_id], needs=net_needs, nw=True)
         logger.debug('TRIE: id_trie has items: {}'.format(ct.id_trie.items()))
 

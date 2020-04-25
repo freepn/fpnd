@@ -55,7 +55,7 @@ def drain_reg_queue(reg_q, pub_q, addr=None):
     id_list = list(reg_q)
 
     # Need to wait a bit on connect to prevent lost messages
-    time.sleep(0.001)
+    time.sleep(0.002)
 
     for _ in id_list:
         with reg_q.transact():
@@ -165,7 +165,7 @@ def publish_cfg_msg(trie, node_id, addr=None):
     pub = Publisher('tcp://{}:9442'.format(addr))
 
     # Need to wait a bit on connect to prevent lost messages
-    time.sleep(0.001)
+    time.sleep(0.002)
 
     msg = make_cfg_msg(trie, node_id)
 
