@@ -61,11 +61,11 @@ async def main():
                     load_id_trie(ct.net_trie, ct.id_trie, [], [mbr_id])
                 # logger.debug('member key suffixes: {}'.format(ct.net_trie.suffixes(net_id)))
 
-            logger.debug('TRIE: net_trie has keys: {}'.format(list(ct.net_trie)))
-            # for net_id in list(ct.net_trie):
-            #     logger.debug('TRIE: net_key {} has paylod: {}'.format(net_id, ct.net_trie[net_id]))
-            # for net_id in net_list:
-            #     logger.debug('TRIE: net_id {} has keys: {}'.format(net_id, ct.net_trie.keys(net_id)))
+            # logger.debug('TRIE: net_trie has keys: {}'.format(list(ct.net_trie)))
+            for key in list(ct.net_trie):
+                logger.debug('TRIE: net key {} has paylod: {}'.format(key, ct.net_trie[key]))
+            # for key in list(ct.id_trie):
+            #     logger.debug('TRIE: id key {} has payload: {}'.format(key, ct.id_trie[key]))
             logger.debug('TRIE: id_trie has keys: {}'.format(list(ct.id_trie)))
 
             # handle node queues and publish messages

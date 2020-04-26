@@ -90,7 +90,7 @@ async def main():
             # print(str(exc))
             raise exc
 
-exit_node = 'ddfd7368e6'
+exit_node = ''
 cache = Index(get_cachedir())
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())

@@ -22,6 +22,7 @@ from node_tools.ctlr_funcs import handle_net_cfg
 from node_tools.ctlr_funcs import ipnet_get_netcfg
 from node_tools.ctlr_funcs import name_generator
 from node_tools.ctlr_funcs import netcfg_get_ipnet
+from node_tools.ctlr_funcs import set_network_cfg
 from node_tools.exceptions import MemberNodeError
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
@@ -43,6 +44,8 @@ from node_tools.node_funcs import handle_moon_data
 from node_tools.node_funcs import parse_moon_data
 from node_tools.sched_funcs import check_return_status
 from node_tools.trie_funcs import create_state_trie
+from node_tools.trie_funcs import get_dangling_net_data
+from node_tools.trie_funcs import load_id_trie
 from node_tools.trie_funcs import load_state_trie
 from node_tools.trie_funcs import save_state_trie
 from node_tools.trie_funcs import trie_is_empty
@@ -56,6 +59,16 @@ except ImportError:
     utc = UTC()
 
 
+def read_file(filename):
+    """
+    Quickndirty get the first line of data from a file.
+    """
+    import codecs
+
+    with codecs.open(filename, 'r', 'utf8') as f:
+        return f.readline().strip()
+
+
 class mock_zt_api_client(object):
     """
     Client API to serve simple GET data endpoints
@@ -66,6 +79,11 @@ class mock_zt_api_client(object):
 
     def get_data(self, endpoint):
         self.endpoint = json_load_file(endpoint, self.test_dir)
+        return self.response, self.endpoint
+
+    def load_data(self, endpoint):
+        import os
+        self.endpoint = read_file(os.path.join(self.test_dir, endpoint))
         return self.response, self.endpoint
 
 
@@ -452,6 +470,35 @@ class XformStateDataTest(unittest.TestCase):
         self.assertEqual(diff.fpn_id0, 'bb8dead3c63cea29')
 
 
+client = mock_zt_api_client()
+
+
+def load_ctlr_data():
+    nets = []
+    for net in ['net1.data', 'net2.data']:
+        _, data = client.load_data(net)
+        nets.append(eval(data))
+
+    mbrs = []
+    for mbr in ['mbr1.data', 'mbr2.data']:
+        _, data = client.load_data(mbr)
+        mbrs.append(eval(data))
+
+    return nets, mbrs
+
+
+def load_net_trie_data(trie):
+    nets, mbrs = load_ctlr_data()
+    for net in nets:
+        # print(net)
+        net_id = net['id']
+        trie[net_id] = net
+        for mbr in mbrs:
+            mbr_id = mbr['id']
+            if net_id == mbr['nwid']:
+                trie[net_id + mbr_id] = mbr
+
+
 def test_file_is_found():
     """
     Test if we can find the msg_responder daemon.
@@ -551,6 +598,53 @@ def test_trie_is_empty():
 
     with pytest.raises(AssertionError):
         assert res is True
+    ct.id_trie.clear()
+
+
+def test_load_id_from_net_trie():
+    from node_tools import ctlr_data as ct
+
+    res = trie_is_empty(ct.net_trie)
+    assert res is True
+
+    load_net_trie_data(ct.net_trie)
+    assert len(list(ct.net_trie)) == 4
+
+    for net_id in ['beafde52b4296ea5', 'beafde52b4a5f7ba']:
+        load_id_trie(ct.net_trie, ct.id_trie, [net_id], [], nw=True)
+    for node_id in ['beefea68e6', 'ee2eedb2e1']:
+        load_id_trie(ct.net_trie, ct.id_trie, [], [node_id])
+
+    for key in ['beafde52b4296ea5', 'beafde52b4a5f7ba', 'beefea68e6', 'ee2eedb2e1']:
+        links, needs = ct.id_trie[key]
+        for item in [links, needs]:
+            assert isinstance(item, list)
+        assert len(links) == 1
+        assert len(needs) == 2
+
+    assert ct.id_trie['beefea68e6'] == (['beafde52b4296ea5'], [False, True])
+    assert ct.id_trie['beafde52b4a5f7ba'] == (['ee2eedb2e1'], [False, True])
+    # print(ct.id_trie.items())
+
+
+def test_get_dangling_net_data():
+    from node_tools import ctlr_data as ct
+
+    load_net_trie_data(ct.net_trie)
+
+    net_id = 'beafde52b4a5f7ba'
+    res = get_dangling_net_data(ct.net_trie, net_id)
+    assert isinstance(res, dict)
+    assert res.host == ['172.16.0.126/30']
+
+
+def test_set_network_cfg():
+    host_cfg = ['172.16.0.126/30']
+    res = set_network_cfg(host_cfg)
+    assert isinstance(res, dict)
+    assert res.ipAssignments == ['172.16.0.126/30']
+    assert res.authorized is True
+    # print(res)
 
 
 def test_name_generator():

@@ -340,10 +340,10 @@ class TrieHandlingTest(unittest.TestCase):
         self.assertEqual(res, [])
         update_id_trie(self.trie, self.net1, self.node1, [False, True], nw=True)
         res = find_dangling_nets(self.trie)
-        print(res)
+        self.assertEqual(len(res), 2)
         self.assertEqual(res, [self.net1[0], self.node1[0]])
-        print(list(self.trie))
-        print(self.trie.items())
+        # print(list(self.trie))
+        # print(self.trie.items())
 
     def test_update_id_trie_net(self):
         update_id_trie(self.trie, self.net1, [self.node2], nw=True)

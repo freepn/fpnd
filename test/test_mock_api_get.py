@@ -106,13 +106,6 @@ client = mock_zt_api_client()
 
 
 # special test cases
-def read_file(filename):
-    import codecs
-
-    with codecs.open(filename, 'r', 'utf8') as f:
-        return f.read()
-
-
 def json_check(data):
     import json
 
@@ -415,7 +408,7 @@ def test_get_state():
     nodeState = AttrDict.from_nested_dict(stest.fpnState)
     assert isinstance(nodeState, dict)
     assert nodeState.online
-    assert nodeState.fpn_id == 'ddfd7368e6'
+    assert nodeState.fpn_id == 'beefea68e6'
     assert not nodeState.fallback
     assert nodeState.fpn0
     assert nodeState.fpn1

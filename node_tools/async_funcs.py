@@ -28,7 +28,7 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
 
     from node_tools.ctlr_funcs import get_network_id
     from node_tools.ctlr_funcs import handle_net_cfg
-    from node_tools.ctlr_funcs import ipnet_get_netcfg
+    from node_tools.ctlr_funcs import set_network_cfg
     from node_tools.trie_funcs import find_dangling_nets
     from node_tools.trie_funcs import get_dangling_net_data
     from node_tools.trie_funcs import update_id_trie
@@ -69,9 +69,8 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
                 gw_node = data_list[1]
                 await add_network_object(client, gw_net, node_id)
                 logger.debug('BOOTSTRAP: added node id {} to gateway net'.format(node_id))
-                ipnet = get_dangling_net_data(ct.net_trie, gw_net)
-                netcfg = ipnet_get_netcfg(ipnet)
-                gw_cfg = netcfg.host
+                netcfg = get_dangling_net_data(ct.net_trie, gw_net)
+                gw_cfg = set_network_cfg(netcfg.host)
                 logger.debug('BOOTSTRAP: got node addr {} for gateway net'.format(gw_cfg))
                 await config_network_object(client, gw_cfg, gw_net, node_id)
                 trie_nets = [gw_net, net_id]

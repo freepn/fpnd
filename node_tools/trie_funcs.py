@@ -73,22 +73,26 @@ def find_dangling_nets(trie):
 def get_dangling_net_data(trie, net_id):
     """
     Given the ID, get the payload from the net_id state trie and return
-    the target network from the `routes` list as a python IPv4 netobj.
-    :param trie: ID state trie
+    the target network cfg from the `routes` list.
+    :notes: The return format matches the cfg_dict payload used by
+            config_network_object()
+    :param trie: net ID state trie
     :param net_id: network ID to retrive
-    :return: <netobj> or None
+    :return: Attrdict <netcfg> or None
     """
+    from node_tools.ctlr_funcs import ipnet_get_netcfg
     from node_tools.ctlr_funcs import netcfg_get_ipnet
 
     payload = trie[net_id]
-    netobj = None
+    netcfg = None
 
     for route in payload['routes']:
-        if route['via'] is None:
-            tgt_route = route['target']
+        if route['via'] is not None:
+            tgt_route = route['via']
             netobj = netcfg_get_ipnet(tgt_route)
+            netcfg = ipnet_get_netcfg(netobj)
 
-    return netobj
+    return netcfg
 
 
 def load_id_trie(net_trie, id_trie, nw_id, node_id, needs=[], nw=False):
@@ -111,12 +115,11 @@ def load_id_trie(net_trie, id_trie, nw_id, node_id, needs=[], nw=False):
         raise AssertionError
 
     id_list = []
-    payload = (id_list, needs)
 
     if nw:
         net_id = nw_id[0]
-        suf_list = net_trie.suffixes(net_id)
-        mbr_list = suf_list[1:]
+        mbr_list = net_trie.suffixes(net_id)[1:]
+        logger.debug('TRIE: net_id {} has mbr {} list'.format(net_id, mbr_list))
         if len(mbr_list) == 2:
             needs = [False, False]
         elif len(mbr_list) == 1:
@@ -135,9 +138,12 @@ def load_id_trie(net_trie, id_trie, nw_id, node_id, needs=[], nw=False):
             needs = [False, True]
             if mbr_id in NODE_SETTINGS['use_exitnode']:
                 needs = [False, False]
+        logger.debug('TRIE: mbr_id {} has net_list {}'.format(mbr_id, net_list))
         key_id = mbr_id
         id_list = net_list
 
+    payload = (id_list, needs)
+    logger.debug('TRIE: loading key {} with payload {}'.format(key_id, payload))
     id_trie[key_id] = payload
 
 

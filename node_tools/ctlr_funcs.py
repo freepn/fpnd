@@ -150,7 +150,17 @@ def netcfg_get_ipnet(addr, cidr='/30'):
         raise ip.AddressValueError
 
 
-def set_network_cfg():
+def set_network_cfg(cfg_addr):
     """
+    Take the netcfg mbr and wrap it so it can be applied during mbr
+    bootstrap (ie, wrap the address with authorized=True, etc).
+    :param netcfg.mbr: gw or host portion of netcfg object
+    :return dict: formatted cfg fragment for async payload
     """
-    pass
+
+    src_addr = {
+        'ipAssignments': cfg_addr,
+        'authorized': True
+    }
+
+    return AttrDict.from_nested_dict(src_addr)
