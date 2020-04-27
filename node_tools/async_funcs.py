@@ -47,7 +47,7 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
         trie_nets = [net_id]
 
         await add_network_object(client, net_id, node_id)
-        logger.debug('BOOTSTRAP: added node id {}'.format(node_id))
+        logger.debug('BOOTSTRAP: added node id {} to gw net'.format(node_id))
         await get_network_object_ids(client, net_id)
         member_dict = client.data
         logger.debug('BOOTSTRAP: got node dict {}'.format(member_dict))
@@ -57,32 +57,30 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
         net, src, gw = handle_net_cfg(deque)
         await config_network_object(client, net, net_id)
 
-        # dedicated exit node is a special case, otherwise, each new node
-        # gets a src_net here, and still *needs* a gw_net
-        if ex:
-            await config_network_object(client, gw, net_id, node_id)
-        else:
+        # A dedicated exit node is a special case, otherwise, each new node
+        # gets a src_net here, and still *needs* a exit_net.  We also need to
+        # update the src net needs after linking the next mbr node.
+        if not ex:
             data_list = find_dangling_nets(ct.id_trie)
-            logger.debug('BOOTSTRAP: got data list {}'.format(data_list))
+            logger.debug('BOOTSTRAP: got exit net {}'.format(data_list))
             if len(data_list) == 2:
-                gw_net = data_list[0]
+                exit_net = data_list[0]
                 gw_node = data_list[1]
-                await add_network_object(client, gw_net, node_id)
-                logger.debug('BOOTSTRAP: added node id {} to gateway net'.format(node_id))
-                netcfg = get_dangling_net_data(ct.net_trie, gw_net)
+                await add_network_object(client, exit_net, node_id)
+                logger.debug('BOOTSTRAP: added node id {} to exit net'.format(node_id))
+                netcfg = get_dangling_net_data(ct.net_trie, exit_net)
                 gw_cfg = set_network_cfg(netcfg.host)
-                logger.debug('BOOTSTRAP: got node addr {} for gateway net'.format(gw_cfg))
-                await config_network_object(client, gw_cfg, gw_net, node_id)
-                trie_nets = [gw_net, net_id]
+                logger.debug('BOOTSTRAP: got node addr {} for exit net'.format(gw_cfg))
+                await config_network_object(client, gw_cfg, exit_net, node_id)
+                trie_nets = [exit_net, net_id]
 
-            await config_network_object(client, src, net_id, node_id)
+        await config_network_object(client, gw, net_id, node_id)
+        logger.debug('BOOTSTRAP: set gw addr {} for src net {}'.format(gw, net_id))
 
         node_needs = [False, False]
-        # if not exit node, we need to update the gw net needs after
-        # linking the next mbr node
         net_needs = [False, True]
         if not ex:
-            update_id_trie(ct.id_trie, [gw_net], [gw_node, node_id], needs=[False, False], nw=True)
+            update_id_trie(ct.id_trie, [exit_net], [gw_node, node_id], needs=[False, False], nw=True)
 
         update_id_trie(ct.id_trie, trie_nets, [node_id], needs=node_needs)
         update_id_trie(ct.id_trie, [net_id], [node_id], needs=net_needs, nw=True)

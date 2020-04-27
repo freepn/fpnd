@@ -69,7 +69,6 @@ def drain_reg_queue(reg_q, pub_q, addr=None):
 @run_until_success(max_retry=4)
 def echo_client(fpn_id, addr, send_cfg=False):
     import json
-    from nanoservice import Requester
     from node_tools import state_data as st
     from node_tools.node_funcs import node_state_check
     from node_tools.node_funcs import run_ztcli_cmd
@@ -81,11 +80,10 @@ def echo_client(fpn_id, addr, send_cfg=False):
     node_data = st.fpnState
     reply_list = []
     reciept = False
-    c = Requester('tcp://{}:9443'.format(addr), timeouts=(1000, 1000))
 
     try:
         if send_cfg:
-            reply_list = c.call('node_cfg', fpn_id)
+            reply_list = send_req_msg(addr, 'node_cfg', fpn_id)
             logger.debug('CFG: send_cfg reply is {}'.format(reply_list))
             if 'result' not in reply_list[0]:
                 logger.warning('CFG: malformed reply {}'.format(reply_list))
@@ -97,12 +95,12 @@ def echo_client(fpn_id, addr, send_cfg=False):
                     res = run_ztcli_cmd(action='join', extra=net)
                     logger.warning('run_ztcli_cmd join result: {}'.format(res))
         else:
-            reply_list = c.call('echo', fpn_id)
+            reply_list = send_req_msg(addr, 'echo', fpn_id)
             node_data['msg_ref'] = reply_list[0]['ref']
         reciept = True
         logger.debug('Send result is {}'.format(reply_list))
         if not send_cfg and not node_data['cfg_ref']:
-            res = node_state_check()
+            res = node_state_check(deorbit=True)
             logger.debug('node_state_check returned {}'.format(res))
     except Exception as exc:
         # success wrapper needs a warning to catch
@@ -226,3 +224,19 @@ def do_net_cmd(cmd):
         retcode = exc
 
     return state, res, retcode
+
+
+def send_req_msg(addr, method, data):
+    """
+    """
+    from nanoservice import Requester
+
+    c = Requester('tcp://{}:9443'.format(addr), timeouts=(1000, 1000))
+    reply = []
+
+    try:
+        reply = c.call(method, data)
+        return reply
+    except Exception as exc:
+        logger.warning('Call error is {}'.format(exc))
+        raise exc

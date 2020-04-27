@@ -430,6 +430,12 @@ class StateChangeTest(unittest.TestCase):
         self.assertFalse(self.state['fpn0'])
         self.assertTrue(self.state['fpn1'])
 
+    def test_change_upfpn1_upfpn0(self):
+        self.state.update(online=True, fpn0=True, fpn1=True)
+        self.assertTrue(self.state['online'])
+        self.assertTrue(self.state['fpn0'])
+        self.assertTrue(self.state['fpn1'])
+
     def test_state_string_vars(self):
         self.state.update(online=True, fpn1=True)
         for iface in ['fpn0', 'fpn1']:

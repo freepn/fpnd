@@ -180,18 +180,20 @@ def handle_moon_data(data):
                                                                st.fpnState['moon_addr']))
 
 
-def node_state_check():
+def node_state_check(deorbit=False):
     """
     Post-startup state check for moon data and msg_ref so we can deorbit.
-    :return: None or deorbit cmd result
+    :return: None or cmd result
     """
     from node_tools import state_data as st
     from node_tools.helper_funcs import AttrDict
 
     result = None
     state = AttrDict.from_nested_dict(st.fpnState)
-    if state.moon_id0 and state.msg_ref:
-        result = run_moon_cmd(state.moon_id0, action='deorbit')
+
+    if deorbit:
+        if state.moon_id0 and state.msg_ref:
+            result = run_moon_cmd(state.moon_id0, action='deorbit')
     return result
 
 
