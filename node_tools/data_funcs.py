@@ -137,6 +137,8 @@ def with_state_check(func):
         elif next_state.online and prev_state.online:
             get_state_values(prev_state, next_state)
             logger.debug('State diff is: {}'.format(st.changes))
+            if next_state.fallback:
+                logger.error('nodeState in ZT fallback mode (network is suspect)')
 
         return result
     return state_check
