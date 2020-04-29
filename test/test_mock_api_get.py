@@ -12,7 +12,7 @@ import tempfile
 
 import pytest
 
-from diskcache import Index
+from diskcache import Index, Deque
 
 from node_tools.cache_funcs import delete_cache_entry
 from node_tools.cache_funcs import find_keys
@@ -38,6 +38,8 @@ from node_tools.helper_funcs import get_filepath
 from node_tools.helper_funcs import json_dump_file
 from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import log_fpn_state
+from node_tools.helper_funcs import net_id_handler
+from node_tools.helper_funcs import network_cruft_cleaner
 from node_tools.helper_funcs import run_event_handlers
 from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import update_state
@@ -99,6 +101,7 @@ add_net = {'authTokens': [{}],
 
 # has_aging = False
 cache = Index(get_cachedir(dir_name='fpn_test'))
+net_q = Deque(get_cachedir(dir_name='net_queue'))
 max_age = NODE_SETTINGS['max_cache_age']
 utc_stamp = datetime.datetime.now(utc)  # use local time for console
 
@@ -486,9 +489,23 @@ def test_node_state_check():
 
 
 def test_run_event_handler():
+    """
+    This stuff really needs better tests.
+    """
     from node_tools import state_data as st
 
     home, pid_file, log_file, debug, msg, mode, role = do_setup()
+
+    nets = ['b6079f73c63cea29', 'b6079f73ca8129ad']
+    net_q.clear()
+    # for nwid in nets:
+    #     net_q.append(nwid)
+
+    net_id_handler('fpn_id0', 'b6079f73c63cea29')
+    net_id_handler('fpn_id1', 'b6079f73ca8129ad')
+
+    for nwid in nets:
+        net_id_handler(None, nwid, old=True)
 
     prev_state = AttrDict.from_nested_dict(st.defState)
     next_state = AttrDict.from_nested_dict(st.defState)
@@ -506,3 +523,5 @@ def test_run_event_handler():
     run_event_handlers(st.changes)
     log_fpn_state(st.changes)
     assert len(st.changes) == 4
+
+    network_cruft_cleaner()

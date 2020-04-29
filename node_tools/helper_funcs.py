@@ -254,7 +254,7 @@ def net_id_handler(iface, nwid, old=False):
         if nwid not in list(net_q):
             net_q.append(nwid)
             logger.debug('Added network id {} to net_q'.format(nwid))
-    elif old:
+    if old:
         if nwid in list(net_q):
             net_q.remove(nwid)
             logger.debug('Removed network id {} from net_q'.format(nwid))
