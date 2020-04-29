@@ -80,25 +80,27 @@ def populate_leaf_list(node_q, wait_q, data):
 def valid_announce_msg(msg):
     import string
 
-    try:
-        assert len(msg) == 10
-        assert set(msg).issubset(string.hexdigits)
-    except:
-        return False
+    if not (len(msg) == 10 and set(msg).issubset(string.hexdigits)):
+        raise AssertionError('Announce msg {} is invalid!'.format(msg))
     return True
 
 
 def valid_cfg_msg(msg):
     import json
+    import string
 
-    try:
-        assert type(msg) is str
-        cfg_msg = json.loads(msg)
-        assert valid_announce_msg(cfg_msg['node_id'])
-        assert len(cfg_msg) > 1
-        assert len(cfg_msg) < 4
-    except:
-        return False
+    if isinstance(msg, str) and 'node_id' in msg:
+        cfg = json.loads(msg)
+        id_str = cfg['node_id']
+        if (set(id_str).issubset(string.hexdigits) and
+                len(id_str) == 10 and
+                'networks' in cfg.keys() and
+                len(cfg) == 2):
+            return True
+        else:
+            raise AssertionError('Config msg {} is invalid!'.format(msg))
+    else:
+        raise AssertionError('Config msg {} is invalid!'.format(msg))
     return True
 
 

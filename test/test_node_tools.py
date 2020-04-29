@@ -600,10 +600,9 @@ def test_trie_is_empty():
     assert res is True
 
     ct.id_trie.setdefault(u'f00b', 42)
-    res = trie_is_empty(ct.id_trie)
-
     with pytest.raises(AssertionError):
-        assert res is True
+        res = trie_is_empty(ct.id_trie)
+
     ct.id_trie.clear()
 
 
@@ -631,6 +630,16 @@ def test_load_id_from_net_trie():
     assert ct.id_trie['beefea68e6'] == (['beafde52b4296ea5'], [False, True])
     assert ct.id_trie['beafde52b4a5f7ba'] == (['ee2eedb2e1'], [False, True])
     # print(ct.id_trie.items())
+
+    node_id = 'beefea68e6'
+    with pytest.raises(AssertionError):
+        load_id_trie(ct.net_trie, ct.id_trie, [], [node_id], needs=[True])
+    with pytest.raises(AssertionError):
+        load_id_trie(ct.net_trie, ct.id_trie, [], [node_id, node_id, node_id])
+    with pytest.raises(AssertionError):
+        load_id_trie(ct.net_trie, ct.id_trie, [], node_id)
+    with pytest.raises(AssertionError):
+        load_id_trie(ct.net_trie, ct.id_trie, [], [])
 
 
 def test_get_dangling_net_data():

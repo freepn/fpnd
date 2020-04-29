@@ -115,7 +115,6 @@ def with_state_check(func):
         """
         cache wrapper for checking nodeState before and after the
         update_runner() tries to grab new data.
-
         """
         from node_tools import state_data as st
 

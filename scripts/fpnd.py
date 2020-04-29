@@ -19,6 +19,7 @@ from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import do_setup
 from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import network_cruft_cleaner
 from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
@@ -87,6 +88,7 @@ def setup_scheduling(max_age):
 
 def do_scheduling():
     set_initial_role()
+    network_cruft_cleaner()
     schedule.run_all(1, 'base-tasks')
     validate_role()
     node_role = NODE_SETTINGS['node_role']

@@ -237,10 +237,52 @@ def net_change_handler(iface, state):
         # raise Exception('Missing command return from get_net_cmds()!')
 
 
+def net_id_handler(iface, nwid, old=False):
+    """
+    Net ID handler for, well, handling network IDs when fpn interfaces
+    come and go.  We use a deque to store the new ID and then remove it
+    on cleanup (or the next startup).
+    :param iface: fpn iface ID name <fpn_id0|fpn_id1>
+    :param nwid: fpn network ID or None (state in the caller)
+    :param old: set old=True to remove `nwid` from the net queue
+    """
+    import diskcache as dc
+
+    net_q = dc.Deque(directory=get_cachedir('net_queue'))
+
+    if not old and nwid is not None:
+        if nwid not in list(net_q):
+            net_q.append(nwid)
+            logger.debug('Added network id {} to net_q'.format(nwid))
+    elif old:
+        if nwid in list(net_q):
+            net_q.remove(nwid)
+            logger.debug('Removed network id {} from net_q'.format(nwid))
+
+
+def network_cruft_cleaner():
+    """
+    This is (sort of) the companion to net_id_handler() for checking
+    the net_q on startup and sending a ztcli command to leave any
+    stale networks found (and clear the queue).
+    """
+    import diskcache as dc
+    from node_tools.node_funcs import run_ztcli_cmd
+
+    if NODE_SETTINGS['node_role'] is None:
+        net_q = dc.Deque(directory=get_cachedir('net_queue'))
+
+        for nwid in list(net_q):
+            res = run_ztcli_cmd(action='leave', extra=nwid)
+            logger.debug('run_ztcli_cmd leave result: {}'.format(res))
+
+        net_q.clear()
+
+
 def run_event_handlers(diff=None):
     """
-    Run state change event handlers (currently just the net handler)
-    :param diff: State change diff, ie, st.changes
+    Run state change event handlers (currently just the net handlers)
+    :param diff: <st.changes> (a shared state change diff)
     """
     if diff is None:
         from node_tools import state_data as st
@@ -251,6 +293,9 @@ def run_event_handlers(diff=None):
             if iface in ['fpn0', 'fpn1']:
                 logger.debug('running net_change_handler for iface {} and state {}'.format(iface, state))
                 net_change_handler(iface, state)
+            if iface in ['fpn_id0', 'fpn_id1']:
+                logger.debug('running net_id_handler for iface {} and net id {}'.format(iface, state))
+                net_id_handler(iface, state)
 
 
 def send_announce_msg(fpn_id, addr, send_cfg=False):

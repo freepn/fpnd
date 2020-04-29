@@ -23,6 +23,7 @@ from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
+from node_tools.helper_funcs import net_id_handler
 from node_tools.helper_funcs import send_cfg_handler
 from node_tools.network_funcs import do_peer_check
 from node_tools.node_funcs import run_ztcli_cmd
@@ -81,6 +82,18 @@ async def main():
             netStatus = get_net_status(cache)
             logger.debug('Got net state: {}'.format(netStatus))
             load_cache_by_type(cache, netStatus, 'istate')
+
+            for net in netStatus:
+                if net['status'] == 'NOT_FOUND':
+                    run_ztcli_cmd(action='leave', extra=net['identity'])
+                    net_id_handler(None, net['identity'], old=True)
+            # this should really run once only, and only when we leave a net,
+            # but for now we run it until we have 2 networks again
+            await client.get_data('network')
+            logger.info('Found {} networks'.format(len(net_data)))
+            nets = client.data
+            if len(nets) == 1 and node_id not in NODE_SETTINGS['use_exitnode']:
+                send_cfg_handler()
 
             if NODE_SETTINGS['mode'] == 'adhoc':
                 if not NODE_SETTINGS['nwid']:

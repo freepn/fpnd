@@ -93,7 +93,7 @@ def echo_client(fpn_id, addr, send_cfg=False):
                 logger.debug('CFG: state has payload {}'.format(cfg))
                 for net in cfg['networks']:
                     res = run_ztcli_cmd(action='join', extra=net)
-                    logger.warning('run_ztcli_cmd join result: {}'.format(res))
+                    logger.debug('run_ztcli_cmd join result: {}'.format(res))
         else:
             reply_list = send_req_msg(addr, 'echo', fpn_id)
             node_data['msg_ref'] = reply_list[0]['ref']

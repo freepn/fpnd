@@ -42,14 +42,16 @@ def save_state_trie(trie, fname):
 def check_trie_params(nw_id, node_id, needs):
     """Check load/update trie params for correctness"""
 
-    try:
-        for param in [nw_id, node_id, needs]:
-            assert type(param) is list
-        for param in [nw_id, node_id]:
-            assert len(param) < 3
-        assert len(needs) == 0 or len(needs) == 2
-    except:
-        return False
+    for param in [nw_id, node_id, needs]:
+        if not type(param) is list:
+            raise AssertionError('Invalid trie parameter: {}'.format(param))
+    for param in [nw_id, node_id]:
+        if not len(param) < 3:
+            raise AssertionError('Invalid trie parameter: {}'.format(param))
+    if not (nw_id != [] or node_id != []):
+        raise AssertionError('Invalid trie parameter')
+    if (len(needs) == 1 or len(needs) > 3):
+        raise AssertionError('Invalid trie parameter: {}'.format(needs))
     return True
 
 
@@ -102,6 +104,8 @@ def load_id_trie(net_trie, id_trie, nw_id, node_id, needs=[], nw=False):
     with node payload.
     :notes: This is intended to run in the normal netstate context; the
             default key param should be a list of one ID.
+            * one of `nw_id` or `node_id` must be a non-empty list
+            * `needs` should be empty (it is unused)
     :param net_trie: datrie trie object
     :param id_trie: datrie trie object
     :param nw_id: list of network IDs
@@ -111,8 +115,7 @@ def load_id_trie(net_trie, id_trie, nw_id, node_id, needs=[], nw=False):
     """
     from node_tools.helper_funcs import NODE_SETTINGS
 
-    if not check_trie_params(nw_id, node_id, needs):
-        raise AssertionError
+    check_trie_params(nw_id, node_id, needs)
 
     id_list = []
 
@@ -152,11 +155,8 @@ def trie_is_empty(trie):
     Check shared state Trie is fresh and empty (mainly on startup).
     :param trie: newly instantiated `datrie.Trie(alpha_set)`
     """
-    try:
-        assert trie.is_dirty()
-        assert list(trie) == []
-    except:
-        return False
+    if not (trie.is_dirty() and list(trie) == []):
+        raise AssertionError('Trie {} is not empty!'.format(trie))
     return True
 
 
@@ -172,8 +172,7 @@ def update_id_trie(trie, nw_id, node_id, needs=[], nw=False):
     :param: needs: list of needs
     :param nw: bool nw|node ID is key
     """
-    if not check_trie_params(nw_id, node_id, needs):
-        raise AssertionError
+    check_trie_params(nw_id, node_id, needs)
 
     id_list = []
     payload = (id_list, needs)

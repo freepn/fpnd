@@ -439,7 +439,7 @@ def test_get_state_values():
     assert prev_state.fpn1
 
     # induce a change
-    stest.fpnState.update(fpn1=False)
+    stest.fpnState.update(fpn1=False, fpn_id1=None)
     next_state = AttrDict.from_nested_dict(stest.fpnState)
     assert not next_state.fpn1
     assert not stest.changes
@@ -447,18 +447,18 @@ def test_get_state_values():
     # now we should see old/new values in the state diff
     get_state_values(prev_state, next_state, True)
     assert isinstance(stest.changes, tuple)
-    assert len(stest.changes) == 1
+    assert len(stest.changes) == 2
     assert len(stest.changes[0]) == 2
     get_state_values(prev_state, next_state)
     assert len(stest.changes[0]) == 2
 
     # reset shared state vars
     stest.changes = []
-    stest.fpnState.update(fpn1=True)
+    stest.fpnState.update(fpn1=True, fpn_id1='b6079f73ca8129ad')
     assert stest.fpnState == prev_state
 
     # induce two changes
-    stest.fpnState.update(fpn0=False, fpn1=False)
+    stest.fpnState.update(fpn0=False, fpn1=False, fpn_id0=None, fpn_id1=None)
     next_state = AttrDict.from_nested_dict(stest.fpnState)
     assert not next_state.fpn0
     assert not next_state.fpn1
@@ -467,7 +467,7 @@ def test_get_state_values():
     # now we should see only new values for both changes in the state diff
     get_state_values(prev_state, next_state)
     assert isinstance(stest.changes, tuple)
-    assert len(stest.changes) == 2
+    assert len(stest.changes) == 4
     assert len(stest.changes[0]) == 2
     # reset shared state vars
     stest.changes = []
@@ -498,8 +498,11 @@ def test_run_event_handler():
     run_event_handlers(st.changes)
     assert len(st.changes) == 0
 
-    next_state.update(fpn0=True, fpn1=True)
+    next_state.update(fpn0=True,
+                      fpn1=True,
+                      fpn_id0='b6079f73c63cea29',
+                      fpn_id1='b6079f73ca8129ad')
     get_state_values(prev_state, next_state)
     run_event_handlers(st.changes)
     log_fpn_state(st.changes)
-    assert len(st.changes) == 2
+    assert len(st.changes) == 4

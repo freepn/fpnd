@@ -54,7 +54,7 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
         await get_network_object_data(client, net_id, node_id)
         logger.debug('BOOTSTRAP: got node data {}'.format(client.data))
 
-        net, src, gw = handle_net_cfg(deque)
+        net, _, gw = handle_net_cfg(deque)
         await config_network_object(client, net, net_id)
 
         # A dedicated exit node is a special case, otherwise, each new node

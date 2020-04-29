@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import unittest
 
+import pytest
+
 from nanoservice import Subscriber
 from nanoservice import Publisher
 
@@ -20,9 +22,9 @@ from node_tools.trie_funcs import update_id_trie
 
 
 def test_invalid_msg():
-    for msg in ['deadbeeh00', 'deadbeef0', 'deadbeef000']:
-        res = valid_announce_msg(msg)
-        assert res is False
+    with pytest.raises(AssertionError):
+        for msg in ['deadbeeh00', 'deadbeef0', 'deadbeef000']:
+            res = valid_announce_msg(msg)
 
 
 def test_valid_msg():
@@ -31,14 +33,18 @@ def test_valid_msg():
 
 
 def test_invalid_cfg_msg():
+
     msg_list = [
-                '{"node": "deadbeef00"}',
+                '{"node": "02beefdead", "networks": ["7ac4235ec5d3d938"]}',
                 '{"node_id": "02beefdead"}',
-                '{"node_id": "02beefhead", "net0_id": "7ac4235ec5d3d938"}'
+                '{"node_id": "beefdead02", "networks": [], "networks": []}',
+                '{"node_id": "02beefdead", "net0_id": "7ac4235ec5d3d938"}',
+                '{"node_id": "02beefhead", "networks": []}'
                ]
-    for msg in msg_list:
-        res = valid_cfg_msg(msg)
-        assert res is False
+
+    with pytest.raises(AssertionError):
+        for msg in msg_list:
+            res = valid_cfg_msg(msg)
 
 
 def test_valid_cfg_msg():
