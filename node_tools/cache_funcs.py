@@ -82,6 +82,7 @@ def get_endpoint_data(cache, key_str):
             logger.debug('Appending data for key: {}'.format(key))
     else:
         key_list = []
+    logger.debug('Leaving get_endpoint_data with key_str: {}'.format(key_str))
     return (key_list, values)
 
 
@@ -138,13 +139,15 @@ def get_peer_status(cache):
     key_list, values = get_endpoint_data(cache, 'peer')
     if key_list:
         for key, data in zip(key_list, values):
-            addr = data.paths[0]['address'].split('/', maxsplit=1)
-            peerStatus = {'identity': data.address,
-                          'role': data.role,
-                          'active': data.paths[0]['active'],
-                          'address': addr[0],
-                          'port': addr[1]}
-            peers.append(peerStatus)
+            # fix for bad LEAF nodes with empty paths (see fpnd issue #27)
+            if data.paths != []:
+                addr = data.paths[0]['address'].split('/', maxsplit=1)
+                peerStatus = {'identity': data.address,
+                              'role': data.role,
+                              'active': data.paths[0]['active'],
+                              'address': addr[0],
+                              'port': addr[1]}
+                peers.append(peerStatus)
         logger.debug('peerStatus list: {}'.format(peers))
     return peers
 

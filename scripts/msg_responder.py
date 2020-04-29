@@ -65,7 +65,7 @@ def echo(msg):
         handle_announce_msg(node_q, reg_q, wait_q, msg)
         return msg
     else:
-        syslog.syslog(syslog.LOG_ERROR, "RSP: Bad announce msg is {}".format(msg))
+        syslog.syslog(syslog.LOG_DEBUG, "RSP: Bad announce msg is {}".format(msg))
 
 
 @timerfunc
@@ -79,15 +79,15 @@ def get_node_cfg(msg):
 
     if valid_announce_msg(msg):
         syslog.syslog(syslog.LOG_INFO, "RSP: Got valid cfg request from {}".format(msg))
-        result = wait_for_cfg_msg(pub_q, active_q, msg)
-        if result:
-            syslog.syslog(syslog.LOG_INFO, "RSP: Got cfg result: {}".format(result))
-            return json.dumps(result)
+        res = wait_for_cfg_msg(pub_q, active_q, msg)
+        if res:
+            syslog.syslog(syslog.LOG_INFO, "RSP: Got cfg result: {}".format(res))
+            return res
         else:
-            syslog.syslog(syslog.LOG_ERROR, "RSP: Null result for ID: {}".format(result))
+            syslog.syslog(syslog.LOG_DEBUG, "RSP: Null result for ID: {}".format(res))
             raise ServiceError
     else:
-        syslog.syslog(syslog.LOG_ERROR, "RSP: Bad cfg msg is {}".format(msg))
+        syslog.syslog(syslog.LOG_DEBUG, "RSP: Bad cfg msg is {}".format(msg))
 
 
 # Inherit from Daemon class

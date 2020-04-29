@@ -58,8 +58,9 @@ fi
 while read -r line; do
     [[ -n $VERBOSE ]] && echo "Checking network..."
     LAST_OCTET=$(echo "$line" | cut -d" " -f9 | cut -d"/" -f1 | cut -d"." -f4)
+    PREFIX=$(echo "$line" | cut -d" " -f9 | cut -d"/" -f2)
     ZT_NET_ID=$(echo "$line" | cut -d" " -f3)
-    if [[ $LAST_OCTET = 1 ]]; then
+    if [[ $LAST_OCTET = 1 || $PREFIX = 30 ]]; then
         ZT_SRC_NETID="${ZT_NET_ID}"
         [[ -n $VERBOSE ]] && echo "  Found $ZT_SRC_NETID"
         break
@@ -81,7 +82,7 @@ ZT_INTERFACE=$(zerotier-cli get "${ZT_SRC_NETID}" portDeviceName)
 ZT_SRC_ADDR=$(zerotier-cli get "${ZT_SRC_NETID}" ip4)
 
 # this should be the active interface with default route
-IPV4_INTERFACE=$(ip -o link show up | awk -F': ' '{print $2}' | grep -e 'en' -e 'wl' -e 'lan' -e 'wan' -e 'eth' | head -n 1)
+IPV4_INTERFACE=$(ip -o link show up | awk -F': ' '{print $2}' | grep -e 'usb' -e 'en' -e 'wl' -e 'lan' -e 'wan' -e 'eth' -e 'net' | head -n 1)
 INET_GATEWAY=$(ip route show | awk '/default / {print $3}')
 
 if [[ -n $ETH0_NULL ]]; then

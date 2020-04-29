@@ -19,6 +19,7 @@ from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import do_setup
 from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import network_cruft_cleaner
 from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
@@ -56,9 +57,6 @@ def check_daemon_status(script='msg_responder.py'):
     """
     Scheduling wrapper for managing rsp/sub daemons.
     """
-    import diskcache as dc
-
-    from node_tools.helper_funcs import get_cachedir
     from node_tools.node_funcs import check_daemon
     from node_tools.node_funcs import control_daemon
 
@@ -66,16 +64,9 @@ def check_daemon_status(script='msg_responder.py'):
     logger.debug('{} daemon status is {}'.format(script, res))
 
     if script == 'msg_responder.py':
-        node_q = dc.Deque(directory=get_cachedir('node_queue'))
-
-        if len(node_q) > 0:
-            if not res:
-                res = control_daemon('start', script)
-                logger.debug('Starting {} daemon'.format(script))
-        else:
-            if res:
-                res = control_daemon('stop', script)
-                logger.debug('Stopping {} daemon'.format(script))
+        if not res:
+            res = control_daemon('start', script)
+            logger.debug('Starting {} daemon'.format(script))
     else:
         if not res:
             res = control_daemon('start', script)
@@ -97,6 +88,7 @@ def setup_scheduling(max_age):
 
 def do_scheduling():
     set_initial_role()
+    network_cruft_cleaner()
     schedule.run_all(1, 'base-tasks')
     validate_role()
     node_role = NODE_SETTINGS['node_role']
@@ -114,7 +106,7 @@ def do_scheduling():
         else:
             if node_role == 'controller':
                 netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
-                gen_netobj_queue(netobj_q, ipnet='192.168.10.0/24')
+                gen_netobj_queue(netobj_q)
                 cache = dc.Index(get_cachedir())
                 for key_str in ['peer', 'moon', 'mstate']:
                     delete_cache_entry(cache, key_str)

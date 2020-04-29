@@ -66,6 +66,7 @@ async def main():
             print('{} networks found'.format(len(client.data)))
             if len(client.data) == 0:
                 await add_network_object(client, ctlr_id=node_id)
+                await get_network_object_ids(client)
             net_list = client.data
             net_data = []
             for net_id in net_list:
@@ -89,7 +90,7 @@ async def main():
             # print(str(exc))
             raise exc
 
-exit_node = 'ddfd7368e6'
+exit_node = ''
 cache = Index(get_cachedir())
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())

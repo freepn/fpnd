@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+import json
 import time
 import shutil
 import datetime
 import logging
 import ipaddress
-# import mock
 import string
 import tempfile
 import unittest
@@ -18,9 +18,11 @@ import pytest
 from diskcache import Index
 
 from node_tools.ctlr_funcs import gen_netobj_queue
+from node_tools.ctlr_funcs import handle_net_cfg
 from node_tools.ctlr_funcs import ipnet_get_netcfg
 from node_tools.ctlr_funcs import name_generator
 from node_tools.ctlr_funcs import netcfg_get_ipnet
+from node_tools.ctlr_funcs import set_network_cfg
 from node_tools.exceptions import MemberNodeError
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
@@ -42,6 +44,8 @@ from node_tools.node_funcs import handle_moon_data
 from node_tools.node_funcs import parse_moon_data
 from node_tools.sched_funcs import check_return_status
 from node_tools.trie_funcs import create_state_trie
+from node_tools.trie_funcs import get_dangling_net_data
+from node_tools.trie_funcs import load_id_trie
 from node_tools.trie_funcs import load_state_trie
 from node_tools.trie_funcs import save_state_trie
 from node_tools.trie_funcs import trie_is_empty
@@ -55,6 +59,16 @@ except ImportError:
     utc = UTC()
 
 
+def read_file(filename):
+    """
+    Quickndirty get the first line of data from a file.
+    """
+    import codecs
+
+    with codecs.open(filename, 'r', 'utf8') as f:
+        return f.readline().strip()
+
+
 class mock_zt_api_client(object):
     """
     Client API to serve simple GET data endpoints
@@ -65,6 +79,11 @@ class mock_zt_api_client(object):
 
     def get_data(self, endpoint):
         self.endpoint = json_load_file(endpoint, self.test_dir)
+        return self.response, self.endpoint
+
+    def load_data(self, endpoint):
+        import os
+        self.endpoint = read_file(os.path.join(self.test_dir, endpoint))
         return self.response, self.endpoint
 
 
@@ -145,6 +164,7 @@ class CheckReturnsTest(unittest.TestCase):
     def test_multiple_returns(self):
         self.assertTrue(check_return_status((True, 'Success', 0)))
         self.assertFalse(check_return_status((False, 'blarg', 1)))
+        self.assertTrue(check_return_status(['forecast is good', 'some clouds', 0]))
 
 
 class HandleMoonDataTest(unittest.TestCase):
@@ -233,8 +253,8 @@ class IPv4NetObjectTest(unittest.TestCase):
         netobj = ipaddress.ip_network('172.16.0.0/30')
         res = ipnet_get_netcfg(netobj)
         self.assertIsInstance(res, AttrDict)
-        self.assertEqual(res.host, '172.16.0.2/30')
-        # print(res)
+        self.assertEqual(res.host, ['172.16.0.2/30'])
+        # print(json.dumps(res, separators=(',', ':')))
 
     def test_get_invalid_cfg(self):
         """Raise IPv4Network ValueError"""
@@ -410,6 +430,12 @@ class StateChangeTest(unittest.TestCase):
         self.assertFalse(self.state['fpn0'])
         self.assertTrue(self.state['fpn1'])
 
+    def test_change_upfpn1_upfpn0(self):
+        self.state.update(online=True, fpn0=True, fpn1=True)
+        self.assertTrue(self.state['online'])
+        self.assertTrue(self.state['fpn0'])
+        self.assertTrue(self.state['fpn1'])
+
     def test_state_string_vars(self):
         self.state.update(online=True, fpn1=True)
         for iface in ['fpn0', 'fpn1']:
@@ -450,6 +476,35 @@ class XformStateDataTest(unittest.TestCase):
         self.assertEqual(diff.fpn_id0, 'bb8dead3c63cea29')
 
 
+client = mock_zt_api_client()
+
+
+def load_ctlr_data():
+    nets = []
+    for net in ['net1.data', 'net2.data']:
+        _, data = client.load_data(net)
+        nets.append(eval(data))
+
+    mbrs = []
+    for mbr in ['mbr1.data', 'mbr2.data']:
+        _, data = client.load_data(mbr)
+        mbrs.append(eval(data))
+
+    return nets, mbrs
+
+
+def load_net_trie_data(trie):
+    nets, mbrs = load_ctlr_data()
+    for net in nets:
+        # print(net)
+        net_id = net['id']
+        trie[net_id] = net
+        for mbr in mbrs:
+            mbr_id = mbr['id']
+            if net_id == mbr['nwid']:
+                trie[net_id + mbr_id] = mbr
+
+
 def test_file_is_found():
     """
     Test if we can find the msg_responder daemon.
@@ -470,6 +525,8 @@ def test_check_daemon():
     assert type(res) is bool
 
 
+# silly check_daemon test fails sporadically due to env
+# @pytest.mark.xfail(strict=False)
 def test_daemon_can_start():
     """
     Test if we can start the msg_responder daemon.
@@ -478,6 +535,8 @@ def test_daemon_can_start():
     res = control_daemon('start')
     assert res.returncode == 0
     assert 'Starting' in res.stdout
+    res = check_daemon()
+    assert res is True
 
 
 def test_daemon_can_stop():
@@ -541,10 +600,66 @@ def test_trie_is_empty():
     assert res is True
 
     ct.id_trie.setdefault(u'f00b', 42)
-    res = trie_is_empty(ct.id_trie)
-
     with pytest.raises(AssertionError):
-        assert res is True
+        res = trie_is_empty(ct.id_trie)
+
+    ct.id_trie.clear()
+
+
+def test_load_id_from_net_trie():
+    from node_tools import ctlr_data as ct
+
+    res = trie_is_empty(ct.net_trie)
+    assert res is True
+
+    load_net_trie_data(ct.net_trie)
+    assert len(list(ct.net_trie)) == 4
+
+    for net_id in ['beafde52b4296ea5', 'beafde52b4a5f7ba']:
+        load_id_trie(ct.net_trie, ct.id_trie, [net_id], [], nw=True)
+    for node_id in ['beefea68e6', 'ee2eedb2e1']:
+        load_id_trie(ct.net_trie, ct.id_trie, [], [node_id])
+
+    for key in ['beafde52b4296ea5', 'beafde52b4a5f7ba', 'beefea68e6', 'ee2eedb2e1']:
+        links, needs = ct.id_trie[key]
+        for item in [links, needs]:
+            assert isinstance(item, list)
+        assert len(links) == 1
+        assert len(needs) == 2
+
+    assert ct.id_trie['beefea68e6'] == (['beafde52b4296ea5'], [False, True])
+    assert ct.id_trie['beafde52b4a5f7ba'] == (['ee2eedb2e1'], [False, True])
+    # print(ct.id_trie.items())
+
+    node_id = 'beefea68e6'
+    with pytest.raises(AssertionError):
+        load_id_trie(ct.net_trie, ct.id_trie, [], [node_id], needs=[True])
+    with pytest.raises(AssertionError):
+        load_id_trie(ct.net_trie, ct.id_trie, [], [node_id, node_id, node_id])
+    with pytest.raises(AssertionError):
+        load_id_trie(ct.net_trie, ct.id_trie, [], node_id)
+    with pytest.raises(AssertionError):
+        load_id_trie(ct.net_trie, ct.id_trie, [], [])
+
+
+def test_get_dangling_net_data():
+    from node_tools import ctlr_data as ct
+
+    load_net_trie_data(ct.net_trie)
+
+    net_id = 'beafde52b4a5f7ba'
+    res = get_dangling_net_data(ct.net_trie, net_id)
+    assert isinstance(res, dict)
+    assert res.host == ['172.16.0.126/30']
+
+
+def test_set_network_cfg():
+    host_cfg = ['172.16.0.126/30']
+    res = set_network_cfg(host_cfg)
+    assert isinstance(res, dict)
+    assert res.ipAssignments == ['172.16.0.126/30']
+    assert res.authorized is True
+    # print(res)
 
 
 def test_name_generator():
@@ -596,9 +711,31 @@ def test_gen_netobj_queue():
 
     gen_netobj_queue(netobj_q, ipnet='192.168.0.0/24')
     assert len(netobj_q) == 64
-    net = netobj_q.peekleft()
+    net = netobj_q.popleft()
     assert isinstance(net, ipaddress.IPv4Network)
     assert len(list(net)) == 4
     assert len(list(net.hosts())) == 2
-    gen_netobj_queue(netobj_q, ipnet='192.168.0.0/24')
-    # netobj_q.clear()
+    gen_netobj_queue(netobj_q)
+    assert len(netobj_q) == 63
+
+
+def test_handle_net_cfg():
+    import diskcache as dc
+
+    netobj_q = dc.Deque(directory='/tmp/test-oq')
+
+    net1, mbr1, gw1 = handle_net_cfg(netobj_q)
+    for fragment in [net1, mbr1, gw1]:
+        assert isinstance(fragment, AttrDict)
+
+    net2, mbr2, gw2 = handle_net_cfg(netobj_q)
+    for fragment in [net2, mbr2, gw2]:
+        assert isinstance(fragment, AttrDict)
+
+    assert mbr1 != mbr2
+    assert mbr1.ipAssignments == ['192.168.0.6/30']
+    assert mbr1.authorized is True
+    res = handle_net_cfg(netobj_q)
+    assert len(res) is 3
+    # print(res)
+    netobj_q.clear()

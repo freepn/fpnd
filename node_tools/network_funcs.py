@@ -55,20 +55,23 @@ def drain_reg_queue(reg_q, pub_q, addr=None):
     id_list = list(reg_q)
 
     # Need to wait a bit on connect to prevent lost messages
-    time.sleep(0.001)
+    time.sleep(0.002)
 
     for _ in id_list:
-        node_id = reg_q.popleft()
+        with reg_q.transact():
+            node_id = reg_q.popleft()
         pub.publish('handle_node', node_id)
-        pub_q.append(node_id)
+        with pub_q.transact():
+            pub_q.append(node_id)
         logger.debug('Published msg {} to {}'.format(node_id, addr))
 
 
 @run_until_success(max_retry=4)
 def echo_client(fpn_id, addr, send_cfg=False):
     import json
-    from nanoservice import Requester
     from node_tools import state_data as st
+    from node_tools.node_funcs import node_state_check
+    from node_tools.node_funcs import run_ztcli_cmd
 
     if NODE_SETTINGS['use_localhost'] or not addr:
         addr = '127.0.0.1'
@@ -77,22 +80,30 @@ def echo_client(fpn_id, addr, send_cfg=False):
     node_data = st.fpnState
     reply_list = []
     reciept = False
-    c = Requester('tcp://{}:9443'.format(addr), timeouts=(1000, 1000))
 
     try:
         if send_cfg:
-            reply_list, err = c.call('node_cfg', fpn_id)
-            if err:
-                logger.error('Send err is {}'.format(err))
+            reply_list = send_req_msg(addr, 'node_cfg', fpn_id)
+            logger.debug('CFG: send_cfg reply is {}'.format(reply_list))
+            if 'result' not in reply_list[0]:
+                logger.warning('CFG: malformed reply {}'.format(reply_list))
             else:
                 node_data['cfg_ref'] = reply_list[0]['ref']
                 cfg = json.loads(reply_list[0]['result'])
+                logger.debug('CFG: state has payload {}'.format(cfg))
+                for net in cfg['networks']:
+                    res = run_ztcli_cmd(action='join', extra=net)
+                    logger.debug('run_ztcli_cmd join result: {}'.format(res))
         else:
-            reply_list = c.call('echo', fpn_id)
+            reply_list = send_req_msg(addr, 'echo', fpn_id)
             node_data['msg_ref'] = reply_list[0]['ref']
         reciept = True
         logger.debug('Send result is {}'.format(reply_list))
+        if not send_cfg and not node_data['cfg_ref']:
+            res = node_state_check(deorbit=True)
+            logger.debug('node_state_check returned {}'.format(res))
     except Exception as exc:
+        # success wrapper needs a warning to catch
         logger.warning('Send error is {}'.format(exc))
         raise exc
 
@@ -132,6 +143,32 @@ def get_net_cmds(bin_dir, iface=None, state=False):
         res = cmds
 
     return res
+
+
+def publish_cfg_msg(trie, node_id, addr=None):
+    """
+    Publish node cfg message (to root node) with network ID to join.
+    Node data is already populated in the ID trie.
+    :param trie: `id_trie` state trie
+    :param node_id: ID of mbr node to configure
+    :param addr: IP address of subscriber
+    """
+    import time
+    from nanoservice import Publisher
+    from node_tools.msg_queues import make_cfg_msg
+
+    if NODE_SETTINGS['use_localhost'] or not addr:
+        addr = '127.0.0.1'
+
+    pub = Publisher('tcp://{}:9442'.format(addr))
+
+    # Need to wait a bit on connect to prevent lost messages
+    time.sleep(0.002)
+
+    msg = make_cfg_msg(trie, node_id)
+
+    pub.publish('cfg_msgs', msg)
+    logger.debug('CFG: sent cfg msg {} for node {} to {}'.format(msg, node_id, addr))
 
 
 @run_until_success()
@@ -187,3 +224,19 @@ def do_net_cmd(cmd):
         retcode = exc
 
     return state, res, retcode
+
+
+def send_req_msg(addr, method, data):
+    """
+    """
+    from nanoservice import Requester
+
+    c = Requester('tcp://{}:9443'.format(addr), timeouts=(1000, 1000))
+    reply = []
+
+    try:
+        reply = c.call(method, data)
+        return reply
+    except Exception as exc:
+        logger.warning('Call error is {}'.format(exc))
+        raise exc

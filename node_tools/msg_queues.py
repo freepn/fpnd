@@ -9,16 +9,14 @@ logger = logging.getLogger(__name__)
 
 
 def handle_announce_msg(node_q, reg_q, wait_q, msg):
-    for node in list(wait_q):
-        if node not in list(reg_q):
-            if msg == node:
-                with reg_q.transact():
-                    reg_q.append(msg)
     for node in list(node_q):
-        if node not in list(reg_q):
-            if msg == node:
-                with reg_q.transact():
-                    reg_q.append(msg)
+        if msg == node:
+            with reg_q.transact():
+                reg_q.append(msg)
+    for node in list(wait_q):
+        if msg == node:
+            with reg_q.transact():
+                reg_q.append(msg)
 
 
 def handle_node_queues(node_q, staging_q):
@@ -37,8 +35,9 @@ def handle_node_queues(node_q, staging_q):
 def make_cfg_msg(trie, node_id):
     """
     Create the net_cfg msg for a node and return cfg string.  Node
-    IDs come from the node/active queues.
-    :param trie: state trie of nodes and their network IDs
+    IDs come from the node/active queues and networks come from the
+    `id_trie`.
+    :param trie: state trie of nodes/nets
     :param node_id: node ID
     :return: JSON str (net_id cfg msg)
     """
@@ -49,15 +48,15 @@ def make_cfg_msg(trie, node_id):
         "networks": []
     }
 
-    d["networks"] = trie[node_id]
+    d["networks"] = trie[node_id][0]
 
     return json.dumps(d)
 
 
 def manage_incoming_nodes(node_q, reg_q, wait_q):
-    for node in list(reg_q):
-        if node in list(node_q):
-            with node_q.transact():
+    with node_q.transact():
+        for node in list(reg_q):
+            if node in list(node_q):
                 node_q.remove(node)
     for node in list(wait_q):
         if wait_q.count(node) >= 3 or node in list(reg_q):
@@ -81,36 +80,38 @@ def populate_leaf_list(node_q, wait_q, data):
 def valid_announce_msg(msg):
     import string
 
-    try:
-        assert len(msg) == 10
-        assert set(msg).issubset(string.hexdigits)
-    except:
-        return False
+    if not (len(msg) == 10 and set(msg).issubset(string.hexdigits)):
+        raise AssertionError('Announce msg {} is invalid!'.format(msg))
     return True
 
 
 def valid_cfg_msg(msg):
     import json
+    import string
 
-    try:
-        assert type(msg) is str
-        cfg_msg = json.loads(msg)
-        assert valid_announce_msg(cfg_msg['node_id'])
-        assert len(cfg_msg) > 1
-        assert len(cfg_msg) < 4
-    except:
-        return False
+    if isinstance(msg, str) and 'node_id' in msg:
+        cfg = json.loads(msg)
+        id_str = cfg['node_id']
+        if (set(id_str).issubset(string.hexdigits) and
+                len(id_str) == 10 and
+                'networks' in cfg.keys() and
+                len(cfg) == 2):
+            return True
+        else:
+            raise AssertionError('Config msg {} is invalid!'.format(msg))
+    else:
+        raise AssertionError('Config msg {} is invalid!'.format(msg))
     return True
 
 
 def wait_for_cfg_msg(pub_q, active_q, msg):
     """
     Handle valid member node request for network ID(s) and return
-    the result (or `None`).  Expects responder daemon to raise the
-    nanoservice exception if result is `None`.
+    the result (or `None`).  Expects client wrapper to raise the
+    nanoservice warning if no cfg result.
     :param pub_q: queue of published node IDs
-    :param active_q: queue of active nodes with net IDs
-    :param msg: net_id cfg message needing a response
+    :param active_q: queue of cfg msgs (nodes with net IDs)
+    :param msg: (outgoig) net_id cfg message needing a response
     :return: JSON str (net_id cfg msg) or None
     """
     import json
@@ -118,12 +119,15 @@ def wait_for_cfg_msg(pub_q, active_q, msg):
     result = None
 
     for item in list(active_q):
-        node_cfg = json.loads(item)
-        if msg == node_cfg['node_id']:
-            result = node_cfg
+        cfg_dict = json.loads(item)
+        if msg == cfg_dict['node_id']:
+            result = item
+            with active_q.transact():
+                active_q.remove(item)
             if msg in list(pub_q):
                 with pub_q.transact():
-                    pub_q.remove(msg)
+                    while pub_q.count(msg) != 0:
+                        pub_q.remove(msg)
                 logger.debug('Node ID {} removed from pub_q'.format(msg))
             else:
                 logger.debug('Node ID {} not in pub_queue'.format(msg))

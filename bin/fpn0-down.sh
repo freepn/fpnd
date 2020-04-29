@@ -36,8 +36,9 @@ fi
 while read -r line; do
     [[ -n $VERBOSE ]] && echo "Checking network..."
     LAST_OCTET=$(echo "$line" | cut -d" " -f9 | cut -d"/" -f1 | cut -d"." -f4)
+    PREFIX=$(echo "$line" | cut -d" " -f9 | cut -d"/" -f2)
     ZT_NET_ID=$(echo "$line" | cut -d" " -f3)
-    if [[ $LAST_OCTET != 1 ]]; then
+    if [[ $LAST_OCTET != 1 || $PREFIX = 30 ]]; then
         ZT_NETWORK="${ZT_NET_ID}"
         [[ -n $VERBOSE ]] && echo "  Found $ZT_NETWORK"
         break
@@ -78,7 +79,7 @@ else
     [[ -n $VERBOSE ]] && echo "  FPN routing table not found!!"
 fi
 
-IPV4_INTERFACE=$(ip -o link show up | awk -F': ' '{print $2}' | grep -e 'eth' -e 'en' -e 'wl' -e 'mlan' | head -n 1)
+IPV4_INTERFACE=$(ip -o link show up | awk -F': ' '{print $2}' | grep -e 'usb' -e 'en' -e 'wl' -e 'lan' -e 'wan' -e 'eth' -e 'net' | head -n 1)
 
 # set this to your "normal" network interface if needed
 #IPV4_INTERFACE="eth0"
