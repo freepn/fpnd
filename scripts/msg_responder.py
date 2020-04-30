@@ -5,8 +5,9 @@
 import os
 import sys
 import time
-import syslog
 import datetime
+import logging
+import logging.handlers
 
 import diskcache as dc
 from daemon import Daemon
@@ -22,11 +23,23 @@ from node_tools.msg_queues import valid_announce_msg
 from node_tools.msg_queues import wait_for_cfg_msg
 
 
+logger = logging.getLogger(__name__)
+
+# set log level and handler/formatter
+logger.setLevel(logging.DEBUG)
+logging.getLogger('node_tools.msg_queues').level = logging.DEBUG
+
+handler = logging.handlers.SysLogHandler(address = '/dev/log', facility='daemon')
+formatter = logging.Formatter('%(module)s.%(funcName)s +%(lineno)s: %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 pid_file = '/tmp/responder.pid'
 stdout = '/tmp/responder.log'
 stderr = '/tmp/responder_err.log'
 
-active_q = dc.Deque(directory=get_cachedir('act_queue'))
+cfg_q = dc.Deque(directory=get_cachedir('cfg_queue'))
+hold_q = dc.Deque(directory=get_cachedir('hold_queue'))
 pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
 
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
@@ -61,11 +74,11 @@ def echo(msg):
     :return: str node ID
     """
     if valid_announce_msg(msg):
-        syslog.syslog(syslog.LOG_INFO, "RSP: Got valid announce msg: {}".format(msg))
-        handle_announce_msg(node_q, reg_q, wait_q, msg)
+        logger.debug('Got valid announce msg: {}'.format(msg))
+        handle_announce_msg(node_q, reg_q, wait_q, hold_q, msg)
         return msg
     else:
-        syslog.syslog(syslog.LOG_DEBUG, "RSP: Bad announce msg is {}".format(msg))
+        logger.warning('Bad announce msg is {}'.format(msg))
 
 
 @timerfunc
@@ -78,16 +91,17 @@ def get_node_cfg(msg):
     import json
 
     if valid_announce_msg(msg):
-        syslog.syslog(syslog.LOG_INFO, "RSP: Got valid cfg request from {}".format(msg))
-        res = wait_for_cfg_msg(pub_q, active_q, msg)
+        logger.debug('Got valid cfg request from {}'.format(msg))
+        res = wait_for_cfg_msg(pub_q, cfg_q, hold_q, reg_q, msg)
+        logger.debug('hold_q contents: {}'.format(list(hold_q)))
         if res:
-            syslog.syslog(syslog.LOG_INFO, "RSP: Got cfg result: {}".format(res))
+            logger.debug('Got cfg result: {}'.format(res))
             return res
         else:
-            syslog.syslog(syslog.LOG_DEBUG, "RSP: Null result for ID: {}".format(res))
-            raise ServiceError
+            logger.debug('Null result for ID: {}'.format(res))
+            # raise ServiceError
     else:
-        syslog.syslog(syslog.LOG_DEBUG, "RSP: Bad cfg msg is {}".format(msg))
+        logger.warning('Bad cfg msg is {}'.format(msg))
 
 
 # Inherit from Daemon class
@@ -109,17 +123,17 @@ if __name__ == "__main__":
     daemon = rspDaemon(pid_file, stdout=stdout, stderr=stderr, verbose=1)
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
-            syslog.syslog(syslog.LOG_INFO, "RSP: Starting")
+            logger.info('Starting')
             daemon.start()
         elif 'stop' == sys.argv[1]:
-            syslog.syslog(syslog.LOG_INFO, "RSP: Stopping")
+            logger.info('Stopping')
             daemon.stop()
         elif 'restart' == sys.argv[1]:
-            syslog.syslog(syslog.LOG_INFO, "RSP: Restarting")
+            logger.info('Restarting')
             daemon.restart()
         elif 'status' == sys.argv[1]:
             res = daemon.status()
-            syslog.syslog(syslog.LOG_INFO, "RSP: Status is {}".format(res))
+            logger.info('Status is {}'.format(res))
         else:
             print("Unknown command")
             sys.exit(2)

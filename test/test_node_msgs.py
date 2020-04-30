@@ -274,6 +274,7 @@ class QueueMsgHandlingTest(unittest.TestCase):
         super(QueueMsgHandlingTest, self).setUp()
         import diskcache as dc
 
+        self.hold_q = dc.Deque(directory='/tmp/test-hq')
         self.node_q = dc.Deque(directory='/tmp/test-nq')
         self.reg_q = dc.Deque(directory='/tmp/test-rq')
         self.wait_q = dc.Deque(directory='/tmp/test-wq')
@@ -283,6 +284,7 @@ class QueueMsgHandlingTest(unittest.TestCase):
 
     def tearDown(self):
 
+        self.hold_q.clear()
         self.node_q.clear()
         self.reg_q.clear()
         self.wait_q.clear()
@@ -299,18 +301,18 @@ class QueueMsgHandlingTest(unittest.TestCase):
         self.assertEqual(list(self.reg_q), [])
         self.assertEqual(list(self.wait_q), [self.node3])
 
-        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node1)
+        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.hold_q, self.node1)
         self.assertEqual(list(self.node_q), [self.node1, self.node2, self.node3])
         self.assertEqual(list(self.reg_q), [self.node1])
         self.assertEqual(list(self.wait_q), [self.node3])
 
-        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node2)
+        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.hold_q, self.node2)
         self.assertEqual(list(self.node_q), [self.node1, self.node2, self.node3])
         self.assertEqual(list(self.reg_q), [self.node1, self.node2])
         self.assertEqual(list(self.wait_q), [self.node3])
 
         # we now allow duplicate IDs in the reg queue
-        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node3)
+        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.hold_q, self.node3)
         self.assertIn(self.node3, list(self.reg_q))
         self.assertEqual(list(self.wait_q), [self.node3])
         # print(list(self.node_q), list(self.reg_q), list(self.wait_q))
@@ -383,8 +385,10 @@ class WaitForMsgHandlingTest(unittest.TestCase):
         super(WaitForMsgHandlingTest, self).setUp()
         import diskcache as dc
 
+        self.reg_q = dc.Deque(directory='/tmp/test-rq')
         self.pub_q = dc.Deque(directory='/tmp/test-pq')
-        self.active_q = dc.Deque(directory='/tmp/test-aq')
+        self.cfg_q = dc.Deque(directory='/tmp/test-aq')
+        self.hold_q = dc.Deque(directory='/tmp/test-hq')
         self.node1 = 'beef01dead'
         self.node2 = '02beefdead'
         self.node3 = 'deadbeef03'
@@ -393,31 +397,32 @@ class WaitForMsgHandlingTest(unittest.TestCase):
 
         self.pub_q.append(self.node1)
         self.pub_q.append(self.node2)
-        self.active_q.append(self.cfg1)
-        self.active_q.append(self.cfg2)
+        self.cfg_q.append(self.cfg1)
+        self.cfg_q.append(self.cfg2)
 
     def tearDown(self):
 
         self.pub_q.clear()
-        self.active_q.clear()
+        self.cfg_q.clear()
+        self.hold_q.clear()
         super(WaitForMsgHandlingTest, self).tearDown()
 
     def test_wait_for_cfg(self):
         import json
-        self.assertIn(self.cfg1, self.active_q)
-        res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node1)
-        self.assertNotIn(self.cfg1, self.active_q)
+        self.assertIn(self.cfg1, self.cfg_q)
+        res = wait_for_cfg_msg(self.pub_q, self.cfg_q, self.hold_q, self.reg_q, self.node1)
+        self.assertNotIn(self.cfg1, self.cfg_q)
         self.assertIsInstance(res, str)
         self.assertIn(self.node1, res)
         self.assertEqual(len(json.loads(res)['networks']), 2)
 
     def test_wait_for_cfg_none(self):
         import json
-        res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node3)
+        res = wait_for_cfg_msg(self.pub_q, self.cfg_q, self.hold_q, self.reg_q, self.node3)
         self.assertIsNone(res)
         self.pub_q.remove(self.node2)
-        self.assertIn(self.cfg2, self.active_q)
-        res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node2)
-        self.assertNotIn(self.cfg2, self.active_q)
+        self.assertIn(self.cfg2, self.cfg_q)
+        res = wait_for_cfg_msg(self.pub_q, self.cfg_q, self.hold_q, self.reg_q, self.node2)
+        self.assertNotIn(self.cfg2, self.cfg_q)
         self.assertIn(self.node2, res)
         self.assertEqual(len(json.loads(res)['networks']), 1)

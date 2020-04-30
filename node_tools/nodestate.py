@@ -87,12 +87,8 @@ async def main():
                 if net['status'] == 'NOT_FOUND':
                     run_ztcli_cmd(action='leave', extra=net['identity'])
                     net_id_handler(None, net['identity'], old=True)
-            # this should really run once only, and only when we leave a net,
-            # but for now we run it until we have 2 networks again
-            await client.get_data('network')
-            logger.info('Found {} networks'.format(len(net_data)))
-            nets = client.data
-            if len(nets) == 1 and node_id not in NODE_SETTINGS['use_exitnode']:
+                    nsState.cfg_ref = None
+            if len(net_data) != 0 and not nsState.cfg_ref:
                 send_cfg_handler()
 
             if NODE_SETTINGS['mode'] == 'adhoc':

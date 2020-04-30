@@ -30,6 +30,8 @@ from node_tools.msg_queues import handle_node_queues as handle_node_queues
 from node_tools.msg_queues import manage_incoming_nodes as manage_incoming_nodes
 from node_tools.msg_queues import populate_leaf_list as populate_leaf_list
 from node_tools.msg_queues import valid_announce_msg as valid_announce_msg
+from node_tools.msg_queues import valid_cfg_msg as valid_cfg_msg
+from node_tools.msg_queues import wait_for_cfg_msg as wait_for_cfg_msg
 from node_tools.network_funcs import drain_reg_queue as drain_reg_queue
 from node_tools.network_funcs import get_net_cmds as get_net_cmds
 from node_tools.network_funcs import run_net_cmd as run_net_cmd
@@ -76,5 +78,7 @@ __all__ = [
     'update_runner',
     'update_state',
     'valid_announce_msg',
+    'valid_cfg_msg',
+    'wait_for_cfg_msg',
     'wait_for_moon',
 ]
