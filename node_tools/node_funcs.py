@@ -85,7 +85,7 @@ def cycle_adhoc_net(nwid, nap=5):
         time.sleep(nap)
 
 
-def do_cleanup(path=None):
+def do_cleanup(path=None, addr=None):
     """
     Run network cleanup commands via daemon cleanup hook.
     :param path: path to scripts dir
@@ -93,6 +93,7 @@ def do_cleanup(path=None):
     from node_tools.helper_funcs import AttrDict
     from node_tools.network_funcs import do_net_cmd
     from node_tools.network_funcs import get_net_cmds
+    from node_tools.network_funcs import send_req_msg
 
     from node_tools import state_data as st
 
@@ -101,24 +102,31 @@ def do_cleanup(path=None):
             res = control_daemon('stop', script)
             logger.info('CLEANUP: shutting down {}'.format(script))
 
-    state = AttrDict.from_nested_dict(st.fpnState)
-    moon_id = state.moon_id0
-    if not path:
-        path = NODE_SETTINGS['home_dir']
-    nets = ['fpn_id0', 'fpn_id1']
-    ifaces = ['fpn0', 'fpn1']
+    else:
+        state = AttrDict.from_nested_dict(st.fpnState)
+        moon_id = state.moon_id0
+        node_id = state.fpn_id
+        if not addr:
+            addr = state.moon_addr
 
-    for iface, net in zip(ifaces, nets):
-        if state[iface]:
-            logger.info('CLEANUP: shutting down {}'.format(iface))
-            cmd = get_net_cmds(path, iface)
-            res = do_net_cmd(cmd)
-            logger.info('CLEANUP: leaving network ID: {}'.format(state[net]))
-            res = run_ztcli_cmd(action='leave', extra=state[net])
-            logger.debug('CLEANUP: action leave returned: {}'.format(res))
+        if not path:
+            path = NODE_SETTINGS['home_dir']
+        nets = ['fpn_id0', 'fpn_id1']
+        ifaces = ['fpn0', 'fpn1']
 
-    if moon_id is not None:
-        run_moon_cmd(moon_id, action='deorbit')
+        for iface, net in zip(ifaces, nets):
+            if state[iface]:
+                logger.info('CLEANUP: shutting down {}'.format(iface))
+                cmd = get_net_cmds(path, iface)
+                res = do_net_cmd(cmd)
+                logger.info('CLEANUP: leaving network ID: {}'.format(state[net]))
+                res = run_ztcli_cmd(action='leave', extra=state[net])
+                logger.debug('CLEANUP: action leave returned: {}'.format(res))
+
+        if moon_id is not None:
+            run_moon_cmd(moon_id, action='deorbit')
+            reply = send_req_msg(addr, 'offline', node_id)
+            logger.debug('CLEANUP: offline reply: {}'.format(reply))
 
 
 def do_startup(nwid):

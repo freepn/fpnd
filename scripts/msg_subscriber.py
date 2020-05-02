@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 # set log level and handler/formatter
 log.setLevel(logging.DEBUG)
 
-handler = logging.handlers.SysLogHandler(address = '/dev/log', facility='daemon')
+handler = logging.handlers.SysLogHandler(address='/dev/log', facility='daemon')
 formatter = logging.Formatter('%(module)s.%(funcName)s +%(lineno)s: %(message)s')
 handler.setFormatter(formatter)
 log.addHandler(handler)
@@ -35,6 +35,7 @@ std_err = '/tmp/subscriber_err.log'
 
 cfg_q = dc.Deque(directory=get_cachedir('cfg_queue'))
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
+off_q = dc.Deque(directory=get_cachedir('off_queue'))
 pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
 
 
@@ -66,6 +67,20 @@ def handle_cfg(msg):
         log.warning('Bad cfg msg is {}'.format(msg))
 
 
+def offline(msg):
+    """
+    Process offline node msg (validate and add to offline_q).
+    """
+    if valid_announce_msg(msg):
+        log.debug('Got valid offline msg: {}'.format(msg))
+        with off_q.transact():
+            add_one_only(msg, off_q)
+        log.debug('Adding node id: {}'.format(msg))
+        log.info('{} nodes in offline queue'.format(len(off_q)))
+    else:
+        log.warning('Bad offline msg is {}'.format(msg))
+
+
 # Inherit from Daemon class
 class subDaemon(Daemon):
     # implement run method
@@ -77,6 +92,7 @@ class subDaemon(Daemon):
         s = Subscriber(self.tcp_addr)
         s.subscribe('handle_node', handle_msg)
         s.subscribe('cfg_msgs', handle_cfg)
+        s.subscribe('offline', offline)
         s.start()
 
 

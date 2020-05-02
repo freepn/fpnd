@@ -260,6 +260,29 @@ Currently we also require a recent Linux kernel with ``iptables`` and
 ``iproute2`` installed (host requirements will be updated as we add
 new platform support).
 
+For the required kernel support, your kernel module listing should include
+something like this::
+
+    $ sudo lsmod
+
+    iptable_filter         16384  1
+    iptable_nat            16384  1
+    xt_nat                 16384  10
+    nf_nat                 36864  2 xt_nat,iptable_nat
+    nf_conntrack          102400  2 xt_nat,nf_nat
+    nf_defrag_ipv6         20480  1 nf_conntrack
+    nf_defrag_ipv4         16384  1 nf_conntrack
+    libcrc32c              16384  2 nf_conntrack,nf_nat
+    iptable_mangle         16384  1
+    xt_mark                16384  6
+    xt_tcpudp              16384  34
+    bpfilter               24576  0
+    ip_tables              24576  3 iptable_mangle,iptable_filter,iptable_nat
+    x_tables               24576  6 xt_nat,iptable_mangle,ip_tables,iptable_filter,x
+    t_mark,xt_tcpudp
+    tun                    45056  0
+
+
 
 Versioning
 ==========

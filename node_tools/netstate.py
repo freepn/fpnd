@@ -89,12 +89,16 @@ async def main():
                 logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
                                                                     list(staging_q)))
 
+            logger.debug('{} nodes in offline queue: {}'.format(len(off_q),
+                                                                list(off_q)))
+
         except Exception as exc:
             logger.error('netstate exception was: {}'.format(exc))
             raise exc
 
 
 cache = dc.Index(get_cachedir())
+off_q = dc.Deque(directory=get_cachedir('off_queue'))
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
 netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
 staging_q = dc.Deque(directory=get_cachedir('staging_queue'))

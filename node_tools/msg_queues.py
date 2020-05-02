@@ -105,7 +105,7 @@ def process_hold_queue(msg, hold_q, reg_q, max_hold=5):
 
     if hold_q.count(msg) > max_hold:
         with reg_q.transact():
-            reg_q.append(msg)
+            add_one_only(msg, reg_q)
         logger.debug('Node ID {} sent back to reg_q'.format(msg))
         with hold_q.transact():
             clean_from_queue(msg, hold_q)
@@ -135,15 +135,14 @@ def valid_cfg_msg(msg):
             raise AssertionError('Config msg {} is invalid!'.format(msg))
     else:
         raise AssertionError('Config msg {} is invalid!'.format(msg))
-    return True
 
 
 def wait_for_cfg_msg(pub_q, cfg_q, hold_q, reg_q, msg):
     """
     Handle valid member node request for network ID(s) and return
     the result (or `None`).  Expects client wrapper to raise the
-    nanoservice warning if no cfg result. We use the hold queue
-    as a timeout mechanism and re-add to the reg queue after 5
+    nanoservice warning if no cfg result. We use the hold queue as
+    a timeout mechanism and re-add to the reg queue after `max_hold`
     attempts with no cfg result.
     :param pub_q: queue of published node IDs
     :param cfg_q: queue of cfg msgs (nodes with net IDs)
@@ -156,7 +155,7 @@ def wait_for_cfg_msg(pub_q, cfg_q, hold_q, reg_q, msg):
     result = None
 
     if len(cfg_q) == 0:
-        process_hold_queue(msg, hold_q, reg_q)
+        process_hold_queue(msg, hold_q, reg_q, max_hold=3)
     else:
         for item in list(cfg_q):
             cfg_dict = json.loads(item)
@@ -170,8 +169,11 @@ def wait_for_cfg_msg(pub_q, cfg_q, hold_q, reg_q, msg):
                     logger.debug('Node ID {} cleaned from pub_q'.format(msg))
                 else:
                     logger.debug('Node ID {} not in pub_q'.format(msg))
+                if msg in list(hold_q):
+                    with hold_q.transact():
+                        clean_from_queue(msg, hold_q)
             else:
-                process_hold_queue(msg, hold_q, reg_q)
+                process_hold_queue(msg, hold_q, reg_q, max_hold=3)
 
     if not result:
         logger.debug('Node ID {} not found'.format(msg))

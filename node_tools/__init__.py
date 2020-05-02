@@ -32,7 +32,7 @@ from node_tools.msg_queues import populate_leaf_list as populate_leaf_list
 from node_tools.msg_queues import valid_announce_msg as valid_announce_msg
 from node_tools.msg_queues import valid_cfg_msg as valid_cfg_msg
 from node_tools.msg_queues import wait_for_cfg_msg as wait_for_cfg_msg
-from node_tools.network_funcs import drain_reg_queue as drain_reg_queue
+from node_tools.network_funcs import drain_msg_queue as drain_msg_queue
 from node_tools.network_funcs import get_net_cmds as get_net_cmds
 from node_tools.network_funcs import run_net_cmd as run_net_cmd
 from node_tools.node_funcs import handle_moon_data as handle_moon_data
@@ -49,7 +49,7 @@ __all__ = [
     'MemberNodeNoDataError',
     'NODE_SETTINGS',
     'check_daemon',
-    'drain_reg_queue',
+    'drain_msg_queue',
     'find_keys',
     'get_cachedir',
     'get_endpoint_data',

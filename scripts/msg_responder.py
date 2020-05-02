@@ -18,6 +18,7 @@ from nanoservice.error import ServiceError
 from node_tools import state_data as st
 
 from node_tools.helper_funcs import get_cachedir
+from node_tools.msg_queues import add_one_only
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import valid_announce_msg
 from node_tools.msg_queues import wait_for_cfg_msg
@@ -29,7 +30,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logging.getLogger('node_tools.msg_queues').level = logging.DEBUG
 
-handler = logging.handlers.SysLogHandler(address = '/dev/log', facility='daemon')
+handler = logging.handlers.SysLogHandler(address='/dev/log', facility='daemon')
 formatter = logging.Formatter('%(module)s.%(funcName)s +%(lineno)s: %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
@@ -40,6 +41,7 @@ stderr = '/tmp/responder_err.log'
 
 cfg_q = dc.Deque(directory=get_cachedir('cfg_queue'))
 hold_q = dc.Deque(directory=get_cachedir('hold_queue'))
+off_q = dc.Deque(directory=get_cachedir('off_queue'))
 pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
 
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
@@ -104,6 +106,21 @@ def get_node_cfg(msg):
         logger.warning('Bad cfg msg is {}'.format(msg))
 
 
+def offline(msg):
+    """
+    Process offline node msg (validate and add to offline_q).
+    :param str node ID: zerotier node identity
+    :return: str node ID
+    """
+    if valid_announce_msg(msg):
+        logger.debug('Got valid offline msg: {}'.format(msg))
+        with off_q.transact():
+            add_one_only(msg, off_q)
+        return msg
+    else:
+        logger.warning('Bad offline msg is {}'.format(msg))
+
+
 # Inherit from Daemon class
 class rspDaemon(Daemon):
     # implement run method
@@ -115,6 +132,7 @@ class rspDaemon(Daemon):
         s = Responder(self.tcp_addr, timeouts=(None, None))
         s.register('echo', echo)
         s.register('node_cfg', get_node_cfg)
+        s.register('offline', offline)
         s.start()
 
 

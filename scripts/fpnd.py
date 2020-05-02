@@ -112,9 +112,9 @@ def do_scheduling():
                     delete_cache_entry(cache, key_str)
 
             elif node_role == 'moon':
-                schedule.every(1).minutes.do(check_daemon_status).tag('chk-tasks', 'responder')
+                schedule.every(15).minutes.do(check_daemon_status).tag('chk-tasks', 'responder')
 
-            schedule.every(30).minutes.do(check_daemon_status, script='msg_subscriber.py').tag('chk-tasks', 'subscriber')
+            schedule.every(15).minutes.do(check_daemon_status, script='msg_subscriber.py').tag('chk-tasks', 'subscriber')
             schedule.run_all(1, 'chk-tasks')
 
     elif mode == 'adhoc':

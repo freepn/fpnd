@@ -20,7 +20,7 @@ from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import manage_incoming_nodes
 from node_tools.msg_queues import populate_leaf_list
-from node_tools.network_funcs import drain_reg_queue
+from node_tools.network_funcs import drain_msg_queue
 
 
 logger = logging.getLogger('peerstate')
@@ -33,11 +33,15 @@ async def main():
         client = ZeroTier(ZT_API, loop, session)
 
         try:
+            logger.debug('{} node(s) in reg queue: {}'.format(len(off_q), list(off_q)))
+            if len(off_q) > 0:
+                drain_msg_queue(off_q, addr='127.0.0.1', method='offline')
+
             logger.debug('{} node(s) in reg queue: {}'.format(len(reg_q), list(reg_q)))
             logger.debug('{} node(s) in wait queue: {}'.format(len(wait_q), list(wait_q)))
             manage_incoming_nodes(node_q, reg_q, wait_q)
             if len(reg_q) > 0:
-                drain_reg_queue(reg_q, pub_q, addr='127.0.0.1')
+                drain_msg_queue(reg_q, pub_q, addr='127.0.0.1')
 
             # get status details of the local node and update state
             await client.get_data('status')
@@ -71,7 +75,7 @@ async def main():
             logger.debug('{} node(s) in wait queue: {}'.format(len(wait_q), list(wait_q)))
             manage_incoming_nodes(node_q, reg_q, wait_q)
             if len(reg_q) > 0:
-                drain_reg_queue(reg_q, pub_q, addr='127.0.0.1')
+                drain_msg_queue(reg_q, pub_q, addr='127.0.0.1')
 
             logger.debug('{} node(s) in node queue: {}'.format(len(node_q), list(node_q)))
             logger.debug('{} node(s) in pub queue: {}'.format(len(pub_q), list(pub_q)))
@@ -85,6 +89,7 @@ async def main():
 cache = dc.Index(get_cachedir())
 cfg_q = dc.Deque(directory=get_cachedir('cfg_queue'))
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
+off_q = dc.Deque(directory=get_cachedir('off_queue'))
 pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
 reg_q = dc.Deque(directory=get_cachedir('reg_queue'))
 wait_q = dc.Deque(directory=get_cachedir('wait_queue'))
