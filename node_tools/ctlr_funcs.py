@@ -5,6 +5,7 @@
 import logging
 
 from node_tools.helper_funcs import AttrDict
+from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import find_ipv4_iface
 
 
@@ -105,6 +106,17 @@ def ipnet_get_netcfg(netobj):
         return AttrDict.from_nested_dict(d)
     else:
         raise ValueError('{} is not a valid IPv4Network object'.format(netobj))
+
+
+def is_exit_node(node_id):
+    """
+    Check if node_id is an exit node.
+    :param node_id: mbr node ID string
+    :return bool: True if node is an exit node
+    """
+    if node_id in NODE_SETTINGS['use_exitnode']:
+        return True
+    return False
 
 
 def name_generator(size=10, char_set=None):

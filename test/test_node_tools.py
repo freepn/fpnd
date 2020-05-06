@@ -20,6 +20,7 @@ from diskcache import Index
 from node_tools.ctlr_funcs import gen_netobj_queue
 from node_tools.ctlr_funcs import handle_net_cfg
 from node_tools.ctlr_funcs import ipnet_get_netcfg
+from node_tools.ctlr_funcs import is_exit_node
 from node_tools.ctlr_funcs import name_generator
 from node_tools.ctlr_funcs import netcfg_get_ipnet
 from node_tools.ctlr_funcs import set_network_cfg
@@ -43,8 +44,10 @@ from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import handle_moon_data
 from node_tools.node_funcs import parse_moon_data
 from node_tools.sched_funcs import check_return_status
+from node_tools.trie_funcs import cleanup_state_tries
 from node_tools.trie_funcs import create_state_trie
 from node_tools.trie_funcs import get_dangling_net_data
+from node_tools.trie_funcs import get_neighbor_net_data
 from node_tools.trie_funcs import load_id_trie
 from node_tools.trie_funcs import load_state_trie
 from node_tools.trie_funcs import save_state_trie
@@ -481,12 +484,12 @@ client = mock_zt_api_client()
 
 def load_ctlr_data():
     nets = []
-    for net in ['net1.data', 'net2.data']:
+    for net in ['net1.data', 'net2.data', 'net3.data']:
         _, data = client.load_data(net)
         nets.append(eval(data))
 
     mbrs = []
-    for mbr in ['mbr1.data', 'mbr2.data']:
+    for mbr in ['mbr1net1.data', 'mbr2net1.data', 'mbr2net2.data', 'mbr3net2.data', 'mbr3net3.data']:
         _, data = client.load_data(mbr)
         mbrs.append(eval(data))
 
@@ -606,29 +609,41 @@ def test_trie_is_empty():
     ct.id_trie.clear()
 
 
+def test_is_exit_node():
+    NODE_SETTINGS['use_exitnode'].append('beefea68e6')
+    res = is_exit_node('beefea68e6')
+    assert res is True
+    NODE_SETTINGS['use_exitnode'].remove('beefea68e6')
+    res = is_exit_node('beefea68e6')
+    assert res is False
+
+
 def test_load_id_from_net_trie():
     from node_tools import ctlr_data as ct
+
+    NODE_SETTINGS['use_exitnode'].append('beefea68e6')
 
     res = trie_is_empty(ct.net_trie)
     assert res is True
 
     load_net_trie_data(ct.net_trie)
-    assert len(list(ct.net_trie)) == 4
+    assert len(list(ct.net_trie)) == 8
 
-    for net_id in ['beafde52b4296ea5', 'beafde52b4a5f7ba']:
+    for net_id in ['beafde52b4296ea5', 'beafde52b4a5f7ba', 'beafde52b4a5e8ab']:
         load_id_trie(ct.net_trie, ct.id_trie, [net_id], [], nw=True)
-    for node_id in ['beefea68e6', 'ee2eedb2e1']:
+    for node_id in ['beefea68e6', 'ee2eedb2e1', 'ff2ffdb2e1']:
         load_id_trie(ct.net_trie, ct.id_trie, [], [node_id])
 
-    for key in ['beafde52b4296ea5', 'beafde52b4a5f7ba', 'beefea68e6', 'ee2eedb2e1']:
+    for key in ['beafde52b4296ea5', 'beafde52b4a5f7ba', 'ee2eedb2e1', 'ff2ffdb2e1']:
         links, needs = ct.id_trie[key]
         for item in [links, needs]:
             assert isinstance(item, list)
-        assert len(links) == 1
+        assert len(links) == 2
         assert len(needs) == 2
 
-    assert ct.id_trie['beefea68e6'] == (['beafde52b4296ea5'], [False, True])
-    assert ct.id_trie['beafde52b4a5f7ba'] == (['ee2eedb2e1'], [False, True])
+    assert ct.id_trie['beefea68e6'] == (['beafde52b4296ea5'], [False, False])
+    assert ct.id_trie['beafde52b4a5f7ba'] == (['ee2eedb2e1', 'ff2ffdb2e1'], [False, False])
+    assert ct.id_trie['beafde52b4a5e8ab'] == (['ff2ffdb2e1'], [False, True])
     # print(ct.id_trie.items())
 
     node_id = 'beefea68e6'
@@ -642,15 +657,62 @@ def test_load_id_from_net_trie():
         load_id_trie(ct.net_trie, ct.id_trie, [], [])
 
 
+def test_get_neighbor_net_data():
+    from node_tools import ctlr_data as ct
+
+    trie = ct.net_trie
+    node_id = 'ee2eedb2e1'
+    res = get_neighbor_net_data(trie, node_id)
+    assert res == ('beafde52b4a5f7ba', 'beafde52b4296ea5', 'ff2ffdb2e1', 'beefea68e6')
+
+
+def test_cleanup_state_tries():
+    from node_tools import ctlr_data as ct
+
+    ct.id_trie.clear()
+    ct.net_trie.clear()
+    load_net_trie_data(ct.net_trie)
+
+    for net_id in ['beafde52b4296ea5', 'beafde52b4a5f7ba', 'beafde52b4a5e8ab']:
+        load_id_trie(ct.net_trie, ct.id_trie, [net_id], [], nw=True)
+    for node_id in ['beefea68e6', 'ee2eedb2e1', 'ff2ffdb2e1']:
+        load_id_trie(ct.net_trie, ct.id_trie, [], [node_id])
+
+    net1 = 'beafde52b4296ea5'
+    node1 = 'beefea68e6'
+    net2 = 'beafde52b4a5f7ba'
+    node2 = 'ee2eedb2e1'
+    net3 = 'beafde52b4a5e8ab'
+    node3 = 'ff2ffdb2e1'
+
+    assert len(list(ct.net_trie)) == 8
+    cleanup_state_tries(ct.net_trie, ct.id_trie, net2, node3, mbr_only=True)
+    assert len(list(ct.net_trie)) == 7
+    assert len(list(ct.id_trie)) == 5
+    for key in ct.id_trie.keys():
+        assert node3 not in key
+    cleanup_state_tries(ct.net_trie, ct.id_trie, net3, node3)
+    assert len(list(ct.net_trie)) == 5
+    assert len(list(ct.id_trie)) == 4
+    for key in ct.net_trie.keys():
+        assert net3 not in key
+        assert node3 not in key
+    for key in ct.id_trie.keys():
+        assert net3 not in key
+        assert node3 not in key
+    # with pytest.raises(AssertionError):
+    #     cleanup_state_tries(ct.net_trie, ct.id_trie, net2, mbr_only=True)
+
+
 def test_get_dangling_net_data():
     from node_tools import ctlr_data as ct
 
     load_net_trie_data(ct.net_trie)
 
-    net_id = 'beafde52b4a5f7ba'
+    net_id = 'beafde52b4a5e8ab'
     res = get_dangling_net_data(ct.net_trie, net_id)
     assert isinstance(res, dict)
-    assert res.host == ['172.16.0.126/30']
+    assert res.host == ['172.16.1.150/30']
 
 
 def test_set_network_cfg():

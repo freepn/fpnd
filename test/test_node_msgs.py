@@ -23,8 +23,9 @@ from node_tools.trie_funcs import update_id_trie
 
 
 def test_invalid_msg():
+    msgs = ['deadbeeh00', 'deadbeef0', 'deadbeef000']
     with pytest.raises(AssertionError):
-        for msg in ['deadbeeh00', 'deadbeef0', 'deadbeef000']:
+        for msg in msgs:
             res = valid_announce_msg(msg)
 
 
@@ -355,12 +356,17 @@ class TrieHandlingTest(unittest.TestCase):
 
         self.trie = ct.id_trie
         self.node1 = ['beef01dead']
-        self.node2 = '02beefdead'
-        self.nodes = ['01beefdead', 'beef02dead']
-        self.nodess = ['01beefdead', 'beef02dead', '02beefdead']
-        self.net1 = ['bb8dead3c63cea29']
+        self.node2 = ['beef02dead']
+        self.node3 = ['beef03dead']
+        self.node4 = '02beefdead'
+        self.nodes = ['beef01dead', 'beef02dead']
+        self.nodes2 = ['beef02dead', 'beef03dead']
+        self.nodess = ['01beefdead', '02beefdead', '02beefdead']
+        self.net1 = ['7ac4235ec5d3d938']
         self.net2 = ['7ac4235ec5d3d947']
+        self.net3 = ['7ac4235ec53f3198']
         self.nets = ['7ac4235ec5d3d938', '7ac4235ec5d3d947']
+        self.nets2 = ['7ac4235ec5d3d947', '7ac4235ec53f3198']
         self.netss = ['7ac4235ec5d3d938', '7ac4235ec5d3d947', 'bb8dead3c64dfb30']
 
     def tearDown(self):
@@ -402,6 +408,7 @@ class TrieHandlingTest(unittest.TestCase):
         with self.assertRaises(AssertionError):
             update_id_trie(self.trie, self.net1, self.node1, needs=[True])
             update_id_trie(self.trie, self.netss, self.node1)
+            update_id_trie(self.trie, self.nets, self.node4)
 
 
 class WaitForMsgHandlingTest(unittest.TestCase):
