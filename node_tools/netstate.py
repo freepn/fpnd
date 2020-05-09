@@ -16,16 +16,17 @@ from node_tools.async_funcs import add_network_object
 from node_tools.async_funcs import bootstrap_mbr_node
 from node_tools.async_funcs import get_network_object_data
 from node_tools.async_funcs import get_network_object_ids
+from node_tools.async_funcs import offline_mbr_node
+from node_tools.async_funcs import update_state_tries
 from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import handle_node_status
+from node_tools.ctlr_funcs import is_exit_node
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import handle_node_queues
 from node_tools.network_funcs import publish_cfg_msg
-from node_tools.trie_funcs import load_id_trie
-from node_tools.trie_funcs import update_id_trie
 
 logger = logging.getLogger('netstate')
 
@@ -37,36 +38,27 @@ async def main():
         client = ZeroTier(ZT_API, loop, session)
 
         try:
-            # get status details of the local node
+            # start with handling offline nodes
+            pre_off = list(off_q)
+            logger.debug('{} nodes in offline queue: {}'.format(len(off_q), pre_off))
+            for node_id in pre_off:
+                await offline_mbr_node(client, node_id)
+            for node_id in [x for x in off_q if x in pre_off]:
+                off_q.remove(node_id)
+            logger.debug('{} nodes in offline queue: {}'.format(len(off_q), list(off_q)))
+
+            # get ID and status details of ctlr node
             await client.get_data('status')
             ctlr_id = handle_node_status(client.data, cache)
 
-            # get/display data for available networks
-            await get_network_object_ids(client)
-            logger.debug('{} networks found'.format(len(client.data)))
-            net_list = client.data
-            for net_id in net_list:
-                # get details about each network
-                await get_network_object_data(client, net_id)
-                ct.net_trie[net_id] = client.data
-                load_id_trie(ct.net_trie, ct.id_trie, [net_id], [], nw=True)
-                await get_network_object_ids(client, net_id)
-                logger.debug('network {} has {} member(s)'.format(net_id, len(client.data)))
-                member_dict = client.data
-                for mbr_id in member_dict.keys():
-                    # get details about each network member
-                    await get_network_object_data(client, net_id, mbr_id)
-                    logger.debug('adding member: {}'.format(mbr_id))
-                    ct.net_trie[net_id + mbr_id] = client.data
-                    load_id_trie(ct.net_trie, ct.id_trie, [], [mbr_id])
-                # logger.debug('member key suffixes: {}'.format(ct.net_trie.suffixes(net_id)))
-
-            # logger.debug('TRIE: net_trie has keys: {}'.format(list(ct.net_trie)))
-            for key in list(ct.net_trie):
-                logger.debug('TRIE: net key {} has paylod: {}'.format(key, ct.net_trie[key]))
+            # update ctlr state tries
+            await update_state_tries(client, ct.net_trie, ct.id_trie)
+            logger.debug('net_trie has keys: {}'.format(list(ct.net_trie)))
+            # for key in list(ct.net_trie):
+            #     logger.debug('net key {} has paylod: {}'.format(key, ct.net_trie[key]))
             # for key in list(ct.id_trie):
-            #     logger.debug('TRIE: id key {} has payload: {}'.format(key, ct.id_trie[key]))
-            logger.debug('TRIE: id_trie has keys: {}'.format(list(ct.id_trie)))
+            #     logger.debug('id key {} has payload: {}'.format(key, ct.id_trie[key]))
+            logger.debug('id_trie has keys: {}'.format(list(ct.id_trie)))
 
             # handle node queues and publish messages
             logger.debug('{} nodes in node queue: {}'.format(len(node_q),
@@ -79,15 +71,15 @@ async def main():
                                                                 list(staging_q)))
 
             for mbr_id in [x for x in staging_q if x not in list(ct.id_trie)]:
-                if mbr_id in NODE_SETTINGS['use_exitnode']:
+                if is_exit_node(mbr_id):
                     await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q, ex=True)
                 else:
                     await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q)
                 publish_cfg_msg(ct.id_trie, mbr_id, addr='127.0.0.1')
             for mbr_id in [x for x in staging_q if x in list(ct.id_trie)]:
                 staging_q.remove(mbr_id)
-                logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
-                                                                    list(staging_q)))
+            logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
+                                                                list(staging_q)))
 
         except Exception as exc:
             logger.error('netstate exception was: {}'.format(exc))
@@ -95,6 +87,7 @@ async def main():
 
 
 cache = dc.Index(get_cachedir())
+off_q = dc.Deque(directory=get_cachedir('off_queue'))
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
 netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
 staging_q = dc.Deque(directory=get_cachedir('staging_queue'))

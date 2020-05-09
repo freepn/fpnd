@@ -55,6 +55,27 @@ def check_trie_params(nw_id, node_id, needs):
     return True
 
 
+def cleanup_state_tries(net_trie, id_trie, nw_id, node_id, mbr_only=False):
+    """
+    Cleanup offlined nets and mbr nodes from state data tries. This needs
+    to run from offline_mbr_node to cleanup stale trie data.
+    :param net_trie: net state trie object
+    :param id_trie: ID state trie object
+    :param nw_id: network ID str
+    :param node_id: mbr node ID str
+    :param mbr_only: if True, delete only the member node keys
+    """
+
+    if mbr_only:
+        mbr_key = nw_id + node_id
+        del net_trie[mbr_key]
+        del id_trie[node_id]
+    else:
+        for key in net_trie.keys(nw_id):
+            del net_trie[key]
+        del id_trie[nw_id]
+
+
 def find_dangling_nets(trie):
     """
     Find networks with needs that are `True` (search the ID trie).
@@ -74,11 +95,11 @@ def find_dangling_nets(trie):
 
 def get_dangling_net_data(trie, net_id):
     """
-    Given the ID, get the payload from the net_id state trie and return
+    Given the net ID, get the payload from the net data trie and return
     the target network cfg from the `routes` list.
     :notes: The return format matches the cfg_dict payload used by
             config_network_object()
-    :param trie: net ID state trie
+    :param trie: net data trie
     :param net_id: network ID to retrive
     :return: Attrdict <netcfg> or None
     """
@@ -95,6 +116,53 @@ def get_dangling_net_data(trie, net_id):
             netcfg = ipnet_get_netcfg(netobj)
 
     return netcfg
+
+
+def get_neighbor_ids(trie, node_id):
+    """
+    Given the node ID, get the payloads from the net trie and return
+    the attached network and neighbor node IDs.
+    :param trie: net data trie
+    :param node_id: node ID to lookup
+    :return: tuple of net and node IDs
+    """
+    from node_tools.ctlr_funcs import ipnet_get_netcfg
+    from node_tools.ctlr_funcs import is_exit_node
+    from node_tools.ctlr_funcs import netcfg_get_ipnet
+    from node_tools.helper_funcs import find_ipv4_iface
+
+    node_list = []
+    key_list = []
+    src_net = None
+    exit_net = None
+    src_node = None
+    exit_node = None
+
+    for key in trie.keys():
+        if node_id in key:
+            key_list.append(key[0:16])
+            node_list.append(trie[key])
+
+    if len(key_list) != 2 and (len(key_list) == 1 and not is_exit_node(node_id)):
+        raise AssertionError('Node {} keys {} are invalid!'.format(node_id, key_list))
+    else:
+        for key, data in zip(key_list, node_list):
+            node_ip = data['ipAssignments'][0]
+            ipnet = netcfg_get_ipnet(node_ip)
+            netcfg = ipnet_get_netcfg(ipnet)
+            gw_ip = find_ipv4_iface(netcfg.gateway[0])
+            if node_ip == gw_ip:
+                src_net = key
+                for node in trie.suffixes(src_net)[1:]:
+                    if node_id != node:
+                        src_node = node
+            else:
+                exit_net = key
+                for node in trie.suffixes(exit_net)[1:]:
+                    if node_id != node:
+                        exit_node = node
+
+    return src_net, exit_net, src_node, exit_node
 
 
 def load_id_trie(net_trie, id_trie, nw_id, node_id, needs=[], nw=False):
@@ -166,7 +234,7 @@ def update_id_trie(trie, nw_id, node_id, needs=[], nw=False):
     key with network payload; set `nw` = True for network key with
     node payload.
     :notes: This is intended to run in the bootstrap_mbr_node context.
-    :param trie: datrie trie object
+    :param trie: id state trie object
     :param nw_id: list of network IDs
     :param node_id: list of node IDs
     :param: needs: list of needs

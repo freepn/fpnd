@@ -19,6 +19,7 @@ from node_tools.cache_funcs import get_net_status
 from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import handle_node_status
 from node_tools.cache_funcs import load_cache_by_type
+from node_tools.ctlr_funcs import is_exit_node
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
@@ -54,19 +55,20 @@ async def main():
                 load_cache_by_type(cache, peer_data, 'peer')
 
                 # check for moon data (only exists for moons we orbit)
-                moon_data = run_ztcli_cmd(action='listmoons')
-                if moon_data:
-                    load_cache_by_type(cache, moon_data, 'moon')
+                if not nsState.moon_id0:
+                    moon_data = run_ztcli_cmd(action='listmoons')
+                    if moon_data:
+                        load_cache_by_type(cache, moon_data, 'moon')
 
-                moonStatus = []
-                fpn_moons = NODE_SETTINGS['moon_list']
-                peerStatus = get_peer_status(cache)
-                for peer in peerStatus:
-                    if peer['role'] == 'MOON' and peer['identity'] in fpn_moons:
-                        moonStatus.append(peer)
-                        break
-                logger.debug('Got moon state: {}'.format(moonStatus))
-                load_cache_by_type(cache, moonStatus, 'mstate')
+                    moonStatus = []
+                    fpn_moons = NODE_SETTINGS['moon_list']
+                    peerStatus = get_peer_status(cache)
+                    for peer in peerStatus:
+                        if peer['role'] == 'MOON' and peer['identity'] in fpn_moons:
+                            moonStatus.append(peer)
+                            break
+                    logger.debug('Got moon state: {}'.format(moonStatus))
+                    load_cache_by_type(cache, moonStatus, 'mstate')
 
             # get all available network data
             await client.get_data('network')
@@ -75,6 +77,8 @@ async def main():
             # this only handles the initial node bootstrap state
             if len(net_data) == 0 and not nsState.cfg_ref:
                 send_cfg_handler()
+            # elif len(net_data) == 1 and not is_exit_node(node_id):
+            #     nsState.cfg_ref = None
             net_keys = find_keys(cache, 'net')
             logger.debug('Returned network keys: {}'.format(net_keys))
             load_cache_by_type(cache, net_data, 'net')
@@ -87,12 +91,8 @@ async def main():
                 if net['status'] == 'NOT_FOUND':
                     run_ztcli_cmd(action='leave', extra=net['identity'])
                     net_id_handler(None, net['identity'], old=True)
-            # this should really run once only, and only when we leave a net,
-            # but for now we run it until we have 2 networks again
-            await client.get_data('network')
-            logger.info('Found {} networks'.format(len(net_data)))
-            nets = client.data
-            if len(nets) == 1 and node_id not in NODE_SETTINGS['use_exitnode']:
+                    nsState.cfg_ref = None
+            if len(net_data) != 0 and not nsState.cfg_ref:
                 send_cfg_handler()
 
             if NODE_SETTINGS['mode'] == 'adhoc':

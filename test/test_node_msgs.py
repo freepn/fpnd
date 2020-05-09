@@ -10,10 +10,11 @@ from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import handle_node_queues
 from node_tools.msg_queues import make_cfg_msg
 from node_tools.msg_queues import manage_incoming_nodes
+from node_tools.msg_queues import process_hold_queue
 from node_tools.msg_queues import valid_announce_msg
 from node_tools.msg_queues import valid_cfg_msg
 from node_tools.msg_queues import wait_for_cfg_msg
-from node_tools.network_funcs import drain_reg_queue
+from node_tools.network_funcs import drain_msg_queue
 from node_tools.network_funcs import publish_cfg_msg
 from node_tools.sched_funcs import check_return_status
 from node_tools.trie_funcs import find_dangling_nets
@@ -22,8 +23,9 @@ from node_tools.trie_funcs import update_id_trie
 
 
 def test_invalid_msg():
+    msgs = ['deadbeeh00', 'deadbeef0', 'deadbeef000']
     with pytest.raises(AssertionError):
-        for msg in ['deadbeeh00', 'deadbeef0', 'deadbeef000']:
+        for msg in msgs:
             res = valid_announce_msg(msg)
 
 
@@ -84,14 +86,17 @@ class BaseTestCase(unittest.TestCase):
         self.net_list = ['7ac4235ec5d3d940']
         self.trie = ct.id_trie
         self.node_q = dc.Deque(directory='/tmp/test-nq')
+        self.off_q = dc.Deque(directory='/tmp/test-oq')
         self.pub_q = dc.Deque(directory='/tmp/test-pq')
         self.node_q.clear()
+        self.off_q.clear()
         self.pub_q.clear()
         self.trie.clear()
 
         self.addr = '127.0.0.1'
         self.tcp_addr = 'tcp://{}:9442'.format(self.addr)
         self.active_list = []
+        self.off_list = []
         self.sub_list = []
 
         def handle_msg(msg):
@@ -102,12 +107,19 @@ class BaseTestCase(unittest.TestCase):
             self.active_list.append(msg)
             return self.active_list
 
+        def offline(msg):
+            if msg not in self.off_list:
+                self.off_list.append(msg)
+            return self.off_list
+
         self.service = Subscriber(self.tcp_addr)
         self.service.subscribe('handle_node', handle_msg)
         self.service.subscribe('cfg_msgs', handle_cfg)
+        self.service.subscribe('offline', offline)
 
     def tearDown(self):
         self.node_q.clear()
+        self.off_q.clear()
         self.pub_q.clear()
         self.service.socket.close()
 
@@ -140,7 +152,7 @@ class TestPubSub(BaseTestCase):
         self.node_q.append(self.node2)
 
         # Client side
-        drain_reg_queue(self.node_q, self.pub_q)
+        drain_msg_queue(self.node_q, self.pub_q)
 
         # server side
         res = self.service.process()
@@ -154,13 +166,29 @@ class TestPubSub(BaseTestCase):
         self.node_q.append(self.node2)
 
         # Client side
-        drain_reg_queue(self.node_q, self.pub_q, self.addr)
+        drain_msg_queue(self.node_q, self.pub_q, addr=self.addr)
 
         # server side
         res = self.service.process()
         res = self.service.process()
         self.assertEqual(list(self.node_q), [])
         self.assertEqual(list(self.pub_q), ['deadbeef01', '20beefdead'])
+        self.assertEqual(res, [self.node1, self.node2])
+
+    def test_node_pub_offline(self):
+        self.node_q.append(self.node1)
+        self.node_q.append(self.node2)
+        self.node_q.append(self.node1)
+
+        # Client side
+        drain_msg_queue(self.node_q, addr=self.addr, method='offline')
+
+        # server side
+        res = self.service.process()
+        res = self.service.process()
+        res = self.service.process()
+        self.assertEqual(list(self.node_q), [])
+        self.assertEqual(self.off_list, ['deadbeef01', '20beefdead'])
         self.assertEqual(res, [self.node1, self.node2])
 
 
@@ -274,6 +302,7 @@ class QueueMsgHandlingTest(unittest.TestCase):
         super(QueueMsgHandlingTest, self).setUp()
         import diskcache as dc
 
+        self.hold_q = dc.Deque(directory='/tmp/test-hq')
         self.node_q = dc.Deque(directory='/tmp/test-nq')
         self.reg_q = dc.Deque(directory='/tmp/test-rq')
         self.wait_q = dc.Deque(directory='/tmp/test-wq')
@@ -283,6 +312,7 @@ class QueueMsgHandlingTest(unittest.TestCase):
 
     def tearDown(self):
 
+        self.hold_q.clear()
         self.node_q.clear()
         self.reg_q.clear()
         self.wait_q.clear()
@@ -299,18 +329,18 @@ class QueueMsgHandlingTest(unittest.TestCase):
         self.assertEqual(list(self.reg_q), [])
         self.assertEqual(list(self.wait_q), [self.node3])
 
-        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node1)
+        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.hold_q, self.node1)
         self.assertEqual(list(self.node_q), [self.node1, self.node2, self.node3])
         self.assertEqual(list(self.reg_q), [self.node1])
         self.assertEqual(list(self.wait_q), [self.node3])
 
-        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node2)
+        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.hold_q, self.node2)
         self.assertEqual(list(self.node_q), [self.node1, self.node2, self.node3])
         self.assertEqual(list(self.reg_q), [self.node1, self.node2])
         self.assertEqual(list(self.wait_q), [self.node3])
 
         # we now allow duplicate IDs in the reg queue
-        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node3)
+        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.hold_q, self.node3)
         self.assertIn(self.node3, list(self.reg_q))
         self.assertEqual(list(self.wait_q), [self.node3])
         # print(list(self.node_q), list(self.reg_q), list(self.wait_q))
@@ -326,12 +356,17 @@ class TrieHandlingTest(unittest.TestCase):
 
         self.trie = ct.id_trie
         self.node1 = ['beef01dead']
-        self.node2 = '02beefdead'
-        self.nodes = ['01beefdead', 'beef02dead']
-        self.nodess = ['01beefdead', 'beef02dead', '02beefdead']
-        self.net1 = ['bb8dead3c63cea29']
+        self.node2 = ['beef02dead']
+        self.node3 = ['beef03dead']
+        self.node4 = '02beefdead'
+        self.nodes = ['beef01dead', 'beef02dead']
+        self.nodes2 = ['beef02dead', 'beef03dead']
+        self.nodess = ['01beefdead', '02beefdead', '02beefdead']
+        self.net1 = ['7ac4235ec5d3d938']
         self.net2 = ['7ac4235ec5d3d947']
+        self.net3 = ['7ac4235ec53f3198']
         self.nets = ['7ac4235ec5d3d938', '7ac4235ec5d3d947']
+        self.nets2 = ['7ac4235ec5d3d947', '7ac4235ec53f3198']
         self.netss = ['7ac4235ec5d3d938', '7ac4235ec5d3d947', 'bb8dead3c64dfb30']
 
     def tearDown(self):
@@ -373,6 +408,7 @@ class TrieHandlingTest(unittest.TestCase):
         with self.assertRaises(AssertionError):
             update_id_trie(self.trie, self.net1, self.node1, needs=[True])
             update_id_trie(self.trie, self.netss, self.node1)
+            update_id_trie(self.trie, self.nets, self.node4)
 
 
 class WaitForMsgHandlingTest(unittest.TestCase):
@@ -383,41 +419,60 @@ class WaitForMsgHandlingTest(unittest.TestCase):
         super(WaitForMsgHandlingTest, self).setUp()
         import diskcache as dc
 
-        self.pub_q = dc.Deque(directory='/tmp/test-pq')
-        self.active_q = dc.Deque(directory='/tmp/test-aq')
+        self.cfg_q = dc.Deque(directory='/tmp/test-aq')
+        self.hold_q = dc.Deque(directory='/tmp/test-hq')
+        self.reg_q = dc.Deque(directory='/tmp/test-rq')
         self.node1 = 'beef01dead'
         self.node2 = '02beefdead'
         self.node3 = 'deadbeef03'
         self.cfg1 = '{"node_id": "beef01dead", "networks": ["7ac4235ec5d3d938", "bb8dead3c63cea29"]}'
         self.cfg2 = '{"node_id": "02beefdead", "networks": ["7ac4235ec5d3d938"]}'
 
-        self.pub_q.append(self.node1)
-        self.pub_q.append(self.node2)
-        self.active_q.append(self.cfg1)
-        self.active_q.append(self.cfg2)
+        self.cfg_q.append(self.cfg1)
+        self.cfg_q.append(self.cfg2)
 
     def tearDown(self):
 
-        self.pub_q.clear()
-        self.active_q.clear()
+        self.reg_q.clear()
+        self.cfg_q.clear()
+        self.hold_q.clear()
         super(WaitForMsgHandlingTest, self).tearDown()
+
+    def show_state(self):
+
+        print('')
+        print(list(self.cfg_q))
+        print(list(self.hold_q))
+        print(list(self.reg_q))
 
     def test_wait_for_cfg(self):
         import json
-        self.assertIn(self.cfg1, self.active_q)
-        res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node1)
-        self.assertNotIn(self.cfg1, self.active_q)
+        self.assertIn(self.cfg1, self.cfg_q)
+        res = wait_for_cfg_msg(self.cfg_q, self.hold_q, self.reg_q, self.node1)
+        self.assertNotIn(self.cfg1, self.cfg_q)
         self.assertIsInstance(res, str)
         self.assertIn(self.node1, res)
         self.assertEqual(len(json.loads(res)['networks']), 2)
 
     def test_wait_for_cfg_none(self):
         import json
-        res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node3)
+        res = wait_for_cfg_msg(self.cfg_q, self.hold_q, self.reg_q, self.node3)
         self.assertIsNone(res)
-        self.pub_q.remove(self.node2)
-        self.assertIn(self.cfg2, self.active_q)
-        res = wait_for_cfg_msg(self.pub_q, self.active_q, self.node2)
-        self.assertNotIn(self.cfg2, self.active_q)
+        self.assertIn(self.cfg2, self.cfg_q)
+        res = wait_for_cfg_msg(self.cfg_q, self.hold_q, self.reg_q, self.node2)
+        self.assertNotIn(self.cfg2, self.cfg_q)
         self.assertIn(self.node2, res)
         self.assertEqual(len(json.loads(res)['networks']), 1)
+        res = wait_for_cfg_msg(self.cfg_q, self.hold_q, self.reg_q, self.node3)
+        self.assertIsNone(res)
+        self.assertEqual(len(self.hold_q), 3)
+        res = wait_for_cfg_msg(self.cfg_q, self.hold_q, self.reg_q, self.node3)
+        self.assertIsNone(res)
+        self.assertEqual(len(self.hold_q), 0)
+        self.assertEqual(len(self.reg_q), 1)
+        self.assertIn(self.node3, list(self.reg_q))
+        self.cfg_q.clear()
+        res = wait_for_cfg_msg(self.cfg_q, self.hold_q, self.reg_q, self.node3)
+        self.assertIsNone(res)
+        self.assertEqual(len(self.hold_q), 1)
+        self.assertIn(self.node3, list(self.hold_q))

@@ -5,6 +5,7 @@
 import logging
 
 from node_tools.helper_funcs import AttrDict
+from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import find_ipv4_iface
 
 
@@ -107,6 +108,17 @@ def ipnet_get_netcfg(netobj):
         raise ValueError('{} is not a valid IPv4Network object'.format(netobj))
 
 
+def is_exit_node(node_id):
+    """
+    Check if node_id is an exit node.
+    :param node_id: mbr node ID string
+    :return bool: True if node is an exit node
+    """
+    if node_id in NODE_SETTINGS['use_exitnode']:
+        return True
+    return False
+
+
 def name_generator(size=10, char_set=None):
     """
     Generate a random network name for ZT add_network_object. The
@@ -161,6 +173,21 @@ def set_network_cfg(cfg_addr):
     src_addr = {
         'ipAssignments': cfg_addr,
         'authorized': True
+    }
+
+    return AttrDict.from_nested_dict(src_addr)
+
+
+def unset_network_cfg():
+    """
+    Create a config fragment to unset (remove) the IP address and
+    deauthorize the node.
+    :return dict: formatted cfg fragment for async payload
+    """
+
+    src_addr = {
+        'ipAssignments': [],
+        'authorized': False
     }
 
     return AttrDict.from_nested_dict(src_addr)

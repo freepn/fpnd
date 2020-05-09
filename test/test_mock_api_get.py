@@ -11,6 +11,7 @@ import string
 import tempfile
 
 import pytest
+import nanomsg
 
 from diskcache import Index, Deque
 
@@ -426,7 +427,8 @@ def test_do_cleanup():
     get_state(cache)
     nodeState = AttrDict.from_nested_dict(stest.fpnState)
     # print(nodeState)
-    do_cleanup('./bin')
+    with pytest.raises(nanomsg.NanoMsgAPIError):
+        do_cleanup('./bin', '127.0.0.1')
 
 
 def test_get_state_values():
