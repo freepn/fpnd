@@ -49,9 +49,11 @@ fi
 while read -r line; do
     [[ -n $VERBOSE ]] && echo "Checking network..."
     LAST_OCTET=$(echo "$line" | cut -d" " -f9 | cut -d"/" -f1 | cut -d"." -f4)
-    PREFIX=$(echo "$line" | cut -d" " -f9 | cut -d"/" -f2)
+    FULL_OCTET=$(echo "$line" | cut -d" " -f9 | cut -d"/" -f1)
     ZT_NET_ID=$(echo "$line" | cut -d" " -f3)
-    if [[ $LAST_OCTET != 1 || $PREFIX = 30 ]]; then
+    ZT_IF_NAME=$(echo "$line" | cut -d" " -f8)
+    ZT_NET_GW=$(zerotier-cli -j listnetworks | grep "${ZT_NET_ID}" -A 14 | grep via | awk '{ print $2 }' | tail -n 1 | cut -d'"' -f2)
+    if [[ $FULL_OCTET != $ZT_NET_GW ]]; then
         ZT_NETWORK="${ZT_NET_ID}"
         [[ -n $VERBOSE ]] && echo "  Found $ZT_NETWORK"
         break
