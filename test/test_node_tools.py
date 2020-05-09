@@ -24,6 +24,7 @@ from node_tools.ctlr_funcs import is_exit_node
 from node_tools.ctlr_funcs import name_generator
 from node_tools.ctlr_funcs import netcfg_get_ipnet
 from node_tools.ctlr_funcs import set_network_cfg
+from node_tools.ctlr_funcs import unset_network_cfg
 from node_tools.exceptions import MemberNodeError
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
@@ -681,7 +682,6 @@ def test_get_neighbor_ids():
     NODE_SETTINGS['use_exitnode'].append(exit_id)
     res = get_neighbor_ids(trie, exit_id)
     assert res == ('beafde52b4296ea5', None, 'ee2eedb2e1', None)
-    print(res)
 
     NODE_SETTINGS['use_exitnode'].clear()
 
@@ -726,15 +726,14 @@ def test_cleanup_state_tries():
         assert node3 not in key
 
     cleanup_state_tries(ct.net_trie, ct.id_trie, net1, node2, mbr_only=True)
-    print('')
-    print(list(ct.net_trie))
-    print(list(ct.id_trie))
     cleanup_state_tries(ct.net_trie, ct.id_trie, net2, node2)
-    print('')
-    print(list(ct.net_trie))
-    print(list(ct.id_trie))
-    # with pytest.raises(AssertionError):
-    #     cleanup_state_tries(ct.net_trie, ct.id_trie, net2, mbr_only=True)
+    for key in ct.net_trie.keys():
+        assert net2 not in key
+        assert node2 not in key
+        assert net1 in key
+    for key in ct.id_trie.keys():
+        assert net2 not in key
+        assert node2 not in key
 
 
 def test_get_dangling_net_data():
@@ -754,7 +753,13 @@ def test_set_network_cfg():
     assert isinstance(res, dict)
     assert res.ipAssignments == ['172.16.0.126/30']
     assert res.authorized is True
-    # print(res)
+
+
+def test_unset_network_cfg():
+    res = unset_network_cfg()
+    assert isinstance(res, dict)
+    assert res.ipAssignments == []
+    assert res.authorized is False
 
 
 def test_name_generator():
