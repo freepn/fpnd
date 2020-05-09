@@ -47,7 +47,7 @@ from node_tools.sched_funcs import check_return_status
 from node_tools.trie_funcs import cleanup_state_tries
 from node_tools.trie_funcs import create_state_trie
 from node_tools.trie_funcs import get_dangling_net_data
-from node_tools.trie_funcs import get_neighbor_net_data
+from node_tools.trie_funcs import get_neighbor_ids
 from node_tools.trie_funcs import load_id_trie
 from node_tools.trie_funcs import load_state_trie
 from node_tools.trie_funcs import save_state_trie
@@ -656,14 +656,34 @@ def test_load_id_from_net_trie():
     with pytest.raises(AssertionError):
         load_id_trie(ct.net_trie, ct.id_trie, [], [])
 
+    NODE_SETTINGS['use_exitnode'].clear()
 
-def test_get_neighbor_net_data():
+
+def test_get_neighbor_ids():
     from node_tools import ctlr_data as ct
 
     trie = ct.net_trie
     node_id = 'ee2eedb2e1'
-    res = get_neighbor_net_data(trie, node_id)
+    exit_id = 'beefea68e6'
+    tail_id = 'ff2ffdb2e1'
+
+    res = get_neighbor_ids(trie, node_id)
     assert res == ('beafde52b4a5f7ba', 'beafde52b4296ea5', 'ff2ffdb2e1', 'beefea68e6')
+    # print(res)
+
+    res = get_neighbor_ids(trie, tail_id)
+    assert res == ('beafde52b4a5e8ab', 'beafde52b4a5f7ba', None, 'ee2eedb2e1')
+    # print(res)
+
+    with pytest.raises(AssertionError):
+        res = get_neighbor_ids(trie, exit_id)
+
+    NODE_SETTINGS['use_exitnode'].append(exit_id)
+    res = get_neighbor_ids(trie, exit_id)
+    assert res == ('beafde52b4296ea5', None, 'ee2eedb2e1', None)
+    print(res)
+
+    NODE_SETTINGS['use_exitnode'].clear()
 
 
 def test_cleanup_state_tries():
@@ -686,12 +706,16 @@ def test_cleanup_state_tries():
     node3 = 'ff2ffdb2e1'
 
     assert len(list(ct.net_trie)) == 8
+
     cleanup_state_tries(ct.net_trie, ct.id_trie, net2, node3, mbr_only=True)
+
     assert len(list(ct.net_trie)) == 7
     assert len(list(ct.id_trie)) == 5
     for key in ct.id_trie.keys():
         assert node3 not in key
+
     cleanup_state_tries(ct.net_trie, ct.id_trie, net3, node3)
+
     assert len(list(ct.net_trie)) == 5
     assert len(list(ct.id_trie)) == 4
     for key in ct.net_trie.keys():
@@ -700,6 +724,15 @@ def test_cleanup_state_tries():
     for key in ct.id_trie.keys():
         assert net3 not in key
         assert node3 not in key
+
+    cleanup_state_tries(ct.net_trie, ct.id_trie, net1, node2, mbr_only=True)
+    print('')
+    print(list(ct.net_trie))
+    print(list(ct.id_trie))
+    cleanup_state_tries(ct.net_trie, ct.id_trie, net2, node2)
+    print('')
+    print(list(ct.net_trie))
+    print(list(ct.id_trie))
     # with pytest.raises(AssertionError):
     #     cleanup_state_tries(ct.net_trie, ct.id_trie, net2, mbr_only=True)
 

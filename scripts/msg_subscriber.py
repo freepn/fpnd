@@ -19,15 +19,16 @@ from node_tools.msg_queues import valid_announce_msg
 from node_tools.msg_queues import valid_cfg_msg
 
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 # set log level and handler/formatter
-log.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
+logging.getLogger('node_tools.msg_queues').level = logging.DEBUG
 
 handler = logging.handlers.SysLogHandler(address='/dev/log', facility='daemon')
 formatter = logging.Formatter('%(module)s.%(funcName)s +%(lineno)s: %(message)s')
 handler.setFormatter(formatter)
-log.addHandler(handler)
+logger.addHandler(handler)
 
 pid_file = '/tmp/subscriber.pid'
 std_out = '/tmp/subscriber.log'
@@ -41,30 +42,28 @@ pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
 
 def handle_msg(msg):
     if valid_announce_msg(msg):
-        log.debug('Got valid node ID: {}'.format(msg))
+        logger.debug('Got valid node ID: {}'.format(msg))
         with node_q.transact():
             node_q.append(msg)
-        log.debug('Adding node id: {}'.format(msg))
-        log.info('{} nodes in node queue'.format(len(node_q)))
-
+        logger.debug('Adding node id: {}'.format(msg))
+        logger.info('{} nodes in node queue'.format(len(node_q)))
     else:
-        log.warning('Bad node msg is {}'.format(msg))
+        logger.warning('Bad node msg is {}'.format(msg))
 
 
 def handle_cfg(msg):
     import json
 
     if valid_cfg_msg(msg):
-        log.debug('Got valid cfg msg: {}'.format(msg))
+        logger.debug('Got valid cfg msg: {}'.format(msg))
         cfg_msg = json.loads(msg)
         if cfg_msg['node_id'] in pub_q:
             with cfg_q.transact():
                 add_one_only(msg, cfg_q)
-            log.debug('Adding node cfg: {}'.format(msg))
-        log.info('{} cfgs in active queue'.format(len(cfg_q)))
-
+            logger.debug('Adding node cfg: {}'.format(msg))
+        logger.info('{} msgs in cfg queue'.format(len(cfg_q)))
     else:
-        log.warning('Bad cfg msg is {}'.format(msg))
+        logger.warning('Bad cfg msg is {}'.format(msg))
 
 
 def offline(msg):
@@ -72,13 +71,13 @@ def offline(msg):
     Process offline node msg (validate and add to offline_q).
     """
     if valid_announce_msg(msg):
-        log.debug('Got valid offline msg: {}'.format(msg))
+        logger.debug('Got valid offline msg: {}'.format(msg))
         with off_q.transact():
             add_one_only(msg, off_q)
-        log.debug('Adding node id: {}'.format(msg))
-        log.info('{} nodes in offline queue'.format(len(off_q)))
+        logger.debug('Added node id: {}'.format(msg))
+        logger.info('{} nodes in offline queue'.format(len(off_q)))
     else:
-        log.warning('Bad offline msg is {}'.format(msg))
+        logger.warning('Bad offline msg is {}'.format(msg))
 
 
 # Inherit from Daemon class
@@ -101,17 +100,17 @@ if __name__ == "__main__":
     daemon = subDaemon(pid_file, stdout=std_out, stderr=std_err, verbose=1)
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
-            log.info('Starting')
+            logger.info('Starting')
             daemon.start()
         elif 'stop' == sys.argv[1]:
-            log.info('Stopping')
+            logger.info('Stopping')
             daemon.stop()
         elif 'restart' == sys.argv[1]:
-            log.info('Restarting')
+            logger.info('Restarting')
             daemon.restart()
         elif 'status' == sys.argv[1]:
             res = daemon.status()
-            log.info('Status is {}'.format(res))
+            logger.info('Status is {}'.format(res))
         else:
             print("Unknown command")
             sys.exit(2)

@@ -419,25 +419,21 @@ class WaitForMsgHandlingTest(unittest.TestCase):
         super(WaitForMsgHandlingTest, self).setUp()
         import diskcache as dc
 
-        self.reg_q = dc.Deque(directory='/tmp/test-rq')
-        self.pub_q = dc.Deque(directory='/tmp/test-pq')
         self.cfg_q = dc.Deque(directory='/tmp/test-aq')
         self.hold_q = dc.Deque(directory='/tmp/test-hq')
+        self.reg_q = dc.Deque(directory='/tmp/test-rq')
         self.node1 = 'beef01dead'
         self.node2 = '02beefdead'
         self.node3 = 'deadbeef03'
         self.cfg1 = '{"node_id": "beef01dead", "networks": ["7ac4235ec5d3d938", "bb8dead3c63cea29"]}'
         self.cfg2 = '{"node_id": "02beefdead", "networks": ["7ac4235ec5d3d938"]}'
 
-        self.pub_q.append(self.node1)
-        self.pub_q.append(self.node2)
         self.cfg_q.append(self.cfg1)
         self.cfg_q.append(self.cfg2)
 
     def tearDown(self):
 
         self.reg_q.clear()
-        self.pub_q.clear()
         self.cfg_q.clear()
         self.hold_q.clear()
         super(WaitForMsgHandlingTest, self).tearDown()
@@ -445,7 +441,6 @@ class WaitForMsgHandlingTest(unittest.TestCase):
     def show_state(self):
 
         print('')
-        print(list(self.pub_q))
         print(list(self.cfg_q))
         print(list(self.hold_q))
         print(list(self.reg_q))
@@ -453,7 +448,7 @@ class WaitForMsgHandlingTest(unittest.TestCase):
     def test_wait_for_cfg(self):
         import json
         self.assertIn(self.cfg1, self.cfg_q)
-        res = wait_for_cfg_msg(self.pub_q, self.cfg_q, self.hold_q, self.reg_q, self.node1)
+        res = wait_for_cfg_msg(self.cfg_q, self.hold_q, self.reg_q, self.node1)
         self.assertNotIn(self.cfg1, self.cfg_q)
         self.assertIsInstance(res, str)
         self.assertIn(self.node1, res)
@@ -461,24 +456,23 @@ class WaitForMsgHandlingTest(unittest.TestCase):
 
     def test_wait_for_cfg_none(self):
         import json
-        res = wait_for_cfg_msg(self.pub_q, self.cfg_q, self.hold_q, self.reg_q, self.node3)
+        res = wait_for_cfg_msg(self.cfg_q, self.hold_q, self.reg_q, self.node3)
         self.assertIsNone(res)
-        self.pub_q.remove(self.node2)
         self.assertIn(self.cfg2, self.cfg_q)
-        res = wait_for_cfg_msg(self.pub_q, self.cfg_q, self.hold_q, self.reg_q, self.node2)
+        res = wait_for_cfg_msg(self.cfg_q, self.hold_q, self.reg_q, self.node2)
         self.assertNotIn(self.cfg2, self.cfg_q)
         self.assertIn(self.node2, res)
         self.assertEqual(len(json.loads(res)['networks']), 1)
-        res = wait_for_cfg_msg(self.pub_q, self.cfg_q, self.hold_q, self.reg_q, self.node3)
+        res = wait_for_cfg_msg(self.cfg_q, self.hold_q, self.reg_q, self.node3)
         self.assertIsNone(res)
         self.assertEqual(len(self.hold_q), 3)
-        res = wait_for_cfg_msg(self.pub_q, self.cfg_q, self.hold_q, self.reg_q, self.node3)
+        res = wait_for_cfg_msg(self.cfg_q, self.hold_q, self.reg_q, self.node3)
         self.assertIsNone(res)
         self.assertEqual(len(self.hold_q), 0)
         self.assertEqual(len(self.reg_q), 1)
         self.assertIn(self.node3, list(self.reg_q))
         self.cfg_q.clear()
-        res = wait_for_cfg_msg(self.pub_q, self.cfg_q, self.hold_q, self.reg_q, self.node3)
+        res = wait_for_cfg_msg(self.cfg_q, self.hold_q, self.reg_q, self.node3)
         self.assertIsNone(res)
         self.assertEqual(len(self.hold_q), 1)
         self.assertIn(self.node3, list(self.hold_q))

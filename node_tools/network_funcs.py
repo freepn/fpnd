@@ -47,6 +47,7 @@ def do_peer_check(ztaddr):
 def drain_msg_queue(reg_q, pub_q=None, addr=None, method='handle_node'):
     import time
     from nanoservice import Publisher
+    from node_tools.msg_queues import add_one_only
 
     if NODE_SETTINGS['use_localhost'] or not addr:
         addr = '127.0.0.1'
@@ -63,7 +64,7 @@ def drain_msg_queue(reg_q, pub_q=None, addr=None, method='handle_node'):
         pub.publish(method, node_id)
         if pub_q is not None:
             with pub_q.transact():
-                pub_q.append(node_id)
+                add_one_only(node_id, pub_q)
         logger.debug('Published msg {} to {}'.format(node_id, addr))
 
 

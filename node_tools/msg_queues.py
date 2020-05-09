@@ -137,14 +137,13 @@ def valid_cfg_msg(msg):
         raise AssertionError('Config msg {} is invalid!'.format(msg))
 
 
-def wait_for_cfg_msg(pub_q, cfg_q, hold_q, reg_q, msg):
+def wait_for_cfg_msg(cfg_q, hold_q, reg_q, msg):
     """
     Handle valid member node request for network ID(s) and return
     the result (or `None`).  Expects client wrapper to raise the
     nanoservice warning if no cfg result. We use the hold queue as
     a timeout mechanism and re-add to the reg queue after `max_hold`
     attempts with no cfg result.
-    :param pub_q: queue of published node IDs
     :param cfg_q: queue of cfg msgs (nodes with net IDs)
     :param hold_q: queue of pending nodes (waiting for cfg)
     :param msg: (outgoig) net_id cfg message needing a response
@@ -163,12 +162,6 @@ def wait_for_cfg_msg(pub_q, cfg_q, hold_q, reg_q, msg):
                 result = item
                 with cfg_q.transact():
                     cfg_q.remove(item)
-                if msg in list(pub_q):
-                    with pub_q.transact():
-                        clean_from_queue(msg, pub_q)
-                    logger.debug('Node ID {} cleaned from pub_q'.format(msg))
-                else:
-                    logger.debug('Node ID {} not in pub_q'.format(msg))
                 if msg in list(hold_q):
                     with hold_q.transact():
                         clean_from_queue(msg, hold_q)

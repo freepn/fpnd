@@ -54,8 +54,8 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
         await get_network_object_data(client, net_id, node_id)
         logger.debug('BOOTSTRAP: got node data {}'.format(client.data))
 
-        net, _, gw = handle_net_cfg(deque)
-        await config_network_object(client, net, net_id)
+        ipnet, _, gw = handle_net_cfg(deque)
+        await config_network_object(client, ipnet, net_id)
 
         # A dedicated exit node is a special case, otherwise, each new node
         # gets a src_net here, and still *needs* a exit_net.  We also need to
@@ -65,14 +65,14 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
             logger.debug('BOOTSTRAP: got exit net {}'.format(data_list))
             if len(data_list) == 2:
                 exit_net = data_list[0]
-                gw_node = data_list[1]
+                exit_node = data_list[1]
                 await add_network_object(client, exit_net, node_id)
-                logger.debug('BOOTSTRAP: added node id {} to exit net'.format(node_id))
+                logger.debug('BOOTSTRAP: added node id {} to exit net {}'.format(node_id, exit_net))
                 netcfg = get_dangling_net_data(ct.net_trie, exit_net)
                 gw_cfg = set_network_cfg(netcfg.host)
                 logger.debug('BOOTSTRAP: got node addr {} for exit net'.format(gw_cfg))
                 await config_network_object(client, gw_cfg, exit_net, node_id)
-                trie_nets = [exit_net, net_id]
+                trie_nets = [net_id, exit_net]
 
         await config_network_object(client, gw, net_id, node_id)
         logger.debug('BOOTSTRAP: set gw addr {} for src net {}'.format(gw, net_id))
@@ -80,7 +80,7 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
         node_needs = [False, False]
         net_needs = [False, True]
         if not ex:
-            update_id_trie(ct.id_trie, [exit_net], [gw_node, node_id], needs=[False, False], nw=True)
+            update_id_trie(ct.id_trie, [exit_net], [node_id, exit_node], needs=[False, False], nw=True)
 
         update_id_trie(ct.id_trie, trie_nets, [node_id], needs=node_needs)
         update_id_trie(ct.id_trie, [net_id], [node_id], needs=net_needs, nw=True)
@@ -98,46 +98,62 @@ async def offline_mbr_node(client, node_id):
     """
     from node_tools import ctlr_data as ct
 
-    from node_tools.ctlr_funcs import is_exit_node
+    # from node_tools.ctlr_funcs import is_exit_node
     from node_tools.ctlr_funcs import set_network_cfg
+    from node_tools.ctlr_funcs import unset_network_cfg
     from node_tools.network_funcs import publish_cfg_msg
     from node_tools.trie_funcs import cleanup_state_tries
-    from node_tools.trie_funcs import find_dangling_nets
+    # from node_tools.trie_funcs import find_dangling_nets
     from node_tools.trie_funcs import get_dangling_net_data
-    from node_tools.trie_funcs import get_neighbor_nodes
+    from node_tools.trie_funcs import get_neighbor_ids
     from node_tools.trie_funcs import update_id_trie
 
-    dangle_list = find_dangling_nets(ct.id_trie)
-    node_nets, _ = ct.id_trie[node_id]
+    # dangle_list = find_dangling_nets(ct.id_trie)
+    src_net, exit_net, src_node, exit_node = get_neighbor_ids(ct.net_trie, node_id)
+    node_nets = [src_net, exit_net]
     logger.debug('OFFLINE: got node_nets {}'.format(node_nets))
+    deauth = unset_network_cfg()
+    if node_nets != [None, None]:
+        if src_node is not None:
+            src_src_net, src_exit_net, src_src_node, src_exit_node = get_neighbor_ids(ct.net_trie, src_node)
 
-    if node_id in dangle_list:
-        if not is_exit_node(node_id):
-            for net_id in [x for x in node_nets if x not in dangle_list]:
-                await delete_network_object(client, net_id, node_id)
-                cleanup_state_tries(ct.net_trie, ct.id_trie, net_id, node_id, mbr_only=True)
-            logger.debug('OFFLINE: removed node id {} from exit net {}'.format(node_id, net_id))
-        await delete_network_object(client, dangle_list[0])
-        cleanup_state_tries(ct.net_trie, ct.id_trie, dangle_list[0], node_id)
-        logger.debug('OFFLINE: removed dangling net {}'.format(dangle_list[0]))
+        if src_node is None:
+            if exit_net is not None:
+                await config_network_object(client, deauth, exit_net, node_id)
+                cleanup_state_tries(ct.net_trie, ct.id_trie, exit_net, node_id, mbr_only=True)
+                logger.debug('OFFLINE: deauthed node id {} from exit net {}'.format(node_id, exit_net))
+            await delete_network_object(client, src_net)
+            cleanup_state_tries(ct.net_trie, ct.id_trie, src_net, node_id)
+            logger.debug('OFFLINE: removed dangling net {}'.format(src_net))
+            # logger.debug('OFFLINE: net_trie keys: {}'.format(list(ct.net_trie)))
+            # logger.debug('OFFLINE: id_trie keys: {}'.format(list(ct.id_trie)))
+        else:
+            await config_network_object(client, deauth, exit_net, node_id)
+            cleanup_state_tries(ct.net_trie, ct.id_trie, exit_net, node_id, mbr_only=True)
+            logger.debug('OFFLINE: deauthed node id {} from exit net'.format(node_id))
+            await delete_network_object(client, src_net)
+            cleanup_state_tries(ct.net_trie, ct.id_trie, src_net, node_id)
+            logger.debug('OFFLINE: removed network id {} and node {}'.format(src_net, node_id))
+
+            await add_network_object(client, exit_net, src_node)
+            logger.debug('OFFLINE: added neighbor {} to exit net'.format(src_node))
+            netcfg = get_dangling_net_data(ct.net_trie, exit_net)
+            gw_cfg = set_network_cfg(netcfg.host)
+            logger.debug('OFFLINE: got cfg {} for exit net'.format(gw_cfg))
+            await config_network_object(client, gw_cfg, exit_net, src_node)
+            logger.debug('OFFLINE: net_trie keys: {}'.format(list(ct.net_trie)))
+            logger.debug('OFFLINE: id_trie keys: {}'.format(list(ct.id_trie)))
+
+            update_id_trie(ct.id_trie, [exit_net], [src_node, exit_node], needs=[False, False], nw=True)
+            update_id_trie(ct.id_trie, [src_src_net, exit_net], [src_node], needs=[False, False])
+            # net_needs = [False, False]
+            # if src_src_node is None:
+            #     net_needs = [False, True]
+            # update_id_trie(ct.id_trie, [src_src_net], [src_src_node, src_node], needs=net_needs, nw=True)
+
+            publish_cfg_msg(ct.id_trie, src_node, addr='127.0.0.1')
     else:
-        exit_net, src_net, src_node = get_neighbor_net_data(ct.net_trie, node_id)
-
-        await delete_network_object(client, exit_net, node_id)
-        cleanup_state_tries(ct.net_trie, ct.id_trie, exit_net, node_id, mbr_only=True)
-        logger.debug('OFFLINE: removed node id {} from exit net'.format(node_id))
-        await delete_network_object(client, src_net)
-        cleanup_state_tries(ct.net_trie, ct.id_trie, src_net, node_id)
-        logger.debug('OFFLINE: removed network id {}'.format(src_net))
-
-        await add_network_object(client, exit_net, src_node)
-        logger.debug('OFFLINE: added neighbor {} to exit net'.format(src_node))
-        netcfg = get_dangling_net_data(ct.net_trie, exit_net)
-        gw_cfg = set_network_cfg(netcfg.host)
-        logger.debug('OFFLINE: got cfg {} for exit net'.format(gw_cfg))
-        await config_network_object(client, gw_cfg, exit_net, src_node)
-
-        publish_cfg_msg(ct.id_trie, src_node, addr='127.0.0.1')
+        logger.warning('OFFLINE: node_nets {} not found!'.format(node_nets))
 
 
 async def update_state_tries(client, net_trie, id_trie):
@@ -159,15 +175,16 @@ async def update_state_tries(client, net_trie, id_trie):
         net_trie[net_id] = client.data
         load_id_trie(net_trie, id_trie, [net_id], [], nw=True)
         await get_network_object_ids(client, net_id)
-        logger.debug('network {} has {} member(s)'.format(net_id, len(client.data)))
+        logger.debug('network {} has {} possible member(s)'.format(net_id, len(client.data)))
         member_dict = client.data
         for mbr_id in member_dict.keys():
             # get details about each network member and update trie data
             await get_network_object_data(client, net_id, mbr_id)
-            logger.debug('adding member: {}'.format(mbr_id))
-            net_trie[net_id + mbr_id] = client.data
-            load_id_trie(net_trie, id_trie, [], [mbr_id])
-        # logger.debug('member key suffixes: {}'.format(net_trie.suffixes(net_id)))
+            if client.data['authorized']:
+                logger.debug('adding member: {}'.format(mbr_id))
+                net_trie[net_id + mbr_id] = client.data
+                load_id_trie(net_trie, id_trie, [], [mbr_id])
+        logger.debug('member key suffixes: {}'.format(net_trie.suffixes(net_id)))
 
 
 async def add_network_object(client, net_id=None, mbr_id=None, ctlr_id=None):

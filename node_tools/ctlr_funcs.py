@@ -176,3 +176,18 @@ def set_network_cfg(cfg_addr):
     }
 
     return AttrDict.from_nested_dict(src_addr)
+
+
+def unset_network_cfg():
+    """
+    Create a config fragment to unset (remove) the IP address and
+    deauthorize the node.
+    :return dict: formatted cfg fragment for async payload
+    """
+
+    src_addr = {
+        'ipAssignments': [],
+        'authorized': False
+    }
+
+    return AttrDict.from_nested_dict(src_addr)

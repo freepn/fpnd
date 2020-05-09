@@ -94,7 +94,7 @@ def get_node_cfg(msg):
 
     if valid_announce_msg(msg):
         logger.debug('Got valid cfg request from {}'.format(msg))
-        res = wait_for_cfg_msg(pub_q, cfg_q, hold_q, reg_q, msg)
+        res = wait_for_cfg_msg(cfg_q, hold_q, reg_q, msg)
         logger.debug('hold_q contents: {}'.format(list(hold_q)))
         if res:
             logger.debug('Got cfg result: {}'.format(res))
@@ -116,6 +116,9 @@ def offline(msg):
         logger.debug('Got valid offline msg: {}'.format(msg))
         with off_q.transact():
             add_one_only(msg, off_q)
+        with pub_q.transact():
+            clean_from_queue(msg, pub_q)
+        logger.info('Node ID {} cleaned from pub_q'.format(msg))
         return msg
     else:
         logger.warning('Bad offline msg is {}'.format(msg))

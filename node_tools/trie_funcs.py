@@ -118,10 +118,10 @@ def get_dangling_net_data(trie, net_id):
     return netcfg
 
 
-def get_neighbor_net_data(trie, node_id):
+def get_neighbor_ids(trie, node_id):
     """
     Given the node ID, get the payloads from the net trie and return
-    the target neighbor node IDs from each network.
+    the attached network and neighbor node IDs.
     :param trie: net data trie
     :param node_id: node ID to lookup
     :return: tuple of net and node IDs
@@ -133,15 +133,18 @@ def get_neighbor_net_data(trie, node_id):
 
     node_list = []
     key_list = []
-    # exit_net = src_net = src_node = exit_node = None
+    src_net = None
+    exit_net = None
+    src_node = None
+    exit_node = None
 
     for key in trie.keys():
         if node_id in key:
             key_list.append(key[0:16])
             node_list.append(trie[key])
 
-    if len(key_list) < 2 and not is_exit_node(node_id):
-        raise AssertionError('node {} has missing key(s) {}'.format(node_id, key_list))
+    if len(key_list) != 2 and (len(key_list) == 1 and not is_exit_node(node_id)):
+        raise AssertionError('Node {} keys {} are invalid!'.format(node_id, key_list))
     else:
         for key, data in zip(key_list, node_list):
             node_ip = data['ipAssignments'][0]
