@@ -97,7 +97,7 @@ def do_scheduling():
     if mode == 'peer':
         if node_role is None:
             try:
-                data = wait_for_moon()
+                data = wait_for_moon(timeout=30)
             except Exception as exc:
                 logger.error('ENODATA exception {}'.format(exc))
             handle_moon_data(data)

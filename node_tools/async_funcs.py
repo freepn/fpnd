@@ -87,6 +87,36 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
         # logger.debug('TRIE: id_trie has items: {}'.format(ct.id_trie.items()))
 
 
+async def connect_mbr_node(client, node_id, src_net, exit_net, gw_node):
+    """
+    Wrapper to reconnect an existing member node; needs the (upstream)
+    exit net and node IDs as well as its own ID and src_net ID.
+    :notes: uses both Tries (required by offline_mbr_node below)
+    :param client: ztcli_api client object
+    :param node_id: node ID
+    :param node_net: src_net ID for node
+    :param exit_net: network ID of the gateway net to connect
+    :param gw_node: node ID of the gateway host
+    """
+    from node_tools import ctlr_data as ct
+
+    from node_tools.ctlr_funcs import set_network_cfg
+    from node_tools.trie_funcs import get_dangling_net_data
+    from node_tools.trie_funcs import update_id_trie
+
+    await add_network_object(client, exit_net, node_id)
+    logger.debug('CONNECT: added neighbor {} to exit net {}'.format(node_id, exit_net))
+    netcfg = get_dangling_net_data(ct.net_trie, exit_net)
+    gw_cfg = set_network_cfg(netcfg.host)
+    logger.debug('CONNECT: got cfg {} for exit net'.format(gw_cfg))
+    await config_network_object(client, gw_cfg, exit_net, node_id)
+    logger.debug('CONNECT: net_trie keys: {}'.format(list(ct.net_trie)))
+    logger.debug('CONNECT: id_trie keys: {}'.format(list(ct.id_trie)))
+
+    update_id_trie(ct.id_trie, [exit_net], [node_id, gw_node], needs=[False, False], nw=True)
+    update_id_trie(ct.id_trie, [src_net, exit_net], [node_id], needs=[False, False])
+
+
 async def offline_mbr_node(client, node_id):
     """
     Wrapper for handling an offline member node; removes the mbr node
@@ -98,68 +128,45 @@ async def offline_mbr_node(client, node_id):
     """
     from node_tools import ctlr_data as ct
 
-    # from node_tools.ctlr_funcs import is_exit_node
-    from node_tools.ctlr_funcs import set_network_cfg
     from node_tools.ctlr_funcs import unset_network_cfg
     from node_tools.network_funcs import publish_cfg_msg
     from node_tools.trie_funcs import cleanup_state_tries
-    # from node_tools.trie_funcs import find_dangling_nets
-    from node_tools.trie_funcs import get_dangling_net_data
     from node_tools.trie_funcs import get_neighbor_ids
-    from node_tools.trie_funcs import update_id_trie
 
-    # dangle_list = find_dangling_nets(ct.id_trie)
-    src_net, exit_net, src_node, exit_node = get_neighbor_ids(ct.net_trie, node_id)
-    node_nets = [src_net, exit_net]
+    node_net, exit_net, src_node, exit_node = get_neighbor_ids(ct.net_trie, node_id)
+    node_nets = [node_net, exit_net]
     logger.debug('OFFLINE: got node_nets {}'.format(node_nets))
     deauth = unset_network_cfg()
     if node_nets != [None, None]:
         if src_node is not None:
-            src_src_net, src_exit_net, src_src_node, src_exit_node = get_neighbor_ids(ct.net_trie, src_node)
+            src_net, _, _, _ = get_neighbor_ids(ct.net_trie, src_node)
 
         if src_node is None:
             if exit_net is not None:
                 await config_network_object(client, deauth, exit_net, node_id)
                 cleanup_state_tries(ct.net_trie, ct.id_trie, exit_net, node_id, mbr_only=True)
                 logger.debug('OFFLINE: deauthed node id {} from exit net {}'.format(node_id, exit_net))
-            await delete_network_object(client, src_net)
-            cleanup_state_tries(ct.net_trie, ct.id_trie, src_net, node_id)
-            logger.debug('OFFLINE: removed dangling net {}'.format(src_net))
-            # logger.debug('OFFLINE: net_trie keys: {}'.format(list(ct.net_trie)))
-            # logger.debug('OFFLINE: id_trie keys: {}'.format(list(ct.id_trie)))
+            await delete_network_object(client, node_net)
+            cleanup_state_tries(ct.net_trie, ct.id_trie, node_net, node_id)
+            logger.debug('OFFLINE: removed dangling net {}'.format(node_net))
         else:
             await config_network_object(client, deauth, exit_net, node_id)
             cleanup_state_tries(ct.net_trie, ct.id_trie, exit_net, node_id, mbr_only=True)
             logger.debug('OFFLINE: deauthed node id {} from exit net'.format(node_id))
-            await delete_network_object(client, src_net)
-            cleanup_state_tries(ct.net_trie, ct.id_trie, src_net, node_id)
-            logger.debug('OFFLINE: removed network id {} and node {}'.format(src_net, node_id))
+            await delete_network_object(client, node_net)
+            cleanup_state_tries(ct.net_trie, ct.id_trie, node_net, node_id)
+            logger.debug('OFFLINE: removed network id {} and node {}'.format(node_net, node_id))
 
-            await add_network_object(client, exit_net, src_node)
-            logger.debug('OFFLINE: added neighbor {} to exit net'.format(src_node))
-            netcfg = get_dangling_net_data(ct.net_trie, exit_net)
-            gw_cfg = set_network_cfg(netcfg.host)
-            logger.debug('OFFLINE: got cfg {} for exit net'.format(gw_cfg))
-            await config_network_object(client, gw_cfg, exit_net, src_node)
-            logger.debug('OFFLINE: net_trie keys: {}'.format(list(ct.net_trie)))
-            logger.debug('OFFLINE: id_trie keys: {}'.format(list(ct.id_trie)))
-
-            update_id_trie(ct.id_trie, [exit_net], [src_node, exit_node], needs=[False, False], nw=True)
-            update_id_trie(ct.id_trie, [src_src_net, exit_net], [src_node], needs=[False, False])
-            # net_needs = [False, False]
-            # if src_src_node is None:
-            #     net_needs = [False, True]
-            # update_id_trie(ct.id_trie, [src_src_net], [src_src_node, src_node], needs=net_needs, nw=True)
-
+            await connect_mbr_node(client, src_node, src_net, exit_net, exit_node)
             publish_cfg_msg(ct.id_trie, src_node, addr='127.0.0.1')
     else:
-        logger.warning('OFFLINE: node_nets {} not found!'.format(node_nets))
+        logger.warning('OFFLINE: node {} has missing net list {}'.format(node_id, node_nets))
 
 
 async def update_state_tries(client, net_trie, id_trie):
     """
     Wrapper to update ctlr state tries from ZT client API.  Loads net/id
-    tries with new data.
+    tries with new data (does not remove any stale trie data).
     :param client: ztcli_api client object
     :param net_trie: zt network/member data
     :param id_trie: network/node state
