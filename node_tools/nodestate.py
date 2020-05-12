@@ -77,8 +77,6 @@ async def main():
             # this only handles the initial node bootstrap state
             if len(net_data) == 0 and not nsState.cfg_ref:
                 send_cfg_handler()
-            # elif len(net_data) == 1 and not is_exit_node(node_id):
-            #     nsState.cfg_ref = None
             net_keys = find_keys(cache, 'net')
             logger.debug('Returned network keys: {}'.format(net_keys))
             load_cache_by_type(cache, net_data, 'net')

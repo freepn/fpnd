@@ -8,7 +8,7 @@ except ImportError:
     from distutils.core import setup
 
 
-__version__ = '0.8.0'
+__version__ = '0.8.1'
 
 # make setuptools happy with PEP 440-compliant post version
 # (enable this for patch releases)
@@ -40,6 +40,7 @@ setup(
                       'bin/ping_gateway.sh',
                       'etc/fpnd.ini',
                       'scripts/fpnd.py',
+                      'scripts/health_check.py',
                       'scripts/msg_responder.py',
                       'scripts/msg_subscriber.py']),
     ],

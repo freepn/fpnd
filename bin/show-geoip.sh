@@ -2,18 +2,18 @@
 # check-geoip.sh
 #
 
-#set -x
+set -e
 
 PATH=/usr/bin:/bin:/usr/sbin:/sbin
 export LC_ALL=C
 
-TIMEOUT="30"
+TIMEOUT="15s"
 
 # Fetch data from Ubuntu's geoip server, requires route to internet
 xml_file="/tmp/geoip-location.xml"
 log_file="/tmp/wget.log"
 
-timeout "$TIMEOUT" wget -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
+timeout --preserve-status $TIMEOUT wget -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
 
 IP_ADDR=$(cat $xml_file | sed -n -e 's/.*<Ip>\(.*\)<\/Ip>.*/\1/p')
 LAT_FULL=$(cat $xml_file | sed -n -e 's/.*<Latitude>\(.*\)<\/Latitude>.*/\1/p')

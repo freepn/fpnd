@@ -4,6 +4,7 @@
     Default fpn node state data and changes.
     :var fpnState: built from cache data on each cache update
     :var changes: state diff tuple of fpnState changes
+    :var net_health: state of outbound route to the internet
 """
 
 defState = dict.fromkeys(['online',
@@ -31,6 +32,8 @@ fpnState = {'online': False,
             'fpn1': False,
             'fpn_id0': None,
             'fpn_id1': None}
+
+net_health = None
 
 leaf_nodes = []
 

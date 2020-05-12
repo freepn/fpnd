@@ -12,6 +12,21 @@ from node_tools.sched_funcs import run_until_success
 logger = logging.getLogger(__name__)
 
 
+def do_net_check():
+    """
+    Try and ping the gateway/peer and goose the network if down.
+    :param addr: target addr
+    """
+    import os
+
+    home = NODE_SETTINGS['home_dir']
+    cmd = os.path.join(home, 'show-geoip.sh')
+
+    result = do_net_cmd(cmd)
+    logger.debug('do_net_check {} returned: {}'.format(cmd, result))
+    return result
+
+
 def do_peer_check(ztaddr):
     """
     ADHOC MODE
@@ -210,16 +225,18 @@ def do_net_cmd(cmd):
         if err:
             logger.error('net cmd {} err: {}'.format(tail, err.decode().strip()))
             res = err
-        elif 'Success' in out.decode().strip():
+        if 'Success' in out.decode().strip() or 'geoloc' in out.decode().strip():
             state = True
             res = out
             logger.info('net cmd {} result: {}'.format(tail, out.decode().strip()))
-        elif retcode == 1:
+        if retcode == 1:
             if 'setup' in tail:
                 msg = out
             else:
                 msg = err
             logger.error('net cmd {} msg: {}'.format(tail, msg.decode().strip()))
+        if retcode == 4:
+            logger.warning('peer check shows network failure!')
 
     except Exception as exc:
         logger.error('net cmd {} exception: {}'.format(tail, exc))

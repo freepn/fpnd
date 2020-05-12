@@ -38,6 +38,7 @@ from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
 from node_tools.helper_funcs import xform_state_diff
 from node_tools.logger_config import setup_logging
+from node_tools.network_funcs import do_net_check
 from node_tools.network_funcs import do_peer_check
 from node_tools.network_funcs import get_net_cmds
 from node_tools.node_funcs import check_daemon
@@ -303,12 +304,18 @@ class NetCmdTest(unittest.TestCase):
 
 class NetPeerCheckTest(unittest.TestCase):
     """
-    Running an actual ``ping`` in a unittest is somewhat problematic
+    Running an actual ``ping`` or geoip lookup in a unittest is somewhat
+    problematic...
     """
     def setUp(self):
         super(NetPeerCheckTest, self).setUp()
         NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'bin')
         # self.bin_dir = os.path.join(os.getcwd(), 'bin')
+
+    @pytest.mark.xfail(strict=False)
+    def test_do_net_check_geoip(self):
+        """Requires live internet in test env"""
+        state, res, retcode = do_net_check()
 
     def test_do_peer_check_bad_addr(self):
         """Raise IPv4 address error"""
@@ -316,7 +323,7 @@ class NetPeerCheckTest(unittest.TestCase):
             res = do_peer_check('192.168.0.261')
 
     def test_do_peer_check_good_addr(self):
-        """Permission error in test env"""
+        """Possible permission error in test env"""
         res = do_peer_check('172.16.0.1')
         self.assertIsInstance(res, tuple)
         self.assertEqual(res, (False, b'', 1))
