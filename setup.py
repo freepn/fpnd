@@ -40,7 +40,6 @@ setup(
                       'bin/ping_gateway.sh',
                       'etc/fpnd.ini',
                       'scripts/fpnd.py',
-                      'scripts/health_check.py',
                       'scripts/msg_responder.py',
                       'scripts/msg_subscriber.py']),
     ],

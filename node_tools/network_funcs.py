@@ -6,24 +6,46 @@ from __future__ import print_function
 import logging
 
 from node_tools.helper_funcs import NODE_SETTINGS
+from node_tools.sched_funcs import catch_exceptions
 from node_tools.sched_funcs import run_until_success
 
 
 logger = logging.getLogger(__name__)
 
 
-def do_net_check():
+def do_net_check(path=None):
     """
-    Try and ping the gateway/peer and goose the network if down.
-    :param addr: target addr
+    Try and get the geoip location using fpn route.
+    :param path: path to script dir
     """
     import os
+    from node_tools import state_data as st
 
-    home = NODE_SETTINGS['home_dir']
-    cmd = os.path.join(home, 'show-geoip.sh')
+    if not path:
+        path = NODE_SETTINGS['home_dir']
+    cmd = os.path.join(path, 'show-geoip.sh')
 
-    result = do_net_cmd(cmd)
-    logger.debug('do_net_check {} returned: {}'.format(cmd, result))
+    result = do_net_cmd([cmd])
+    state, res, retcode = result
+    fpn_data = st.fpnState
+    fpn_up = st.net_health
+
+    if not state:
+        if fpn_data['fpn0'] and fpn_data['fpn1'] and retcode == 4:
+            fpn_up = False
+            logger.error('HEALTH: net_health state is {}'.format(fpn_up))
+            return result
+        else:
+            logger.error('do_net_check {} returned: {}'.format(cmd, result))
+    else:
+        if fpn_data['fpn0'] and fpn_data['fpn1']:
+            if state and retcode == 0:
+                fpn_up = True
+            logger.info('HEALTH: net_health state is {}'.format(fpn_up))
+        else:
+            fpn_up = None
+            logger.info('HEALTH: no state yet (state is {})'.format(fpn_up))
+
     return result
 
 
@@ -188,6 +210,16 @@ def publish_cfg_msg(trie, node_id, addr=None):
     logger.debug('CFG: sent cfg msg {} for node {} to {}'.format(msg, node_id, addr))
 
 
+@catch_exceptions()
+def run_net_check():
+    """
+    Command wrapper for decorated net_check (fpn health) command.
+    """
+    result = do_net_check()
+    logger.debug('run_net_check returned tuple: {}'.format(result))
+    return result
+
+
 @run_until_success()
 def run_net_cmd(cmd):
     """
@@ -236,7 +268,7 @@ def do_net_cmd(cmd):
                 msg = err
             logger.error('net cmd {} msg: {}'.format(tail, msg.decode().strip()))
         if retcode == 4:
-            logger.warning('peer check shows network failure!')
+            logger.error('health check shows network failure!')
 
     except Exception as exc:
         logger.error('net cmd {} exception: {}'.format(tail, exc))

@@ -24,6 +24,7 @@ from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
 from node_tools.logger_config import setup_logging
+from node_tools.network_funcs import run_net_check
 from node_tools.node_funcs import do_cleanup
 from node_tools.node_funcs import do_startup
 from node_tools.node_funcs import handle_moon_data
@@ -75,15 +76,18 @@ def check_daemon_status(script='msg_responder.py'):
     return res
 
 
-def setup_scheduling(max_age):
+def setup_scheduling(max_age, path):
     """Initial setup for scheduled jobs"""
     sleep_time = max_age / 6
 
     baseUpdateJob = schedule.every(sleep_time).seconds
     baseUpdateJob.do(update_runner).tag('base-tasks', 'get-updates')
 
+    baseCheckJob = schedule.every(max_age).seconds
+    baseCheckJob.do(run_net_check).tag('base-tasks', 'route-status')
+
     show_scheduled_jobs()
-    logger.debug('Leaving setup_scheduling: {}'.format(baseUpdateJob))
+    logger.debug('Leaving setup_scheduling')
 
 
 def do_scheduling():
@@ -149,9 +153,9 @@ if __name__ == "__main__":
     home, pid_file, log_file, debug, msg, mode, role = do_setup()
     setup_logging(debug, log_file)
     logger.debug('fpnd.ini set startup mode: {} and role: {}'.format(mode, role))
-    setup_scheduling(max_age)
     if not home:
         home = '.'
+    setup_scheduling(max_age, home)
 
     if len(sys.argv) == 2:
         arg = sys.argv[1]

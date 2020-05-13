@@ -316,6 +316,7 @@ class NetPeerCheckTest(unittest.TestCase):
     def test_do_net_check_geoip(self):
         """Requires live internet in test env"""
         state, res, retcode = do_net_check()
+        # print(state, res, retcode)
 
     def test_do_peer_check_bad_addr(self):
         """Raise IPv4 address error"""
