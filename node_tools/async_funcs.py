@@ -133,9 +133,14 @@ async def offline_mbr_node(client, node_id):
     from node_tools.trie_funcs import cleanup_state_tries
     from node_tools.trie_funcs import get_neighbor_ids
 
-    node_net, exit_net, src_node, exit_node = get_neighbor_ids(ct.net_trie, node_id)
-    node_nets = [node_net, exit_net]
-    logger.debug('OFFLINE: got node_nets {}'.format(node_nets))
+    try:
+        node_net, exit_net, src_node, exit_node = get_neighbor_ids(ct.net_trie, node_id)
+        node_nets = [node_net, exit_net]
+        logger.debug('OFFLINE: got node_nets {}'.format(node_nets))
+    except Exception as exc:
+        logger.error('OFFLINE: {}'.format(exc))
+        node_nets = [None, None]
+
     deauth = unset_network_cfg()
     if node_nets != [None, None]:
         if src_node is not None:

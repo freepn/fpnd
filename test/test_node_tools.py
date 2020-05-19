@@ -50,6 +50,7 @@ from node_tools.trie_funcs import cleanup_state_tries
 from node_tools.trie_funcs import create_state_trie
 from node_tools.trie_funcs import get_dangling_net_data
 from node_tools.trie_funcs import get_neighbor_ids
+from node_tools.trie_funcs import get_wedged_node_id
 from node_tools.trie_funcs import load_id_trie
 from node_tools.trie_funcs import load_state_trie
 from node_tools.trie_funcs import save_state_trie
@@ -692,6 +693,21 @@ def test_get_neighbor_ids():
     assert res == ('beafde52b4296ea5', None, 'ee2eedb2e1', None)
 
     NODE_SETTINGS['use_exitnode'].clear()
+
+
+def test_get_wedged_node_id():
+    from node_tools import ctlr_data as ct
+
+    trie = ct.net_trie
+    node_id = 'ee2eedb2e1'
+    exit_id = 'beefea68e6'
+    tail_id = 'ff2ffdb2e1'
+
+    res = get_wedged_node_id(ct.net_trie, node_id)
+    assert res == exit_id
+
+    res = get_wedged_node_id(ct.net_trie, tail_id)
+    assert res == node_id
 
 
 def test_cleanup_state_tries():

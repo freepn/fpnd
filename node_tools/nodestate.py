@@ -27,6 +27,8 @@ from node_tools.helper_funcs import get_token
 from node_tools.helper_funcs import net_id_handler
 from node_tools.helper_funcs import send_cfg_handler
 from node_tools.network_funcs import do_peer_check
+from node_tools.network_funcs import send_req_msg
+from node_tools.node_funcs import get_ztnwid
 from node_tools.node_funcs import run_ztcli_cmd
 
 
@@ -39,6 +41,7 @@ async def main():
         ZT_API = get_token()
         client = ZeroTier(ZT_API, loop, session)
         nsState = AttrDict.from_nested_dict(st.fpnState)
+        net_wait = st.wait_cache
 
         try:
             # get status details of the local node and update state
@@ -85,13 +88,36 @@ async def main():
             logger.debug('Got net state: {}'.format(netStatus))
             load_cache_by_type(cache, netStatus, 'istate')
 
+            # check for reconfiguration events
             for net in netStatus:
                 if net['status'] == 'NOT_FOUND':
                     run_ztcli_cmd(action='leave', extra=net['identity'])
                     net_id_handler(None, net['identity'], old=True)
                     nsState.cfg_ref = None
+                    net_wait.set('offline_wait', True, 90)
             if len(net_data) != 0 and not nsState.cfg_ref:
                 send_cfg_handler()
+
+            # check the state of exit network/route
+            if node_id not in NODE_SETTINGS['use_exitnode']:
+                exit_id = get_ztnwid('fpn0', 'fpn_id0')
+                if exit_id is not None:
+                    for net in netStatus:
+                        if net['identity'] == exit_id:
+                            ztaddr = net['ztaddress']
+                            break
+                    gw_check = do_peer_check(ztaddr)
+                    logger.debug('HEALTH: gw check returned {}'.format(gw_check))
+
+            wait_for_nets = net_wait.get('offline_wait')
+            logger.debug('HEALTH: network route state is {}'.format(nsState.route))
+            if nsState.route is False and not wait_for_nets:
+                # logger.error('HEALTH: net_health state is {}'.format(nsState.route))
+                # reply = send_req_msg(nsState.moon_addr, 'wedged', node_id)
+                # nsState.wdg_ref = True
+                logger.error('HEALTH: network is unreachable!!')
+            else:
+                logger.debug('HEALTH: wait_for_nets is {}'.format(wait_for_nets))
 
             if NODE_SETTINGS['mode'] == 'adhoc':
                 if not NODE_SETTINGS['nwid']:

@@ -317,7 +317,8 @@ def send_announce_msg(fpn_id, addr, send_cfg=False):
 def send_cfg_handler():
     """
     Event handler for cfg request message (somewhat analogous to the
-    startup_handlers func).  Runs *after* the announce msg succeeds.
+    startup_handlers func).  Runs *after* the announce msg succeeds, or
+    after each network ID change.
     """
     from node_tools import state_data as st
 

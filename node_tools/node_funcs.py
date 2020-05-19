@@ -101,6 +101,10 @@ def do_cleanup(path=None, addr=None):
         for script in ['msg_responder.py', 'msg_subscriber.py']:
             res = control_daemon('stop', script)
             logger.info('CLEANUP: shutting down {}'.format(script))
+    elif NODE_SETTINGS['node_role'] == 'controller':
+        for script in ['msg_subscriber.py']:
+            res = control_daemon('stop', script)
+            logger.info('CLEANUP: shutting down {}'.format(script))
 
     else:
         state = AttrDict.from_nested_dict(st.fpnState)
@@ -156,6 +160,30 @@ def do_startup(nwid):
             cmd = get_net_cmds(fpn_home, iface, True)
             logger.debug('run_net_cmd using cmd: {}'.format(cmd))
             schedule.every(1).seconds.do(run_net_cmd, cmd).tag('net-change')
+
+
+def get_ztnwid(fpn_net, fpn_id):
+    """
+    Get the ZT network ID from the given fpn interface, eg use `fpn0` and
+    `fpn_id0` to get the ID for the exit network.
+    :param fpn_net: fpn interface str from state dict
+    :param fpn_id: fpn interface ID str from state dict
+    :return: ZT network ID str or None
+    """
+    from node_tools.helper_funcs import AttrDict
+
+    from node_tools import state_data as st
+
+    state = AttrDict.from_nested_dict(st.fpnState)
+    result = None
+
+    if state.fpn_net:
+        result = state.fpn_id
+        logger.debug('Got nwid {} for gateway check'.format(nwid))
+    else:
+        logger.warning('No network ID found for {}'.format(fpn_net))
+
+    return result
 
 
 def handle_moon_data(data):

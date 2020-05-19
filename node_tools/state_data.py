@@ -4,8 +4,13 @@
     Default fpn node state data and changes.
     :var fpnState: built from cache data on each cache update
     :var changes: state diff tuple of fpnState changes
-    :var net_health: state of outbound route to the internet
+    :val route: state of outbound route to the internet
 """
+from node_tools.timing_funcs import Cache as waitCache
+
+
+# A hack to avoid repeatedly hammering infra nodes with wedged node msgs
+wait_cache = waitCache()
 
 defState = dict.fromkeys(['online',
                           'fpn_id',
@@ -18,7 +23,9 @@ defState = dict.fromkeys(['online',
                           'fpn0',
                           'fpn1',
                           'fpn_id0',
-                          'fpn_id1'])
+                          'fpn_id1',
+                          'route',
+                          'wdg_ref'])
 
 fpnState = {'online': False,
             'fpn_id': None,
@@ -31,9 +38,9 @@ fpnState = {'online': False,
             'fpn0': False,
             'fpn1': False,
             'fpn_id0': None,
-            'fpn_id1': None}
-
-net_health = None
+            'fpn_id1': None,
+            'route': None,
+            'wdg_ref': None}
 
 leaf_nodes = []
 

@@ -5,6 +5,8 @@ from __future__ import print_function
 
 import logging
 
+from node_tools import state_data as st
+
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.sched_funcs import catch_exceptions
 from node_tools.sched_funcs import run_until_success
@@ -19,7 +21,6 @@ def do_net_check(path=None):
     :param path: path to script dir
     """
     import os
-    from node_tools import state_data as st
 
     if not path:
         path = NODE_SETTINGS['home_dir']
@@ -28,30 +29,34 @@ def do_net_check(path=None):
     result = do_net_cmd([cmd])
     state, res, retcode = result
     fpn_data = st.fpnState
-    fpn_up = st.net_health
+    net_wait = st.wait_cache
 
     if not state:
         if fpn_data['fpn0'] and fpn_data['fpn1'] and retcode == 4:
-            fpn_up = False
-            logger.error('HEALTH: net_health state is {}'.format(fpn_up))
+            if fpn_data['route'] is True:
+                fpn_data['route'] = None
+                net_wait.set('failed_once', True, 10)
+            else:
+                fpn_data['route'] = False
+            logger.error('HEALTH: network route state is {}'.format(fpn_data['route']))
+            logger.debug('HEALTH: net_wait is {}'.format(repr(net_wait)))
             return result
         else:
             logger.error('do_net_check {} returned: {}'.format(cmd, result))
     else:
         if fpn_data['fpn0'] and fpn_data['fpn1']:
-            if state and retcode == 0:
-                fpn_up = True
-            logger.info('HEALTH: net_health state is {}'.format(fpn_up))
-        else:
-            fpn_up = None
-            logger.info('HEALTH: no state yet (state is {})'.format(fpn_up))
+            if retcode == 0:
+                fpn_data['route'] = True
+                fpn_data['wdg_ref'] = None
+            logger.info('HEALTH: network route state is {}'.format(fpn_data['route']))
+        elif fpn_data['route'] is None:
+            logger.info('HEALTH: no state yet (state is {})'.format(fpn_data['route']))
 
     return result
 
 
 def do_peer_check(ztaddr):
     """
-    ADHOC MODE
     Try and ping the gateway/peer and goose the network if down.
     :param addr: target addr
     """

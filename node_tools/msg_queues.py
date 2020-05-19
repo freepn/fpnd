@@ -46,6 +46,26 @@ def handle_node_queues(node_q, staging_q):
             add_one_only(node_id, staging_q)
 
 
+def handle_wedged_nodes(trie, wdg_q, off_q):
+    """
+    Use node ID in wedged queue to lookup the corresponding exit node ID
+    and add it to the offline queue.  This is the only way we currently
+    have to remove a wedged exit node.
+    """
+    from node_tools.ctlr_funcs import is_exit_node
+    from node_tools.trie_funcs import get_wedged_node_id
+
+    for _ in list(wdg_q):
+        with wdg_q.transact():
+            node_id = wdg_q.popleft()
+            clean_from_queue(node_id, wdg_q)
+        wedged_node = get_wedged_node_id(trie, node_id)
+        if wedged_node is not None:
+            if not is_exit_node(wedged_node):
+                with off_q.transact():
+                    add_one_only(wedged_node, off_q)
+
+
 def make_cfg_msg(trie, node_id):
     """
     Create the net_cfg msg for a node and return cfg string.  Node

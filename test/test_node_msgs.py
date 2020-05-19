@@ -6,6 +6,7 @@ import pytest
 from nanoservice import Subscriber
 from nanoservice import Publisher
 
+from node_tools.msg_queues import clean_from_queue
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import handle_node_queues
 from node_tools.msg_queues import make_cfg_msg
@@ -213,6 +214,15 @@ class QueueHandlingTest(unittest.TestCase):
         self.reg_q.clear()
         self.wait_q.clear()
         super(QueueHandlingTest, self).tearDown()
+
+    def test_clean_from_queue(self):
+        self.node_q.append(self.node1)
+        self.node_q.append(self.node2)
+        self.node_q.append(self.node3)
+
+        clean_from_queue(self.node1, self.node_q)
+        self.assertNotIn(self.node1, list(self.node_q))
+        # print(list(self.node_q))
 
     def test_handle_node_queues(self):
         self.node_q.append(self.node1)

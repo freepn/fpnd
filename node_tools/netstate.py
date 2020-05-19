@@ -26,6 +26,7 @@ from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import handle_node_queues
+from node_tools.msg_queues import handle_wedged_nodes
 from node_tools.network_funcs import publish_cfg_msg
 
 logger = logging.getLogger('netstate')
@@ -39,8 +40,9 @@ async def main():
 
         try:
             # start with handling offline nodes
+            handle_wedged_nodes(ct.net_trie, wdg_q, off_q)
             pre_off = list(off_q)
-            logger.debug('{} nodes in offline queue: {}'.format(len(off_q), pre_off))
+            logger.debug('{} nodes in offline queue: {}'.format(len(pre_off), pre_off))
             for node_id in pre_off:
                 await offline_mbr_node(client, node_id)
             for node_id in [x for x in off_q if x in pre_off]:
@@ -91,5 +93,6 @@ off_q = dc.Deque(directory=get_cachedir('off_queue'))
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
 netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
 staging_q = dc.Deque(directory=get_cachedir('staging_queue'))
+wdg_q = dc.Deque(directory=get_cachedir('wedge_queue'))
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())

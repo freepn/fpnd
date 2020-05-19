@@ -165,6 +165,22 @@ def get_neighbor_ids(trie, node_id):
     return src_net, exit_net, src_node, exit_node
 
 
+def get_wedged_node_id(trie, node_id):
+    """
+    Get the node ID of a wedged node, where wedged is defined by the
+    network failure error code returned by wget (retcode == 4).  The
+    wedge msg is initiated by its downstream neightbor node.
+    :param trie: net data trie
+    :param node_id: ID of node with network failure
+    :return: exit node ID
+    """
+
+    _, _, _, exit_node = get_neighbor_ids(trie, node_id)
+
+    logger.debug('TRIE: node_id {} has exit node {}'.format(node_id, exit_node))
+    return exit_node
+
+
 def load_id_trie(net_trie, id_trie, nw_id, node_id, needs=[], nw=False):
     """
     Load ID state trie based on current data from ZT api.  Default key
