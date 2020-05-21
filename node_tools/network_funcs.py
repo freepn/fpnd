@@ -15,6 +15,21 @@ from node_tools.sched_funcs import run_until_success
 logger = logging.getLogger(__name__)
 
 
+def do_host_check(path=None):
+    """
+    Try and ping a google DNS server over the (default) host route.
+    :param path: path to script dir
+    """
+    import os
+
+    if not path:
+        path = NODE_SETTINGS['home_dir']
+    cmd = os.path.join(path, 'ping_google.sh')
+
+    result = do_net_cmd([cmd])
+    return result
+
+
 def do_net_check(path=None):
     """
     Try and get the geoip location using fpn route.
@@ -32,15 +47,17 @@ def do_net_check(path=None):
     net_wait = st.wait_cache
 
     if not state:
+        host_state, _, _ = do_host_check()
         if fpn_data['fpn0'] and fpn_data['fpn1'] and retcode == 4:
             if fpn_data['route'] is True:
                 fpn_data['route'] = None
-                net_wait.set('failed_once', True, 35)
+                net_wait.set('failed_once', True, 45)
             else:
-                fpn_data['route'] = False
+                if host_state:
+                    fpn_data['route'] = False
             logger.error('HEALTH: network route state is {}'.format(fpn_data['route']))
+            logger.error('HEALTH: host route state is {}'.format(host_state))
             logger.debug('HEALTH: net_wait is {}'.format(repr(net_wait)))
-            return result
         else:
             logger.error('do_net_check {} returned: {}'.format(cmd, result))
     else:
@@ -213,6 +230,16 @@ def publish_cfg_msg(trie, node_id, addr=None):
 
     pub.publish('cfg_msgs', msg)
     logger.debug('CFG: sent cfg msg {} for node {} to {}'.format(msg, node_id, addr))
+
+
+@catch_exceptions()
+def run_host_check():
+    """
+    Command wrapper for decorated host_check (net health) command.
+    """
+    result = do_host_check()
+    logger.debug('run_host_check returned tuple: {}'.format(result))
+    return result
 
 
 @catch_exceptions()

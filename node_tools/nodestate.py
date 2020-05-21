@@ -108,15 +108,15 @@ async def main():
                 exit_state, _, _ = do_peer_check(ztaddr)
                 logger.debug('HEALTH: peer state is {}'.format(exit_state))
 
-            wait_for_nets = net_wait.get('offline_wait')
-            logger.debug('HEALTH: network route state is {}'.format(nsState.route))
-            if nsState.route is False and not wait_for_nets:
-                # logger.error('HEALTH: net_health state is {}'.format(nsState.route))
-                reply = send_req_msg(nsState.moon_addr, 'wedged', node_id)
-                st.fpnState['wdg_ref'] = True
-                logger.error('HEALTH: network is unreachable!!')
-            else:
-                logger.debug('HEALTH: wait_for_nets is {}'.format(wait_for_nets))
+                wait_for_nets = net_wait.get('offline_wait')
+                logger.debug('HEALTH: network route state is {}'.format(nsState.route))
+                if nsState.route is False and not wait_for_nets:
+                    # logger.error('HEALTH: net_health state is {}'.format(nsState.route))
+                    reply = send_req_msg(nsState.moon_addr, 'wedged', node_id)
+                    st.fpnState['wdg_ref'] = True
+                    logger.error('HEALTH: network is unreachable!!')
+                else:
+                    logger.debug('HEALTH: wait_for_nets is {}'.format(wait_for_nets))
 
             if NODE_SETTINGS['mode'] == 'adhoc':
                 if not NODE_SETTINGS['nwid']:

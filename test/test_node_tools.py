@@ -41,6 +41,7 @@ from node_tools.helper_funcs import validate_role
 from node_tools.helper_funcs import xform_state_diff
 from node_tools.logger_config import setup_logging
 from node_tools.msg_queues import handle_wedged_nodes
+from node_tools.network_funcs import do_host_check
 from node_tools.network_funcs import do_net_check
 from node_tools.network_funcs import do_peer_check
 from node_tools.network_funcs import get_net_cmds
@@ -306,6 +307,21 @@ class NetCmdTest(unittest.TestCase):
         self.assertEqual(name, 'fpn1-setup.sh')
 
 
+class NetHostCheckTest(unittest.TestCase):
+    """
+    Running an actual ``ping`` or geoip lookup in a unittest is somewhat
+    problematic...
+    """
+    def setUp(self):
+        super(NetHostCheckTest, self).setUp()
+        NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'bin')
+
+    @pytest.mark.xfail(strict=False)
+    def test_do_host_check(self):
+        """Requires live internet in test env"""
+        state, res, retcode = do_host_check()
+
+
 class NetPeerCheckTest(unittest.TestCase):
     """
     Running an actual ``ping`` or geoip lookup in a unittest is somewhat
@@ -314,7 +330,6 @@ class NetPeerCheckTest(unittest.TestCase):
     def setUp(self):
         super(NetPeerCheckTest, self).setUp()
         NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'bin')
-        # self.bin_dir = os.path.join(os.getcwd(), 'bin')
 
     @pytest.mark.xfail(strict=False)
     def test_do_net_check_geoip(self):
