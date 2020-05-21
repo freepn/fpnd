@@ -48,6 +48,7 @@ from node_tools.helper_funcs import validate_role
 from node_tools.msg_queues import populate_leaf_list
 from node_tools.node_funcs import cycle_adhoc_net
 from node_tools.node_funcs import do_cleanup
+from node_tools.node_funcs import get_ztnwid
 from node_tools.node_funcs import node_state_check
 from node_tools.node_funcs import parse_moon_data
 from node_tools.node_funcs import run_moon_cmd
@@ -419,6 +420,21 @@ def test_get_state():
     assert nodeState.moon_id0 == 'deadd738e6'
     assert nodeState['fpn_id0'] == 'b6079f73c63cea29'
     assert nodeState['fpn_id1'] == 'b6079f73ca8129ad'
+
+
+def test_get_ztnwid():
+    from node_tools import state_data as stest
+
+    nodeState = AttrDict.from_nested_dict(stest.fpnState)
+    res = get_ztnwid('fpn0', 'fpn_id0')
+    assert res == 'b6079f73c63cea29'
+
+    res = get_ztnwid('fpn1', 'fpn_id1')
+    assert res == 'b6079f73ca8129ad'
+
+    stest.fpnState['fpn1'] = stest.fpnState['fpn_id1'] = None
+    res = get_ztnwid('fpn1', 'fpn_id1')
+    assert res is None
 
 
 def test_do_cleanup():

@@ -35,7 +35,7 @@ def do_net_check(path=None):
         if fpn_data['fpn0'] and fpn_data['fpn1'] and retcode == 4:
             if fpn_data['route'] is True:
                 fpn_data['route'] = None
-                net_wait.set('failed_once', True, 10)
+                net_wait.set('failed_once', True, 35)
             else:
                 fpn_data['route'] = False
             logger.error('HEALTH: network route state is {}'.format(fpn_data['route']))
@@ -75,7 +75,7 @@ def do_peer_check(ztaddr):
         if str(host) != ztaddr:
             addr = str(host)
             break
-            logger.debug('ADHOC: found target IP addr {}'.format(addr))
+            logger.debug('PEER: found target IP addr {}'.format(addr))
 
     home = NODE_SETTINGS['home_dir']
     cmd_file = os.path.join(home, 'ping_gateway.sh')

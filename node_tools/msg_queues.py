@@ -55,9 +55,8 @@ def handle_wedged_nodes(trie, wdg_q, off_q):
     from node_tools.ctlr_funcs import is_exit_node
     from node_tools.trie_funcs import get_wedged_node_id
 
-    for _ in list(wdg_q):
+    for node_id in list(wdg_q):
         with wdg_q.transact():
-            node_id = wdg_q.popleft()
             clean_from_queue(node_id, wdg_q)
         wedged_node = get_wedged_node_id(trie, node_id)
         if wedged_node is not None:

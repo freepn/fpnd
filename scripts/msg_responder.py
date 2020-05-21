@@ -130,7 +130,8 @@ def offline(msg):
 
 def wedged(msg):
     """
-    Process wedged node msg (validate and add to wedge_q).
+    Process wedged node msg (validate and add to wedge_q). Note these
+    are currently disabled for testing.
     :param str node ID: zerotier node identity
     :return: str node ID
     """

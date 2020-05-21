@@ -17,6 +17,8 @@ import pytest
 
 from diskcache import Index
 
+import node_tools.timing_funcs as tf
+
 from node_tools.ctlr_funcs import gen_netobj_queue
 from node_tools.ctlr_funcs import handle_net_cfg
 from node_tools.ctlr_funcs import ipnet_get_netcfg
@@ -38,6 +40,7 @@ from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
 from node_tools.helper_funcs import xform_state_diff
 from node_tools.logger_config import setup_logging
+from node_tools.msg_queues import handle_wedged_nodes
 from node_tools.network_funcs import do_net_check
 from node_tools.network_funcs import do_peer_check
 from node_tools.network_funcs import get_net_cmds
@@ -457,6 +460,88 @@ class StateChangeTest(unittest.TestCase):
                 # print(iface)
 
 
+class WaitCacheTest(unittest.TestCase):
+    """
+    Stolen from NTPSec util tests
+    """
+    def test_wait_cache(self):
+        c = tf.Cache
+
+        monodata = []
+
+        def monoclock_jig():
+            return monodata.pop(0)
+
+        # Test init
+        cls = c()
+        self.assertEqual(cls._cache, {})
+        try:
+            monotemp = tf.monoclock
+            tf.monoclock = monoclock_jig
+            # Test set
+            monodata = [5, 10, 315, 20]
+            cls.set("foo", 42)
+            cls.set("bar", 23)
+            self.assertEqual(cls._cache, {"foo": (42, 5, 300),
+                                          "bar": (23, 10, 300)})
+            self.assertEqual(monodata, [315, 20])
+            # Test get, expired
+            result = cls.get("foo")
+            self.assertEqual(result, None)
+            self.assertEqual(monodata, [20])
+            self.assertEqual(cls._cache, {"bar": (23, 10, 300)})
+            # Test get, valid
+            result = cls.get("bar")
+            self.assertEqual(result, 23)
+            self.assertEqual(monodata, [])
+            self.assertEqual(cls._cache, {"bar": (23, 10, 300)})
+            # Test set, custom TTL
+            monodata = [0, 0, 11, 15]
+            cls.set("foo", 42, 10)
+            cls.set("bar", 23, 20)
+            self.assertEqual(cls._cache, {"foo": (42, 0, 10),
+                                          "bar": (23, 0, 20)})
+            self.assertEqual(monodata, [11, 15])
+            # Test get, expired, custom TTL
+            result = cls.get("foo")
+            self.assertEqual(result, None)
+            self.assertEqual(monodata, [15])
+            self.assertEqual(cls._cache, {"bar": (23, 0, 20)})
+            # Test get, valid, custom TTL
+            result = cls.get("bar")
+            self.assertEqual(result, 23)
+            self.assertEqual(monodata, [])
+            self.assertEqual(cls._cache, {"bar": (23, 0, 20)})
+        finally:
+            tf.monoclock = monotemp
+
+    def test_monoclock(self):
+        a = tf.monoclock()
+        b = tf.monoclock()
+        self.assertLessEqual(a, b)
+        # print(tf.monoclock())
+        # monoclock() should not go backward
+        times = [tf.monoclock() for n in range(100)]
+        t1 = times[0]
+        for t2 in times[1:]:
+            self.assertGreaterEqual(t2, t1, "times=%s" % times)
+            t1 = t2
+
+        # monoclock() includes time elapsed during a sleep
+        t1 = tf.monoclock()
+        time.sleep(0.5)
+        t2 = tf.monoclock()
+        dt = t2 - t1
+        self.assertGreater(t2, t1)
+        # Issue #20101: On some Windows machines, dt may be slightly low
+        self.assertTrue(0.45 <= dt <= 1.0, dt)
+
+        # monoclock() is a monotonic but non adjustable clock
+        info = time.get_clock_info('monotonic')
+        self.assertTrue(info.monotonic)
+        self.assertFalse(info.adjustable)
+
+
 class XformStateDataTest(unittest.TestCase):
     """
     Tests for state data transformation: xform_state_diff()
@@ -708,6 +793,35 @@ def test_get_wedged_node_id():
 
     res = get_wedged_node_id(ct.net_trie, tail_id)
     assert res == node_id
+
+
+def test_handle_wedged_nodes():
+    import diskcache as dc
+    from node_tools import ctlr_data as ct
+
+    trie = ct.net_trie
+    off_q = dc.Deque(directory='/tmp/test-oq')
+    wdg_q = dc.Deque(directory='/tmp/test-wq')
+    node_id = 'ee2eedb2e1'
+    exit_id = 'beefea68e6'
+    tail_id = 'ff2ffdb2e1'
+
+    wdg_q.append(node_id)
+    wdg_q.append(node_id)
+    handle_wedged_nodes(trie, wdg_q, off_q)
+    assert list(wdg_q) == []
+    assert list(off_q) == ['beefea68e6']
+
+    wdg_q.append(tail_id)
+    wdg_q.append(tail_id)
+    handle_wedged_nodes(trie, wdg_q, off_q)
+    assert list(wdg_q) == []
+    assert list(off_q) == ['beefea68e6', 'ee2eedb2e1']
+
+    wdg_q.append(exit_id)
+    wdg_q.append(exit_id)
+    with pytest.raises(AssertionError):
+        handle_wedged_nodes(trie, wdg_q, off_q)
 
 
 def test_cleanup_state_tries():

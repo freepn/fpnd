@@ -99,22 +99,21 @@ async def main():
                 send_cfg_handler()
 
             # check the state of exit network/route
-            if node_id not in NODE_SETTINGS['use_exitnode']:
-                exit_id = get_ztnwid('fpn0', 'fpn_id0')
-                if exit_id is not None:
-                    for net in netStatus:
-                        if net['identity'] == exit_id:
-                            ztaddr = net['ztaddress']
-                            break
-                    gw_check = do_peer_check(ztaddr)
-                    logger.debug('HEALTH: gw check returned {}'.format(gw_check))
+            exit_id = get_ztnwid('fpn0', 'fpn_id0')
+            if exit_id is not None:
+                for net in netStatus:
+                    if net['identity'] == exit_id:
+                        ztaddr = net['ztaddress']
+                        break
+                exit_state, _, _ = do_peer_check(ztaddr)
+                logger.debug('HEALTH: peer state is {}'.format(exit_state))
 
             wait_for_nets = net_wait.get('offline_wait')
             logger.debug('HEALTH: network route state is {}'.format(nsState.route))
             if nsState.route is False and not wait_for_nets:
                 # logger.error('HEALTH: net_health state is {}'.format(nsState.route))
-                # reply = send_req_msg(nsState.moon_addr, 'wedged', node_id)
-                # nsState.wdg_ref = True
+                reply = send_req_msg(nsState.moon_addr, 'wedged', node_id)
+                st.fpnState['wdg_ref'] = True
                 logger.error('HEALTH: network is unreachable!!')
             else:
                 logger.debug('HEALTH: wait_for_nets is {}'.format(wait_for_nets))

@@ -177,9 +177,9 @@ def get_ztnwid(fpn_net, fpn_id):
     state = AttrDict.from_nested_dict(st.fpnState)
     result = None
 
-    if state.fpn_net:
-        result = state.fpn_id
-        logger.debug('Got nwid {} for gateway check'.format(nwid))
+    if state[fpn_net]:
+        result = state[fpn_id]
+        logger.debug('Got nwid {} for gateway check'.format(result))
     else:
         logger.warning('No network ID found for {}'.format(fpn_net))
 
