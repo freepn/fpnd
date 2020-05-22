@@ -76,15 +76,12 @@ def check_daemon_status(script='msg_responder.py'):
     return res
 
 
-def setup_scheduling(max_age, path):
+def setup_scheduling(max_age):
     """Initial setup for scheduled jobs"""
     sleep_time = max_age / 6
 
     baseUpdateJob = schedule.every(sleep_time).seconds
     baseUpdateJob.do(update_runner).tag('base-tasks', 'get-updates')
-
-    baseCheckJob = schedule.every(max_age).seconds
-    baseCheckJob.do(run_net_check).tag('base-tasks', 'route-status')
 
     show_scheduled_jobs()
     logger.debug('Leaving setup_scheduling')
@@ -100,6 +97,9 @@ def do_scheduling():
 
     if mode == 'peer':
         if node_role is None:
+            check_time = 33
+            baseCheckJob = schedule.every(check_time).seconds
+            baseCheckJob.do(run_net_check).tag('base-tasks', 'route-status')
             try:
                 data = wait_for_moon(timeout=30)
             except Exception as exc:
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     logger.debug('fpnd.ini set startup mode: {} and role: {}'.format(mode, role))
     if not home:
         home = '.'
-    setup_scheduling(max_age, home)
+    setup_scheduling(max_age)
 
     if len(sys.argv) == 2:
         arg = sys.argv[1]

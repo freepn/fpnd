@@ -6,6 +6,7 @@ import pytest
 from nanoservice import Subscriber
 from nanoservice import Publisher
 
+from node_tools.msg_queues import clean_from_queue
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import handle_node_queues
 from node_tools.msg_queues import make_cfg_msg
@@ -214,6 +215,15 @@ class QueueHandlingTest(unittest.TestCase):
         self.wait_q.clear()
         super(QueueHandlingTest, self).tearDown()
 
+    def test_clean_from_queue(self):
+        self.node_q.append(self.node1)
+        self.node_q.append(self.node2)
+        self.node_q.append(self.node3)
+
+        clean_from_queue(self.node1, self.node_q)
+        self.assertNotIn(self.node1, list(self.node_q))
+        # print(list(self.node_q))
+
     def test_handle_node_queues(self):
         self.node_q.append(self.node1)
         self.node_q.append(self.node2)
@@ -383,8 +393,6 @@ class TrieHandlingTest(unittest.TestCase):
         res = find_dangling_nets(self.trie)
         self.assertEqual(len(res), 2)
         self.assertEqual(res, [self.net1[0], self.node1[0]])
-        # print(list(self.trie))
-        # print(self.trie.items())
 
     def test_update_id_trie_net(self):
         update_id_trie(self.trie, self.net1, [self.node2], nw=True)

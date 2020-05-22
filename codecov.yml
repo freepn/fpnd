@@ -11,7 +11,7 @@ coverage:
     changes: no
 
   precision: 2
-  range: "50...100"
+  range: 50...75
 
   notify:
     irc:

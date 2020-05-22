@@ -38,6 +38,7 @@ cfg_q = dc.Deque(directory=get_cachedir('cfg_queue'))
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
 off_q = dc.Deque(directory=get_cachedir('off_queue'))
 pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
+wdg_q = dc.Deque(directory=get_cachedir('wedge_queue'))
 
 
 def handle_msg(msg):
@@ -80,6 +81,20 @@ def offline(msg):
         logger.warning('Bad offline msg is {}'.format(msg))
 
 
+def wedged(msg):
+    """
+    Process wedged node msg (validate and add to wedge_q).
+    """
+    if valid_announce_msg(msg):
+        logger.debug('Got valid wedged msg: {}'.format(msg))
+        with wdg_q.transact():
+            add_one_only(msg, wdg_q)
+        logger.debug('Added node id: {}'.format(msg))
+        logger.info('{} nodes in wedged queue'.format(len(wdg_q)))
+    else:
+        logger.warning('Bad wedged msg is {}'.format(msg))
+
+
 # Inherit from Daemon class
 class subDaemon(Daemon):
     # implement run method
@@ -92,6 +107,7 @@ class subDaemon(Daemon):
         s.subscribe('handle_node', handle_msg)
         s.subscribe('cfg_msgs', handle_cfg)
         s.subscribe('offline', offline)
+        s.subscribe('wedged', wedged)
         s.start()
 
 

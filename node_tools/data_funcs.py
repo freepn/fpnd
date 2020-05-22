@@ -1,11 +1,13 @@
 # coding: utf-8
 
-"""Data update helper functions."""
+"""Data and update helper functions/decorators."""
 from __future__ import print_function
 
 import logging
 import datetime
 import functools
+
+from datetime import timezone
 
 from diskcache import Index
 
@@ -17,8 +19,6 @@ from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
-
-from datetime import timezone
 
 
 utc = timezone.utc
@@ -68,7 +68,8 @@ def with_cache_aging(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         """
-        cache wrapper to manage timestamp age for update_runner()
+        Diskcache wrapper to manage timestamp age for update_runner (this is
+        necessary because the Index cache has no expire/eviction policy).
         * get timestamp and clear cache if greater than max_age
         * update cache timestamp based on result
         * log some debug info
@@ -113,7 +114,7 @@ def with_state_check(func):
     @functools.wraps(func)
     def state_check(*args, **kwargs):
         """
-        cache wrapper for checking nodeState before and after the
+        Diskcache wrapper for checking nodeState before and after the
         update_runner() tries to grab new data.
         """
         from node_tools import state_data as st
@@ -137,7 +138,7 @@ def with_state_check(func):
             get_state_values(prev_state, next_state)
             logger.debug('State diff is: {}'.format(st.changes))
             if next_state.fallback:
-                logger.error('nodeState in ZT fallback mode (network is suspect)')
+                logger.error('ZT fallback mode is {} (network is suspect)'.format(next_state.fallback))
 
         return result
     return state_check

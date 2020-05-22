@@ -19,6 +19,7 @@ from node_tools import state_data as st
 
 from node_tools.helper_funcs import get_cachedir
 from node_tools.msg_queues import add_one_only
+from node_tools.msg_queues import clean_from_queue
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import valid_announce_msg
 from node_tools.msg_queues import wait_for_cfg_msg
@@ -43,10 +44,13 @@ cfg_q = dc.Deque(directory=get_cachedir('cfg_queue'))
 hold_q = dc.Deque(directory=get_cachedir('hold_queue'))
 off_q = dc.Deque(directory=get_cachedir('off_queue'))
 pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
+wdg_q = dc.Deque(directory=get_cachedir('wedge_queue'))
 
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
 reg_q = dc.Deque(directory=get_cachedir('reg_queue'))
 wait_q = dc.Deque(directory=get_cachedir('wait_queue'))
+
+temp_q = dc.Deque(directory=get_cachedir('temp_queue'))
 
 
 def timerfunc(func):
@@ -124,6 +128,24 @@ def offline(msg):
         logger.warning('Bad offline msg is {}'.format(msg))
 
 
+def wedged(msg):
+    """
+    Process wedged node msg (validate and add to wedge_q). Note these
+    are currently disabled for testing.
+    :param str node ID: zerotier node identity
+    :return: str node ID
+    """
+    if valid_announce_msg(msg):
+        logger.debug('Got valid wedged node msg: {}'.format(msg))
+        with temp_q.transact():
+            # disable msg processing for now, and just collect them
+            # add_one_only(msg, wdg_q)
+            temp_q.append(msg)
+        return msg
+    else:
+        logger.warning('Bad wedge msg is {}'.format(msg))
+
+
 # Inherit from Daemon class
 class rspDaemon(Daemon):
     # implement run method
@@ -136,6 +158,7 @@ class rspDaemon(Daemon):
         s.register('echo', echo)
         s.register('node_cfg', get_node_cfg)
         s.register('offline', offline)
+        s.register('wedged', wedged)
         s.start()
 
 

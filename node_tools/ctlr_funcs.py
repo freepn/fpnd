@@ -25,6 +25,17 @@ def gen_netobj_queue(deque, ipnet='172.16.0.0/12'):
     logger.debug('{} IPNetwork objects in queue: {}'.format(len(deque), deque.directory))
 
 
+def get_exit_node_id():
+    """
+    Get the exit node ID (if not empty, return the first ID in the list).
+    :return str: Id of the exit node
+    """
+    result = None
+    if len(NODE_SETTINGS['use_exitnode']) > 0:
+        result = NODE_SETTINGS['use_exitnode'][0]
+    return result
+
+
 def get_network_id(data):
     """
     Get the network ID from the dict-ish client payload (ie, the content

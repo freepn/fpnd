@@ -33,9 +33,13 @@ async def main():
         client = ZeroTier(ZT_API, loop, session)
 
         try:
-            logger.debug('{} node(s) in reg queue: {}'.format(len(off_q), list(off_q)))
+            logger.debug('{} node(s) in offline queue: {}'.format(len(off_q), list(off_q)))
             if len(off_q) > 0:
                 drain_msg_queue(off_q, addr='127.0.0.1', method='offline')
+
+            logger.debug('{} node(s) in wedged queue: {}'.format(len(wdg_q), list(wdg_q)))
+            if len(wdg_q) > 0:
+                drain_msg_queue(wdg_q, addr='127.0.0.1', method='wedged')
 
             logger.debug('{} node(s) in reg queue: {}'.format(len(reg_q), list(reg_q)))
             logger.debug('{} node(s) in wait queue: {}'.format(len(wait_q), list(wait_q)))
@@ -90,6 +94,7 @@ cache = dc.Index(get_cachedir())
 cfg_q = dc.Deque(directory=get_cachedir('cfg_queue'))
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
 off_q = dc.Deque(directory=get_cachedir('off_queue'))
+wdg_q = dc.Deque(directory=get_cachedir('wedge_queue'))
 pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
 reg_q = dc.Deque(directory=get_cachedir('reg_queue'))
 wait_q = dc.Deque(directory=get_cachedir('wait_queue'))
