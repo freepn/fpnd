@@ -127,6 +127,7 @@ async def offline_mbr_node(client, node_id):
     :param node_id: node ID
     """
     from node_tools import ctlr_data as ct
+    from node_tools import state_data as st
 
     from node_tools.ctlr_funcs import unset_network_cfg
     from node_tools.network_funcs import publish_cfg_msg
@@ -137,6 +138,9 @@ async def offline_mbr_node(client, node_id):
         node_net, exit_net, src_node, exit_node = get_neighbor_ids(ct.net_trie, node_id)
         node_nets = [node_net, exit_net]
         logger.debug('OFFLINE: got node_nets {}'.format(node_nets))
+        if exit_node is not None:
+            st.wait_cache.set(exit_node, True, 90)
+            logger.debug('OFFLINE: added exit_node {} to wait cache'.format(exit_node))
     except Exception as exc:
         logger.error('OFFLINE: {}'.format(exc))
         node_nets = [None, None]

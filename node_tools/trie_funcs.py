@@ -93,6 +93,46 @@ def find_dangling_nets(trie):
     return net_list
 
 
+def get_active_nodes(trie):
+    """
+    Find all the currently active nodes (search the ID trie).
+    :notes: In this case the answer depends on when this runs (relative
+            to the `netstate` runner).
+    :param trie: ID state trie
+    :return: list of node IDs (empty list if None)
+    """
+    node_list = []
+
+    for node in [x for x in list(trie) if len(x) == 10]:
+        node_list.append(node)
+    return node_list
+
+
+def get_bootstrap_list(net_trie, id_trie):
+    """
+    Find all the nodes in the bootstrap chain (search the net trie).
+    :notes: We start counting from the first node attached to the exit
+            node.
+    :param trie: net data trie
+    :param trie: ID state trie
+    :return: list of node IDs (empty list if None)
+    """
+    from node_tools.ctlr_funcs import get_exit_node_id
+
+    node_list = []
+    next_node = None
+    prev_node = get_exit_node_id()
+    dangle_list = find_dangling_nets(id_trie)
+    last_node = dangle_list[1]
+
+    while next_node != last_node:
+        _, _, next_node, _ = get_neighbor_ids(net_trie, prev_node)
+        node_list.append(next_node)
+        prev_node = next_node
+
+    return node_list
+
+
 def get_dangling_net_data(trie, net_id):
     """
     Given the net ID, get the payload from the net data trie and return
@@ -172,12 +212,16 @@ def get_wedged_node_id(trie, node_id):
     wedge msg is initiated by its downstream neightbor node.
     :param trie: net data trie
     :param node_id: ID of node with network failure
-    :return: exit node ID
+    :return: exit node ID or None
     """
+    from node_tools import state_data as st
 
     _, _, _, exit_node = get_neighbor_ids(trie, node_id)
 
-    logger.debug('TRIE: node_id {} has exit node {}'.format(node_id, exit_node))
+    if st.wait_cache.get(exit_node):
+        exit_node = None
+
+    logger.debug('TRIE: node {} has exit node {}'.format(node_id, exit_node))
     return exit_node
 
 

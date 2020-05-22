@@ -45,6 +45,7 @@ from node_tools.network_funcs import do_host_check
 from node_tools.network_funcs import do_net_check
 from node_tools.network_funcs import do_peer_check
 from node_tools.network_funcs import get_net_cmds
+from node_tools.network_funcs import run_host_check
 from node_tools.node_funcs import check_daemon
 from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import handle_moon_data
@@ -52,6 +53,8 @@ from node_tools.node_funcs import parse_moon_data
 from node_tools.sched_funcs import check_return_status
 from node_tools.trie_funcs import cleanup_state_tries
 from node_tools.trie_funcs import create_state_trie
+from node_tools.trie_funcs import get_active_nodes
+from node_tools.trie_funcs import get_bootstrap_list
 from node_tools.trie_funcs import get_dangling_net_data
 from node_tools.trie_funcs import get_neighbor_ids
 from node_tools.trie_funcs import get_wedged_node_id
@@ -307,6 +310,7 @@ class NetCmdTest(unittest.TestCase):
         self.assertEqual(name, 'fpn1-setup.sh')
 
 
+@pytest.mark.xfail(strict=False)
 class NetHostCheckTest(unittest.TestCase):
     """
     Running an actual ``ping`` or geoip lookup in a unittest is somewhat
@@ -316,10 +320,13 @@ class NetHostCheckTest(unittest.TestCase):
         super(NetHostCheckTest, self).setUp()
         NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'bin')
 
-    @pytest.mark.xfail(strict=False)
     def test_do_host_check(self):
         """Requires live internet in test env"""
         state, res, retcode = do_host_check()
+
+    def test_run_host_check(self):
+        """Requires live internet in test env"""
+        res = run_host_check()
 
 
 class NetPeerCheckTest(unittest.TestCase):
@@ -779,11 +786,9 @@ def test_get_neighbor_ids():
 
     res = get_neighbor_ids(trie, node_id)
     assert res == ('beafde52b4a5f7ba', 'beafde52b4296ea5', 'ff2ffdb2e1', 'beefea68e6')
-    # print(res)
 
     res = get_neighbor_ids(trie, tail_id)
     assert res == ('beafde52b4a5e8ab', 'beafde52b4a5f7ba', None, 'ee2eedb2e1')
-    # print(res)
 
     with pytest.raises(AssertionError):
         res = get_neighbor_ids(trie, exit_id)
@@ -795,10 +800,26 @@ def test_get_neighbor_ids():
     NODE_SETTINGS['use_exitnode'].clear()
 
 
-def test_get_wedged_node_id():
+def test_get_bootstrap_list():
     from node_tools import ctlr_data as ct
 
-    trie = ct.net_trie
+    node_id = 'ee2eedb2e1'
+    exit_id = 'beefea68e6'
+    tail_id = 'ff2ffdb2e1'
+    NODE_SETTINGS['use_exitnode'].append(exit_id)
+
+    boot_list = get_bootstrap_list(ct.net_trie, ct.id_trie)
+    assert exit_id not in boot_list
+    assert node_id == boot_list[0]
+    assert tail_id == boot_list[1]
+    # print(boot_list)
+    NODE_SETTINGS['use_exitnode'].clear()
+
+
+def test_get_wedged_node_id():
+    from node_tools import ctlr_data as ct
+    from node_tools import state_data as st
+
     node_id = 'ee2eedb2e1'
     exit_id = 'beefea68e6'
     tail_id = 'ff2ffdb2e1'
@@ -808,6 +829,10 @@ def test_get_wedged_node_id():
 
     res = get_wedged_node_id(ct.net_trie, tail_id)
     assert res == node_id
+
+    st.wait_cache.set(exit_id, True, 0.1)
+    res = get_wedged_node_id(ct.net_trie, node_id)
+    assert res is None
 
 
 def test_handle_wedged_nodes():
@@ -859,13 +884,17 @@ def test_cleanup_state_tries():
     node3 = 'ff2ffdb2e1'
 
     assert len(list(ct.net_trie)) == 8
+    res = get_active_nodes(ct.id_trie)
+    assert len(res) == 3
+    assert res == ['beefea68e6', 'ee2eedb2e1', 'ff2ffdb2e1']
 
     cleanup_state_tries(ct.net_trie, ct.id_trie, net2, node3, mbr_only=True)
 
     assert len(list(ct.net_trie)) == 7
-    assert len(list(ct.id_trie)) == 5
-    for key in ct.id_trie.keys():
-        assert node3 not in key
+    assert node3 not in ct.id_trie
+    res = get_active_nodes(ct.id_trie)
+    assert len(res) == 2
+    assert res == ['beefea68e6', 'ee2eedb2e1']
 
     cleanup_state_tries(ct.net_trie, ct.id_trie, net3, node3)
 
