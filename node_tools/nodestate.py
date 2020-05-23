@@ -110,11 +110,13 @@ async def main():
 
                 wait_for_nets = net_wait.get('offline_wait')
                 logger.debug('HEALTH: network route state is {}'.format(nsState.route))
-                if nsState.route is False and not wait_for_nets:
-                    # logger.error('HEALTH: net_health state is {}'.format(nsState.route))
-                    reply = send_req_msg(nsState.moon_addr, 'wedged', node_id)
-                    st.fpnState['wdg_ref'] = True
-                    logger.error('HEALTH: network is unreachable!!')
+                if nsState.route is False:
+                    if not st.fpnState['wdg_ref'] and not wait_for_nets:
+                        # logger.error('HEALTH: net_health state is {}'.format(nsState.route))
+                        reply = send_req_msg(nsState.moon_addr, 'wedged', node_id)
+                        if 'result' in reply[0]:
+                            st.fpnState['wdg_ref'] = True
+                        logger.error('HEALTH: network is unreachable!!')
                 else:
                     logger.debug('HEALTH: wait_for_nets is {}'.format(wait_for_nets))
 

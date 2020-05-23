@@ -137,10 +137,9 @@ def wedged(msg):
     """
     if valid_announce_msg(msg):
         logger.debug('Got valid wedged node msg: {}'.format(msg))
-        with temp_q.transact():
-            # disable msg processing for now, and just collect them
-            # add_one_only(msg, wdg_q)
-            temp_q.append(msg)
+        with wdg_q.transact():
+            # re-enable msg processing for testing
+            add_one_only(msg, wdg_q)
         return msg
     else:
         logger.warning('Bad wedge msg is {}'.format(msg))
