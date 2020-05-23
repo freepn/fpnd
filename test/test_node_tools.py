@@ -833,6 +833,7 @@ def test_get_wedged_node_id():
     st.wait_cache.set(exit_id, True, 0.1)
     res = get_wedged_node_id(ct.net_trie, node_id)
     assert res is None
+    time.sleep(0.1)
 
 
 def test_handle_wedged_nodes():
