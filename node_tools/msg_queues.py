@@ -15,6 +15,17 @@ def add_one_only(item, deque):
         deque.append(item)
 
 
+def avoid_and_update(node_id, new_thing, deque):
+    """
+    Update or add node_id data to deque (still avoiding duplicates).
+    """
+    for old_thing in list(deque):
+        if node_id in old_thing:
+            if new_thing != old_thing:
+                deque.remove(old_thing)
+    add_one_only(new_thing, deque)
+
+
 def clean_from_queue(item, deque):
     """
     Remove all instances of item from deque.
@@ -27,7 +38,7 @@ def clean_from_queue(item, deque):
             deque.rotate()
 
 
-def handle_announce_msg(node_q, reg_q, wait_q, hold_q, msg):
+def handle_announce_msg(node_q, reg_q, wait_q, msg):
     for node in list(node_q):
         if msg == node:
             with reg_q.transact():
@@ -50,7 +61,7 @@ def handle_wedged_nodes(trie, wdg_q, off_q):
     """
     Use node ID in wedged queue to lookup the corresponding exit node ID
     and add it to the offline queue.  This is the only way we currently
-    have to remove a wedged exit node.
+    have to remove a wedged neighbor (exit) node.
     """
     from node_tools.ctlr_funcs import is_exit_node
     from node_tools.trie_funcs import get_wedged_node_id
@@ -66,13 +77,31 @@ def handle_wedged_nodes(trie, wdg_q, off_q):
                     add_one_only(wedged_node, off_q)
 
 
+def lookup_node_id(node_id, deque):
+    """
+    Find the first node ID in the queue item and return the associated
+    item.
+    :notes: item should be a dict with node ID as key
+    :param node_id: node ID str
+    :param deque: target queue to search
+    :return: queue item <dict> or None
+    """
+    result = None
+
+    for item in list(deque):
+        if isinstance(item, dict):
+            if node_id in item:
+                result = item
+    return result
+
+
 def make_cfg_msg(trie, node_id):
     """
     Create the net_cfg msg for a node and return cfg string.  Node
     IDs come from the node/active queues and networks come from the
     `id_trie`.
     :param trie: state trie of nodes/nets
-    :param node_id: node ID
+    :param node_id: node ID str
     :return: JSON str (net_id cfg msg)
     """
     import json
@@ -102,12 +131,13 @@ def manage_incoming_nodes(node_q, reg_q, wait_q):
         node_q.clear()
 
 
-def populate_leaf_list(node_q, wait_q, data):
+def populate_leaf_list(node_q, wait_q, tmp_q, data):
     from node_tools import state_data as st
 
     st.leaf_nodes = []
     if data['identity'] in node_q or data['identity'] in wait_q:
         st.leaf_nodes.append({data['identity']: data['address']})
+        avoid_and_update(data['identity'], st.leaf_nodes[0], tmp_q)
 
 
 def process_hold_queue(msg, hold_q, reg_q, max_hold=5):

@@ -26,7 +26,7 @@ logger.setLevel(logging.DEBUG)
 logging.getLogger('node_tools.msg_queues').level = logging.DEBUG
 
 handler = logging.handlers.SysLogHandler(address='/dev/log', facility='daemon')
-formatter = logging.Formatter('%(module)s.%(funcName)s +%(lineno)s: %(message)s')
+formatter = logging.Formatter('%(module)s: %(funcName)s+%(lineno)s: %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 

@@ -21,6 +21,7 @@ from node_tools.helper_funcs import get_cachedir
 from node_tools.msg_queues import add_one_only
 from node_tools.msg_queues import clean_from_queue
 from node_tools.msg_queues import handle_announce_msg
+from node_tools.msg_queues import lookup_node_id
 from node_tools.msg_queues import valid_announce_msg
 from node_tools.msg_queues import wait_for_cfg_msg
 
@@ -32,7 +33,7 @@ logger.setLevel(logging.DEBUG)
 logging.getLogger('node_tools.msg_queues').level = logging.DEBUG
 
 handler = logging.handlers.SysLogHandler(address='/dev/log', facility='daemon')
-formatter = logging.Formatter('%(module)s.%(funcName)s +%(lineno)s: %(message)s')
+formatter = logging.Formatter('%(module)s: %(funcName)s+%(lineno)s: %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
@@ -50,7 +51,7 @@ node_q = dc.Deque(directory=get_cachedir('node_queue'))
 reg_q = dc.Deque(directory=get_cachedir('reg_queue'))
 wait_q = dc.Deque(directory=get_cachedir('wait_queue'))
 
-temp_q = dc.Deque(directory=get_cachedir('temp_queue'))
+tmp_q = dc.Deque(directory=get_cachedir('tmp_queue'))
 
 
 def timerfunc(func):
@@ -81,10 +82,15 @@ def echo(msg):
     """
     if valid_announce_msg(msg):
         logger.debug('Got valid announce msg: {}'.format(msg))
-        handle_announce_msg(node_q, reg_q, wait_q, hold_q, msg)
+        handle_announce_msg(node_q, reg_q, wait_q, msg)
+        if lookup_node_id(msg, tmp_q):
+            logger.info('Handled announce msg from host {}'.format(node_data[msg]))
         return msg
     else:
-        logger.warning('Bad announce msg is {}'.format(msg))
+        if lookup_node_id(msg, tmp_q):
+            logger.info('Bad announce msg from host {}'.format(node_data[msg]))
+        else:
+            logger.warning('Bad announce msg: {}'.format(msg))
 
 
 @timerfunc
@@ -97,17 +103,21 @@ def get_node_cfg(msg):
     import json
 
     if valid_announce_msg(msg):
-        logger.debug('Got valid cfg request from {}'.format(msg))
+        if lookup_node_id(msg, tmp_q)
+            logger.info('Got valid cfg request msg from host {}'.format(node_data[msg]))
         res = wait_for_cfg_msg(cfg_q, hold_q, reg_q, msg)
         logger.debug('hold_q contents: {}'.format(list(hold_q)))
         if res:
             logger.debug('Got cfg result: {}'.format(res))
             return res
         else:
-            logger.debug('Null result for ID: {}'.format(res))
+            logger.debug('Null result for ID: {}'.format(msg))
             # raise ServiceError
     else:
-        logger.warning('Bad cfg msg is {}'.format(msg))
+        if lookup_node_id(msg, tmp_q):
+            logger.info('Bad cfg msg from host {}'.format(node_data[msg]))
+        else:
+            logger.warning('Bad cfg msg: {}'.format(msg))
 
 
 def offline(msg):
@@ -117,15 +127,19 @@ def offline(msg):
     :return: str node ID
     """
     if valid_announce_msg(msg):
-        logger.debug('Got valid offline msg: {}'.format(msg))
+        if lookup_node_id(msg, tmp_q)
+            logger.info('Got valid offline msg from host {}'.format(node_data[msg]))
         with off_q.transact():
             add_one_only(msg, off_q)
         with pub_q.transact():
             clean_from_queue(msg, pub_q)
-        logger.info('Node ID {} cleaned from pub_q'.format(msg))
+        logger.debug('Node ID {} cleaned from pub_q'.format(msg))
         return msg
     else:
-        logger.warning('Bad offline msg is {}'.format(msg))
+        if lookup_node_id(msg, tmp_q):
+            logger.info('Bad offline msg from host {}'.format(node_data[msg]))
+        else:
+            logger.warning('Bad offline msg: {}'.format(msg))
 
 
 def wedged(msg):
@@ -136,13 +150,17 @@ def wedged(msg):
     :return: str node ID
     """
     if valid_announce_msg(msg):
-        logger.debug('Got valid wedged node msg: {}'.format(msg))
+        if lookup_node_id(msg, tmp_q)
+            logger.info('Got valid wedged msg from host {}'.format(node_data[msg]))
         with wdg_q.transact():
             # re-enable msg processing for testing
             add_one_only(msg, wdg_q)
         return msg
     else:
-        logger.warning('Bad wedge msg is {}'.format(msg))
+        if lookup_node_id(msg, tmp_q):
+            logger.info('Bad wedged msg from host {}'.format(node_data[msg]))
+        else:
+            logger.warning('Bad wedged msg: {}'.format(msg))
 
 
 # Inherit from Daemon class

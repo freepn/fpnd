@@ -103,7 +103,14 @@ def do_peer_check(ztaddr):
     return result
 
 
-def drain_msg_queue(reg_q, pub_q=None, addr=None, method='handle_node'):
+def drain_msg_queue(reg_q, pub_q=None, tmp_q=None, addr=None, method='handle_node'):
+    """
+    This function now handles several different methods; note the optional
+    queue params should not be used together.
+    :param reg_q: queue of registered nodes
+    :param pub_q: queue of published nodes (use for publishing online nodes)
+    :param tmp_q: queue of nodes/addrs for logging (use for publishing offline nodes)
+    """
     import time
     from nanoservice import Publisher
     from node_tools.msg_queues import add_one_only
