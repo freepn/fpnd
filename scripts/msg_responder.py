@@ -103,7 +103,7 @@ def get_node_cfg(msg):
     import json
 
     if valid_announce_msg(msg):
-        if lookup_node_id(msg, tmp_q)
+        if lookup_node_id(msg, tmp_q):
             logger.info('Got valid cfg request msg from host {}'.format(node_data[msg]))
         res = wait_for_cfg_msg(cfg_q, hold_q, reg_q, msg)
         logger.debug('hold_q contents: {}'.format(list(hold_q)))
@@ -127,7 +127,7 @@ def offline(msg):
     :return: str node ID
     """
     if valid_announce_msg(msg):
-        if lookup_node_id(msg, tmp_q)
+        if lookup_node_id(msg, tmp_q):
             logger.info('Got valid offline msg from host {}'.format(node_data[msg]))
         with off_q.transact():
             add_one_only(msg, off_q)
@@ -150,7 +150,7 @@ def wedged(msg):
     :return: str node ID
     """
     if valid_announce_msg(msg):
-        if lookup_node_id(msg, tmp_q)
+        if lookup_node_id(msg, tmp_q):
             logger.info('Got valid wedged msg from host {}'.format(node_data[msg]))
         with wdg_q.transact():
             # re-enable msg processing for testing
