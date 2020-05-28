@@ -54,6 +54,16 @@ wait_q = dc.Deque(directory=get_cachedir('wait_queue'))
 tmp_q = dc.Deque(directory=get_cachedir('tmp_queue'))
 
 
+def clean_stale_cfgs(key_str, deque):
+    """
+    Clean any stale cfg msgs from the cfg deque.
+    """
+    if len(deque) != 0:
+        for item in list(deque):
+            if key_str in item:
+                clean_from_queue(item, deque)
+
+
 def timerfunc(func):
     """
     A timer decorator
@@ -73,7 +83,6 @@ def timerfunc(func):
     return function_timer
 
 
-@timerfunc
 def echo(msg):
     """
     Process valid node msg/queues, ie, msg must be a valid node ID.
@@ -82,18 +91,20 @@ def echo(msg):
     """
     if valid_announce_msg(msg):
         logger.debug('Got valid announce msg: {}'.format(msg))
+        clean_stale_cfgs(msg, cfg_q)
         handle_announce_msg(node_q, reg_q, wait_q, msg)
-        if lookup_node_id(msg, tmp_q):
+        node_data = lookup_node_id(msg, tmp_q)
+        if node_data:
             logger.info('Handled announce msg from host {}'.format(node_data[msg]))
         return msg
     else:
-        if lookup_node_id(msg, tmp_q):
+        node_data = lookup_node_id(msg, tmp_q)
+        if node_data:
             logger.info('Bad announce msg from host {}'.format(node_data[msg]))
         else:
             logger.warning('Bad announce msg: {}'.format(msg))
 
 
-@timerfunc
 def get_node_cfg(msg):
     """
     Process valid cfg msg, ie, msg must be a valid node ID.
@@ -103,7 +114,8 @@ def get_node_cfg(msg):
     import json
 
     if valid_announce_msg(msg):
-        if lookup_node_id(msg, tmp_q):
+        node_data = lookup_node_id(msg, tmp_q)
+        if node_data:
             logger.info('Got valid cfg request msg from host {}'.format(node_data[msg]))
         res = wait_for_cfg_msg(cfg_q, hold_q, reg_q, msg)
         logger.debug('hold_q contents: {}'.format(list(hold_q)))
@@ -114,7 +126,8 @@ def get_node_cfg(msg):
             logger.debug('Null result for ID: {}'.format(msg))
             # raise ServiceError
     else:
-        if lookup_node_id(msg, tmp_q):
+        node_data = lookup_node_id(msg, tmp_q)
+        if node_data:
             logger.info('Bad cfg msg from host {}'.format(node_data[msg]))
         else:
             logger.warning('Bad cfg msg: {}'.format(msg))
@@ -127,7 +140,9 @@ def offline(msg):
     :return: str node ID
     """
     if valid_announce_msg(msg):
-        if lookup_node_id(msg, tmp_q):
+        clean_stale_cfgs(msg, cfg_q)
+        node_data = lookup_node_id(msg, tmp_q)
+        if node_data:
             logger.info('Got valid offline msg from host {}'.format(node_data[msg]))
         with off_q.transact():
             add_one_only(msg, off_q)
@@ -136,7 +151,8 @@ def offline(msg):
         logger.debug('Node ID {} cleaned from pub_q'.format(msg))
         return msg
     else:
-        if lookup_node_id(msg, tmp_q):
+        node_data = lookup_node_id(msg, tmp_q)
+        if node_data:
             logger.info('Bad offline msg from host {}'.format(node_data[msg]))
         else:
             logger.warning('Bad offline msg: {}'.format(msg))
@@ -150,14 +166,16 @@ def wedged(msg):
     :return: str node ID
     """
     if valid_announce_msg(msg):
-        if lookup_node_id(msg, tmp_q):
+        node_data = lookup_node_id(msg, tmp_q)
+        if node_data:
             logger.info('Got valid wedged msg from host {}'.format(node_data[msg]))
         with wdg_q.transact():
             # re-enable msg processing for testing
             add_one_only(msg, wdg_q)
         return msg
     else:
-        if lookup_node_id(msg, tmp_q):
+        node_data = lookup_node_id(msg, tmp_q)
+        if node_data:
             logger.info('Bad wedged msg from host {}'.format(node_data[msg]))
         else:
             logger.warning('Bad wedged msg: {}'.format(msg))

@@ -87,7 +87,7 @@ class ScheduleTests(unittest.TestCase):
             assert '14:16' in s
 
     def test_cancel_job(self):
-        @show_job_tags
+        @show_job_tags()
         def stop_job():
             return schedule.CancelJob
         mock_job = make_mock_job()

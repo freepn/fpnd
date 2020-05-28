@@ -23,7 +23,7 @@ def good_task():
 
 @run_until_success()
 def good_returns():
-    print("I'm good")
+    print("I'm good too")
     return True, 'Success', 0
 
 
@@ -33,8 +33,8 @@ def bad_returns():
     return False, 'blah', 1
 
 
-# @catch_exceptions(cancel_on_failure=True)
-@run_until_success()
+@show_job_tags()
+@catch_exceptions(cancel_on_failure=True)
 def bad_task():
     print('I am bad')
     raise Exception('Something went wrong!')
@@ -48,4 +48,4 @@ schedule.every(5).seconds.do(bad_returns)
 
 while True:
     schedule.run_pending()
-time.sleep(1)
+    time.sleep(1)

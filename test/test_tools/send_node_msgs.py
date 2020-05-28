@@ -6,7 +6,13 @@ from nanoservice import Requester
 # addr = '127.0.0.1'
 addr = '192.168.0.66'
 
-id_list = ['deadbeef00', 'deadbeef04', 'deadbeef03', 'deadbeef02', 'deadbeef01']
+id_list = [
+              'deadbeef00', 'deadbeef04', 'deadbeef03', 'deadbeef02', 'deadbeef01'
+              'deadbeef00', 'deadbeef04', 'deadbeef03', 'deadbeef02', 'deadbeef01'
+              'deadbeef00', 'deadbeef04', 'deadbeef03', 'deadbeef02', 'deadbeef01'
+              'deadbeef00', 'deadbeef04', 'deadbeef03', 'deadbeef02', 'deadbeef01'
+              'deadbeef00', 'deadbeef04', 'deadbeef03', 'deadbeef02', 'deadbeef01'
+          ]
 
 # Need to wait a bit to prevent lost messages
 # time.sleep(0.001)

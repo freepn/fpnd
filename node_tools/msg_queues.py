@@ -15,13 +15,17 @@ def add_one_only(item, deque):
         deque.append(item)
 
 
-def avoid_and_update(node_id, new_thing, deque):
+def avoid_and_update(key_str, new_thing, deque):
     """
-    Update or add node_id data to deque (still avoiding duplicates).
+    Update or add node ID data to deque and remove stale entries.
+    :param key_str: node ID str
+    :param new_thing: new data dict for node ID
+    :param deque: target queue of node data (dicts)
+
     """
     for old_thing in list(deque):
-        if node_id in old_thing:
-            if new_thing != old_thing:
+        if key_str in old_thing:
+            if old_thing != new_thing:
                 deque.remove(old_thing)
     add_one_only(new_thing, deque)
 
@@ -77,12 +81,12 @@ def handle_wedged_nodes(trie, wdg_q, off_q):
                     add_one_only(wedged_node, off_q)
 
 
-def lookup_node_id(node_id, deque):
+def lookup_node_id(key_str, deque):
     """
-    Find the first node ID in the queue item and return the associated
+    Find the first item with key = `key_str` and return the associated
     item.
     :notes: item should be a dict with node ID as key
-    :param node_id: node ID str
+    :param key_str: node ID str
     :param deque: target queue to search
     :return: queue item <dict> or None
     """
@@ -90,28 +94,28 @@ def lookup_node_id(node_id, deque):
 
     for item in list(deque):
         if isinstance(item, dict):
-            if node_id in item:
+            if key_str in item:
                 result = item
     return result
 
 
-def make_cfg_msg(trie, node_id):
+def make_cfg_msg(trie, key_str):
     """
     Create the net_cfg msg for a node and return cfg string.  Node
     IDs come from the node/active queues and networks come from the
     `id_trie`.
     :param trie: state trie of nodes/nets
-    :param node_id: node ID str
+    :param key_str: node ID str
     :return: JSON str (net_id cfg msg)
     """
     import json
 
     d = {
-        "node_id": "{}".format(node_id),
+        "node_id": "{}".format(key_str),
         "networks": []
     }
 
-    d["networks"] = trie[node_id][0]
+    d["networks"] = trie[key_str][0]
 
     return json.dumps(d)
 
