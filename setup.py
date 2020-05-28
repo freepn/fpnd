@@ -8,7 +8,7 @@ except ImportError:
     from distutils.core import setup
 
 
-__version__ = '0.8.3'
+__version__ = '0.8.4'
 
 # make setuptools happy with PEP 440-compliant post version
 # (enable this for patch releases)
