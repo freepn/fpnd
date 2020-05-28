@@ -108,17 +108,19 @@ def run_until_success(max_retry=2):
     return run_until_success_decorator
 
 
-def show_job_tags(job_func):
-    """
-    decorator to show job name and tags for current job
-    """
-    import schedule
+def show_job_tags():
+    def show_job_tags_decorator(job_func):
+        """
+        decorator to show job name and tags for current job
+        """
+        import schedule
 
-    @functools.wraps(job_func)
-    def job_tags(*args, **kwargs):
-        current_job = min(job for job in schedule.jobs)
-        job_tags = current_job.tags
-        logger.info('JOB: {}'.format(current_job))
-        logger.info('TAGS: {}'.format(job_tags))
-        return job_func(*args, **kwargs)
-    return job_tags
+        @functools.wraps(job_func)
+        def job_tags(*args, **kwargs):
+            current_job = min(job for job in schedule.jobs)
+            job_tags = current_job.tags
+            logger.info('JOB: {}'.format(current_job))
+            logger.info('TAGS: {}'.format(job_tags))
+            return job_func(*args, **kwargs)
+        return job_tags
+    return show_job_tags_decorator

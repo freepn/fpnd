@@ -72,12 +72,14 @@ async def main():
             logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
                                                                 list(staging_q)))
 
-            for mbr_id in [x for x in staging_q if x not in list(ct.id_trie)]:
-                if is_exit_node(mbr_id):
-                    await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q, ex=True)
-                else:
-                    await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q)
+            for mbr_id in staging_q:
+                if mbr_id not in list(ct.id_trie):
+                    if is_exit_node(mbr_id):
+                        await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q, ex=True)
+                    else:
+                        await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q)
                 publish_cfg_msg(ct.id_trie, mbr_id, addr='127.0.0.1')
+
             for mbr_id in [x for x in staging_q if x in list(ct.id_trie)]:
                 staging_q.remove(mbr_id)
             logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),

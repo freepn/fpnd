@@ -67,12 +67,12 @@ async def main():
                         if peer['identity'] not in node_q:
                             node_q.append(peer['identity'])
                             logger.debug('Adding LEAF node id: {}'.format(peer['identity']))
-                    populate_leaf_list(node_q, wait_q, peer)
+                    populate_leaf_list(node_q, wait_q, tmp_q, peer)
                     num_leaves = num_leaves + 1
             if num_leaves == 0 and st.leaf_nodes != []:
                 st.leaf_nodes = []
             if st.leaf_nodes != []:
-                logger.debug('Found leaf node(s): {}'.format(st.leaf_nodes))
+                logger.debug('Found {} leaf node(s)'.format(num_leaves))
             logger.debug('{} node(s) in node queue: {}'.format(len(node_q), list(node_q)))
 
             logger.debug('{} node(s) in reg queue: {}'.format(len(reg_q), list(reg_q)))
@@ -97,6 +97,7 @@ off_q = dc.Deque(directory=get_cachedir('off_queue'))
 wdg_q = dc.Deque(directory=get_cachedir('wedge_queue'))
 pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
 reg_q = dc.Deque(directory=get_cachedir('reg_queue'))
+tmp_q = dc.Deque(directory=get_cachedir('tmp_queue'))
 wait_q = dc.Deque(directory=get_cachedir('wait_queue'))
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())

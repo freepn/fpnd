@@ -45,6 +45,8 @@ from node_tools.helper_funcs import run_event_handlers
 from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import validate_role
+from node_tools.msg_queues import avoid_and_update
+from node_tools.msg_queues import lookup_node_id
 from node_tools.msg_queues import populate_leaf_list
 from node_tools.node_funcs import cycle_adhoc_net
 from node_tools.node_funcs import do_cleanup
@@ -334,14 +336,16 @@ def test_populate_leaf_list():
 
     node_q = dc.Deque(directory='/tmp/test-nq')
     wait_q = dc.Deque(directory='/tmp/test-wq')
+    tmp_q = dc.Deque(directory='/tmp/test-tq')
     node_q.clear()
     wait_q.clear()
+    tmp_q.clear()
     node_q.append('beef9f73c6')
 
     peers = get_peer_status(cache)
     for peer in peers:
         if peer['role'] == 'LEAF':
-            populate_leaf_list(node_q, wait_q, peer)
+            populate_leaf_list(node_q, wait_q, tmp_q, peer)
             assert len(st.leaf_nodes) == 1
             assert st.leaf_nodes[0]['beef9f73c6'] == '134.47.250.137'
 
@@ -349,11 +353,23 @@ def test_populate_leaf_list():
     wait_q.append('beef9f73c6')
     for peer in peers:
         if peer['role'] == 'LEAF':
-            populate_leaf_list(node_q, wait_q, peer)
+            populate_leaf_list(node_q, wait_q, tmp_q, peer)
             assert len(st.leaf_nodes) == 1
             assert st.leaf_nodes[0]['beef9f73c6'] == '134.47.250.137'
 
+    res = lookup_node_id('beef9f73c6', tmp_q)
+    assert res['beef9f73c6'] == '134.47.250.137'
+    assert len(tmp_q) == 1
+
+    node_update = dict({'beef9f73c6': '134.47.250.42'})
+    avoid_and_update('beef9f73c6', node_update, tmp_q)
+
+    res = lookup_node_id('beef9f73c6', tmp_q)
+    assert res['beef9f73c6'] == '134.47.250.42'
+    assert len(tmp_q) == 1
+
     wait_q.clear()
+    tmp_q.clear()
     st.leaf_nodes = []
 
 

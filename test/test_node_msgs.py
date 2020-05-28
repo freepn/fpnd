@@ -9,6 +9,7 @@ from nanoservice import Publisher
 from node_tools.msg_queues import clean_from_queue
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import handle_node_queues
+from node_tools.msg_queues import lookup_node_id
 from node_tools.msg_queues import make_cfg_msg
 from node_tools.msg_queues import manage_incoming_nodes
 from node_tools.msg_queues import process_hold_queue
@@ -25,8 +26,8 @@ from node_tools.trie_funcs import update_id_trie
 
 def test_invalid_msg():
     msgs = ['deadbeeh00', 'deadbeef0', 'deadbeef000']
-    with pytest.raises(AssertionError):
-        for msg in msgs:
+    for msg in msgs:
+        with pytest.raises(AssertionError):
             res = valid_announce_msg(msg)
 
 
@@ -38,16 +39,16 @@ def test_valid_msg():
 def test_invalid_cfg_msg():
 
     msg_list = [
-                '{"node": "02beefdead", "networks": ["7ac4235ec5d3d938"]}',
                 '{"node_id": "02beefdead"}',
-                '{"node_id": "beefdead02", "networks": [], "networks": []}',
-                '{"node_id": "02beefdead", "net0_id": "7ac4235ec5d3d938"}',
-                '{"node_id": "02beefhead", "networks": []}'
+                '{"node_id": "02beefdead", "net0_id": ["7ac4235ec5d3d938"]}',
+                '{"node_id": "022beefdead", "networks": ["7ac4235ec5d3d938"]}',
+                '{"node": "02beefdead", "networks": ["7ac4235ec5d3d938"]}',
+                '{"node_id": "02beefhead", "networks": ["7ac4235ec5d3d938"]}'
                ]
 
-    with pytest.raises(AssertionError):
-        for msg in msg_list:
-            res = valid_cfg_msg(msg)
+    for msg in msg_list:
+        with pytest.raises(AssertionError):
+            valid_cfg_msg(msg)
 
 
 def test_valid_cfg_msg():
@@ -219,10 +220,26 @@ class QueueHandlingTest(unittest.TestCase):
         self.node_q.append(self.node1)
         self.node_q.append(self.node2)
         self.node_q.append(self.node3)
+        self.node_q.append(self.node1)
 
         clean_from_queue(self.node1, self.node_q)
         self.assertNotIn(self.node1, list(self.node_q))
         # print(list(self.node_q))
+
+        self.dict1 = {self.node1: '127.0.0.1'}
+        self.dict2 = {self.node2: '127.0.0.1'}
+        self.node_q.append(self.dict1)
+        self.node_q.append(self.dict2)
+        self.node_q.append(self.dict1)
+        self.node_q.append(self.dict2)
+        res = lookup_node_id(self.node1, self.node_q)
+        self.assertEqual(res, self.dict1)
+        clean_from_queue(self.dict1, self.node_q)
+        # print(list(self.node_q))
+        res = lookup_node_id(self.node1, self.node_q)
+        self.assertIsNone(res)
+        self.assertNotIn(self.dict1, list(self.node_q))
+        self.assertIn(self.dict2, list(self.node_q))
 
     def test_handle_node_queues(self):
         self.node_q.append(self.node1)
@@ -253,6 +270,7 @@ class QueueHandlingTest(unittest.TestCase):
         self.assertEqual(list(self.wait_q), [self.node2])
 
         # register node2
+        self.node_q.append(self.node2)
         self.reg_q.append(self.node2)
 
         manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
@@ -288,6 +306,7 @@ class QueueHandlingTest(unittest.TestCase):
 
         # node1 still not seen yet, late register from node2
         self.node_q.append(self.node1)
+        self.node_q.append(self.node2)
         self.reg_q.append(self.node2)
 
         manage_incoming_nodes(self.node_q, self.reg_q, self.wait_q)
@@ -312,7 +331,6 @@ class QueueMsgHandlingTest(unittest.TestCase):
         super(QueueMsgHandlingTest, self).setUp()
         import diskcache as dc
 
-        self.hold_q = dc.Deque(directory='/tmp/test-hq')
         self.node_q = dc.Deque(directory='/tmp/test-nq')
         self.reg_q = dc.Deque(directory='/tmp/test-rq')
         self.wait_q = dc.Deque(directory='/tmp/test-wq')
@@ -322,7 +340,6 @@ class QueueMsgHandlingTest(unittest.TestCase):
 
     def tearDown(self):
 
-        self.hold_q.clear()
         self.node_q.clear()
         self.reg_q.clear()
         self.wait_q.clear()
@@ -339,18 +356,18 @@ class QueueMsgHandlingTest(unittest.TestCase):
         self.assertEqual(list(self.reg_q), [])
         self.assertEqual(list(self.wait_q), [self.node3])
 
-        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.hold_q, self.node1)
+        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node1)
         self.assertEqual(list(self.node_q), [self.node1, self.node2, self.node3])
         self.assertEqual(list(self.reg_q), [self.node1])
         self.assertEqual(list(self.wait_q), [self.node3])
 
-        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.hold_q, self.node2)
+        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node2)
         self.assertEqual(list(self.node_q), [self.node1, self.node2, self.node3])
         self.assertEqual(list(self.reg_q), [self.node1, self.node2])
         self.assertEqual(list(self.wait_q), [self.node3])
 
         # we now allow duplicate IDs in the reg queue
-        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.hold_q, self.node3)
+        handle_announce_msg(self.node_q, self.reg_q, self.wait_q, self.node3)
         self.assertIn(self.node3, list(self.reg_q))
         self.assertEqual(list(self.wait_q), [self.node3])
         # print(list(self.node_q), list(self.reg_q), list(self.wait_q))
