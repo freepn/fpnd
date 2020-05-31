@@ -7,6 +7,7 @@ import logging
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import find_ipv4_iface
+from node_tools.helper_funcs import json_load_file
 
 
 logger = logging.getLogger(__name__)
@@ -175,10 +176,10 @@ def netcfg_get_ipnet(addr, cidr='/30'):
 
 def set_network_cfg(cfg_addr):
     """
-    Take the netcfg mbr and wrap it so it can be applied during mbr
+    Take the netcfg for mbr and wrap it so it can be applied during mbr
     bootstrap (ie, wrap the address with authorized=True, etc).
-    :param netcfg.mbr: gw or host portion of netcfg object
-    :return dict: formatted cfg fragment for async payload
+    :param cfg_addr: <list> gw or host portion of netcfg object
+    :return: <dict> formatted cfg fragment for async payload
     """
 
     src_addr = {

@@ -99,7 +99,7 @@ async def main():
                 send_cfg_handler()
 
             # check the state of exit network/route
-            exit_id = get_ztnwid('fpn0', 'fpn_id0')
+            exit_id = get_ztnwid('fpn0', 'fpn_id0', nsState)
             if exit_id is not None:
                 for net in netStatus:
                     if net['identity'] == exit_id:

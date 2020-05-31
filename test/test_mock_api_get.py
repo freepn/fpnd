@@ -161,6 +161,19 @@ def test_net_client_status():
         assert status == 'OK'
 
 
+def test_load_rules():
+    import json
+    from node_tools import ctlr_data as ct
+
+    rule_data = ct.rules
+    rule_size = len(rule_data['rules'])
+
+    # print(rule_data)
+    assert isinstance(rule_data, dict)
+    assert rule_size == 15
+    # print(json.dumps(rule_data))
+
+
 def test_get_network_id():
     res = get_network_id(add_net)
     assert res == 'b6079f73ca8129ad'
@@ -442,14 +455,15 @@ def test_get_ztnwid():
     from node_tools import state_data as stest
 
     nodeState = AttrDict.from_nested_dict(stest.fpnState)
-    res = get_ztnwid('fpn0', 'fpn_id0')
+    res = get_ztnwid('fpn0', 'fpn_id0', nodeState)
     assert res == 'b6079f73c63cea29'
 
-    res = get_ztnwid('fpn1', 'fpn_id1')
+    res = get_ztnwid('fpn1', 'fpn_id1', nodeState)
     assert res == 'b6079f73ca8129ad'
 
-    stest.fpnState['fpn1'] = stest.fpnState['fpn_id1'] = None
-    res = get_ztnwid('fpn1', 'fpn_id1')
+    nodeState['fpn1'] = None
+    nodeState['fpn_id1'] = None
+    res = get_ztnwid('fpn1', 'fpn_id1', nodeState)
     assert res is None
 
 

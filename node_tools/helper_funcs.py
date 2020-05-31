@@ -176,7 +176,7 @@ def json_dump_file(endpoint, data, dirname=None):
         opener = None
 
     with open(endpoint + '.json', 'w', opener=opener) as fp:
-        json.dump(data, fp)
+        json.dump(data, fp, sort_keys=False)
     logger.debug('{} data in {}.json'.format(endpoint, endpoint))
 
 
