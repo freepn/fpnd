@@ -36,6 +36,9 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
     await add_network_object(client, ctlr_id=ctlr_id)
     net_id = get_network_id(client.data)
     logger.debug('BOOTSTRAP: added network id {}'.format(net_id))
+    net_rules = ct.rules
+    await config_network_object(client, net_rules, net_id)
+    logger.debug('BOOTSTRAP: added network rules {}'.format(net_rules))
     await get_network_object_ids(client)
     logger.debug('BOOTSTRAP: got network list {}'.format(client.data))
 

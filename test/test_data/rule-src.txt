@@ -1,0 +1,35 @@
+# Whitelist only IPv4 (/ARP) and IPv6 traffic and allow only ZeroTier-assigned IP addresses
+drop                      # drop cannot be overridden by capabilities
+  not ethertype ipv4      # frame is not ipv4
+  and not ethertype arp   # AND is not ARP
+#  and not ethertype ipv6  # AND is not ipv6
+;
+
+# This prevents IP spoofing but also 
+# blocks manual IP management at the OS level and
+# bridging/routing unless special rules to exempt 
+# certain hosts or traffic are added before
+# this rule.
+#drop
+#  not chr ipauth
+#;
+
+# Allow HTTP, HTTPS by allowing all TCP packets (including SYN/!ACK) to these ports
+accept
+  ipprotocol tcp
+  and dport 80
+  or dport 443
+;
+
+# Drop TCP SYN,!ACK packets (new connections) not explicitly whitelisted above
+break                     # break can be overridden by a capability
+  chr tcp_syn             # TCP SYN (TCP flags will never match non-TCP packets)
+  and not chr tcp_ack     # AND not TCP ACK
+;
+
+# Allow all ICMP and IGMP
+accept ipprotocol 1;
+accept ipprotocol 2;
+
+# Accept other packets
+accept;

@@ -90,9 +90,11 @@ class BaseTestCase(unittest.TestCase):
         self.node_q = dc.Deque(directory='/tmp/test-nq')
         self.off_q = dc.Deque(directory='/tmp/test-oq')
         self.pub_q = dc.Deque(directory='/tmp/test-pq')
+        self.tmp_q = dc.Deque(directory='/tmp/test-tq')
         self.node_q.clear()
         self.off_q.clear()
         self.pub_q.clear()
+        self.tmp_q.clear()
         self.trie.clear()
 
         self.addr = '127.0.0.1'
@@ -123,6 +125,7 @@ class BaseTestCase(unittest.TestCase):
         self.node_q.clear()
         self.off_q.clear()
         self.pub_q.clear()
+        self.tmp_q.clear()
         self.service.socket.close()
 
 
@@ -183,7 +186,7 @@ class TestPubSub(BaseTestCase):
         self.node_q.append(self.node1)
 
         # Client side
-        drain_msg_queue(self.node_q, addr=self.addr, method='offline')
+        drain_msg_queue(self.node_q, tmp_q=self.tmp_q, addr=self.addr, method='offline')
 
         # server side
         res = self.service.process()
