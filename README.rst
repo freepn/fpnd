@@ -86,7 +86,10 @@ Currently all web traffic (ie, ports 80 and 443) is routed over virtual
 network links to an "exit" peer (although other ports may be added/dropped
 in future releases).  In adhoc mode, the default network rules allow all
 traffic, however, only the ports above are automatically routed over FPN
-network links.  **Do** use ``https`` for everything (*especially* anything
+network links.  In peer mode *no* other TCP/UDP traffic is allowed between
+peers *except* the routed ports above.
+
+The general advice is: **do** use ``https`` for everything (*especially* anything
 sensitive/private) and **don't** use ``http`` for anything.  At all.  Period.
 
 * adhoc mode - *you* own the network link and the peers

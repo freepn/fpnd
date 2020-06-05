@@ -19,8 +19,15 @@ exec 2> >(tee -ia /tmp/fpn0-down-${DATE}_error.log)
 
 #VERBOSE="anything"
 
-# set allowed ports
-ports_to_fwd="http https domain ntp ssh submission imaps ircs ircs-u"
+# set allowed ports (still TBD))
+ports_to_fwd="http https domain submission imaps ircs ircs-u"
+
+[[ -n $VERBOSE ]] && echo "Checking iptables binary..."
+IPTABLES=$(which iptables)
+HAS_LEGACY=$(which iptables-legacy)
+if [[ -n $HAS_LEGACY ]]; then
+    IPTABLES="${HAS_LEGACY}"
+fi
 
 [[ -n $VERBOSE ]] && echo "Checking kernel rp_filter setting..."
 RP_NEED="1"
@@ -103,11 +110,11 @@ if [[ -n $VERBOSE ]]; then
 fi
 
 [[ -n $VERBOSE ]] && echo "Deleting nat and mangle rules..."
-iptables -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
-iptables -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
+$IPTABLES -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
+$IPTABLES -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
 
-iptables -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
-iptables -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
+$IPTABLES -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
+$IPTABLES -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
 
 [[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then

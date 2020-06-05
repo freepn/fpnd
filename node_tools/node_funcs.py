@@ -123,7 +123,8 @@ def do_cleanup(path=None, addr=None):
                 logger.info('CLEANUP: shutting down {}'.format(iface))
                 cmd = get_net_cmds(path, iface)
                 res = do_net_cmd(cmd)
-                logger.info('CLEANUP: leaving network ID: {}'.format(state[net]))
+                logger.info('CLEANUP: {} shutdown returned {}'.format(iface, res))
+                # logger.info('CLEANUP: leaving network ID: {}'.format(state[net]))
                 res = run_ztcli_cmd(action='leave', extra=state[net])
                 logger.debug('CLEANUP: action leave returned: {}'.format(res))
 

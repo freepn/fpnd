@@ -5,11 +5,12 @@ After=zerotier-one.service
 
 [Service]
 ExecStart=/usr/lib/fpnd/fpnd.py start
-ExecStop=/usr/lib/fpnd/fpnd.py stop
+ExecStop=/bin/kill -TERM $MAINPID
+KillMode=none
 PIDFile=/run/fpnd.pid
-Type=simple
-Restart=on-failure
-RestartSec=5
+Type=forking
+TimeoutStartSec=5
+TimeoutStopSec=7
 
 [Install]
 WantedBy=multi-user.target

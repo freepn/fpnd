@@ -21,19 +21,15 @@ exec 2> >(tee -ia /tmp/fpn1-setup-${DATE}_error.log)
 # uncomment for more output
 #VERBOSE="anything"
 
-# set allowed ports
-ports_to_fwd="http https domain ntp ssh submission imaps ircs ircs-u"
+# set allowed ports (still TBD))
+ports_to_fwd="http https domain submission imaps ircs ircs-u"
 
-# uncomment AND set if you have a weird interface name that depends
-# on eth0 UP but null, eg, this is needed on espressobin
-#ETH0_NULL="lan1"
-
-#ZT_UP=$(/etc/init.d/zerotier status | grep -o started)
-#if [[ $ZT_UP != "started" ]]; then
-    #echo "FPN zerotier service is not running!!"
-    #echo "Please start the zerotier service and then re-run this script."
-    #exit 1
-#fi
+[[ -n $VERBOSE ]] && echo "Checking iptables binary..."
+IPTABLES=$(which iptables)
+HAS_LEGACY=$(which iptables-legacy)
+if [[ -n $HAS_LEGACY ]]; then
+    IPTABLES="${HAS_LEGACY}"
+fi
 
 zt_route_tgts=( $(ip route show | grep zt | cut -d" " -f3) )
 num_zt_tgts=${#zt_route_tgts[@]}
@@ -105,11 +101,11 @@ fi
 
 # setup nat/masq to forward outbound/return traffic
 [[ -n $VERBOSE ]] && echo "Deleting nat and forwarding rules..."
-iptables -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 80 -j ACCEPT
-iptables -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 443 -j ACCEPT
-iptables -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
-iptables -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 443 -j ACCEPT
-iptables -t nat -D POSTROUTING -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -j SNAT --to-source "${INET_ADDRESS}"
+$IPTABLES -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 80 -j ACCEPT
+$IPTABLES -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 443 -j ACCEPT
+$IPTABLES -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
+$IPTABLES -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 443 -j ACCEPT
+$IPTABLES -t nat -D POSTROUTING -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -j SNAT --to-source "${INET_ADDRESS}"
 
 #echo "Leaving FPN1 network..."
 #zerotier-cli leave "${ZT_SRC_NETID}"
