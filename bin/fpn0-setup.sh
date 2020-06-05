@@ -25,15 +25,15 @@ exec 2> >(tee -ia /tmp/fpn0-setup-${DATE}_error.log)
 
 #VERBOSE="anything"
 
-# set allowed ports
-ports_to_fwd="http https domain ntp ssh submission imaps ircs ircs-u"
+# set allowed ports (still TBD))
+ports_to_fwd="http https domain submission imaps ircs ircs-u"
 
-#ZT_UP=$(/etc/init.d/zerotier status | grep -o started)
-#if [[ $ZT_UP != "started" ]]; then
-    #echo "FPN zerotier service is not running!!"
-    #echo "Please start the zerotier service and re-run this script."
-    #exit 1
-#fi
+[[ -n $VERBOSE ]] && echo "Checking iptables binary..."
+IPTABLES=$(which iptables)
+HAS_LEGACY=$(which iptables-legacy)
+if [[ -n $HAS_LEGACY ]]; then
+    IPTABLES="${HAS_LEGACY}"
+fi
 
 [[ -n $VERBOSE ]] && echo "Checking kernel rp_filter setting..."
 RP_NEED="2"
@@ -122,12 +122,12 @@ ip rule add fwmark 0x1 table "${TABLE_NAME}"
 sleep 2
 
 # Mark these packets so that ip can route web traffic through fpn0
-iptables -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
-iptables -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
+$IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
+$IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
 
 # now rewrite the src-addr using snat
-iptables -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
-iptables -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
+$IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
+$IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
 
 [[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then
