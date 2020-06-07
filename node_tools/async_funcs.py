@@ -164,7 +164,7 @@ async def offline_mbr_node(client, node_id):
         else:
             await config_network_object(client, deauth, exit_net, node_id)
             cleanup_state_tries(ct.net_trie, ct.id_trie, exit_net, node_id, mbr_only=True)
-            logger.debug('OFFLINE: deauthed node id {} from exit net'.format(node_id))
+            logger.debug('OFFLINE: deauthed node id {} from exit net {}'.format(node_id, exit_net))
             await delete_network_object(client, node_net)
             cleanup_state_tries(ct.net_trie, ct.id_trie, node_net, node_id)
             logger.debug('OFFLINE: removed network id {} and node {}'.format(node_net, node_id))
@@ -189,10 +189,11 @@ async def update_state_tries(client, net_trie, id_trie):
     logger.debug('{} networks found'.format(len(client.data)))
     net_list = client.data
     for net_id in net_list:
+        mbr_list = []
         # get details about each network and update trie data
         await get_network_object_data(client, net_id)
         net_trie[net_id] = client.data
-        load_id_trie(net_trie, id_trie, [net_id], [], nw=True)
+        # load_id_trie(net_trie, id_trie, [net_id], [], nw=True)
         await get_network_object_ids(client, net_id)
         logger.debug('network {} has {} possible member(s)'.format(net_id, len(client.data)))
         member_dict = client.data
@@ -203,6 +204,8 @@ async def update_state_tries(client, net_trie, id_trie):
                 logger.debug('adding member: {}'.format(mbr_id))
                 net_trie[net_id + mbr_id] = client.data
                 load_id_trie(net_trie, id_trie, [], [mbr_id])
+                mbr_list.append(mbr_id)
+        load_id_trie(net_trie, id_trie, [net_id], mbr_list, nw=True)
         logger.debug('member key suffixes: {}'.format(net_trie.suffixes(net_id)))
 
 

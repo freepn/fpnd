@@ -194,7 +194,7 @@ def unset_network_cfg():
     """
     Create a config fragment to unset (remove) the IP address and
     deauthorize the node.
-    :return dict: formatted cfg fragment for async payload
+    :return: <dict> formatted cfg fragment for async payload
     """
 
     src_addr = {

@@ -43,7 +43,7 @@ def check_trie_params(nw_id, node_id, needs):
     """Check load/update trie params for correctness"""
 
     for param in [nw_id, node_id, needs]:
-        if not type(param) is list:
+        if not isinstance(param, list):
             raise AssertionError('Invalid trie parameter: {}'.format(param))
     for param in [nw_id, node_id]:
         if not len(param) < 3:
@@ -74,6 +74,8 @@ def cleanup_state_tries(net_trie, id_trie, nw_id, node_id, mbr_only=False):
         for key in net_trie.keys(nw_id):
             del net_trie[key]
         del id_trie[nw_id]
+        if node_id in id_trie:
+            del id_trie[node_id]
 
 
 def find_dangling_nets(trie):
@@ -93,17 +95,17 @@ def find_dangling_nets(trie):
     return net_list
 
 
-def get_active_nodes(trie):
+def get_active_nodes(id_trie):
     """
     Find all the currently active nodes (search the ID trie).
     :notes: In this case the answer depends on when this runs (relative
-            to the `netstate` runner).
-    :param trie: ID state trie
+            to the cmds in `netstate` runner).
+    :param id_trie: ID state trie
     :return: list of node IDs (empty list if None)
     """
     node_list = []
 
-    for node in [x for x in list(trie) if len(x) == 10]:
+    for node in [x for x in list(id_trie) if len(x) == 10]:
         node_list.append(node)
     return node_list
 
@@ -111,8 +113,8 @@ def get_active_nodes(trie):
 def get_bootstrap_list(net_trie, id_trie):
     """
     Find all the nodes in the bootstrap chain (search the net trie).
-    :notes: We start counting from the first node attached to the exit
-            node.
+    :notes: We start counting from the last node in the bootstrap
+    chain.
     :param trie: net data trie
     :param trie: ID state trie
     :return: list of node IDs (empty list if None)
@@ -121,14 +123,16 @@ def get_bootstrap_list(net_trie, id_trie):
 
     node_list = []
     next_node = None
-    prev_node = get_exit_node_id()
+    exit_node = get_exit_node_id()
     dangle_list = find_dangling_nets(id_trie)
     last_node = dangle_list[1]
+    prev_node = last_node
 
-    while next_node != last_node:
-        _, _, next_node, _ = get_neighbor_ids(net_trie, prev_node)
-        node_list.append(next_node)
-        prev_node = next_node
+    if last_node != exit_node:
+        while next_node != exit_node:
+            node_list.append(prev_node)
+            _, _, _, next_node = get_neighbor_ids(net_trie, prev_node)
+            prev_node = next_node
 
     return node_list
 
@@ -178,7 +182,7 @@ def get_neighbor_ids(trie, node_id):
     src_node = None
     exit_node = None
 
-    for key in trie.keys():
+    for key in trie:
         if node_id in key:
             key_list.append(key[0:16])
             node_list.append(trie[key])
@@ -201,7 +205,6 @@ def get_neighbor_ids(trie, node_id):
                 for node in trie.suffixes(exit_net)[1:]:
                     if node_id != node:
                         exit_node = node
-
     return src_net, exit_net, src_node, exit_node
 
 

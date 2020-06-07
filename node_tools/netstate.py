@@ -12,13 +12,9 @@ from ztcli_api import ZeroTierConnectionError
 
 from node_tools import ctlr_data as ct
 
-from node_tools.async_funcs import add_network_object
 from node_tools.async_funcs import bootstrap_mbr_node
-from node_tools.async_funcs import get_network_object_data
-from node_tools.async_funcs import get_network_object_ids
 from node_tools.async_funcs import offline_mbr_node
 from node_tools.async_funcs import update_state_tries
-from node_tools.cache_funcs import find_keys
 from node_tools.cache_funcs import handle_node_status
 from node_tools.ctlr_funcs import is_exit_node
 from node_tools.helper_funcs import AttrDict
@@ -28,6 +24,9 @@ from node_tools.helper_funcs import get_token
 from node_tools.msg_queues import handle_node_queues
 from node_tools.msg_queues import handle_wedged_nodes
 from node_tools.network_funcs import publish_cfg_msg
+from node_tools.trie_funcs import get_active_nodes
+from node_tools.trie_funcs import get_bootstrap_list
+
 
 logger = logging.getLogger('netstate')
 
@@ -39,7 +38,7 @@ async def main():
         client = ZeroTier(ZT_API, loop, session)
 
         try:
-            # start with handling offline nodes
+            # handle offline/wedged nodes
             handle_wedged_nodes(ct.net_trie, wdg_q, off_q)
             pre_off = list(off_q)
             logger.debug('{} nodes in offline queue: {}'.format(len(pre_off), pre_off))
@@ -85,6 +84,14 @@ async def main():
             logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
                                                                 list(staging_q)))
 
+            # refresh ctlr state tries again
+            await update_state_tries(client, ct.net_trie, ct.id_trie)
+
+            node_list = get_active_nodes(ct.id_trie)
+            logger.debug('{} nodes in node_list: {}'.format(len(node_list), node_list))
+            boot_list = get_bootstrap_list(ct.net_trie, ct.id_trie)
+            logger.debug('{} nodes in boot_list: {}'.format(len(boot_list), boot_list))
+
         except Exception as exc:
             logger.error('netstate exception was: {}'.format(exc))
             raise exc
@@ -96,5 +103,6 @@ node_q = dc.Deque(directory=get_cachedir('node_queue'))
 netobj_q = dc.Deque(directory=get_cachedir('netobj_queue'))
 staging_q = dc.Deque(directory=get_cachedir('staging_queue'))
 wdg_q = dc.Deque(directory=get_cachedir('wedge_queue'))
+
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())

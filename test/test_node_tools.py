@@ -810,8 +810,8 @@ def test_get_bootstrap_list():
 
     boot_list = get_bootstrap_list(ct.net_trie, ct.id_trie)
     assert exit_id not in boot_list
-    assert node_id == boot_list[0]
-    assert tail_id == boot_list[1]
+    assert node_id == boot_list[1]
+    assert tail_id == boot_list[0]
     # print(boot_list)
     NODE_SETTINGS['use_exitnode'].clear()
 
