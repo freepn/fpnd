@@ -930,6 +930,8 @@ def test_cleanup_state_tries():
     for key in ct.id_trie.keys():
         assert net2 not in key
         assert node2 not in key
+    cleanup_state_tries(ct.net_trie, ct.id_trie, net1, node1)
+    assert node1 not in ct.id_trie
 
 
 def test_get_dangling_net_data():
