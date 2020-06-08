@@ -57,6 +57,7 @@ from node_tools.trie_funcs import get_active_nodes
 from node_tools.trie_funcs import get_bootstrap_list
 from node_tools.trie_funcs import get_dangling_net_data
 from node_tools.trie_funcs import get_neighbor_ids
+from node_tools.trie_funcs import get_target_node_id
 from node_tools.trie_funcs import get_wedged_node_id
 from node_tools.trie_funcs import load_id_trie
 from node_tools.trie_funcs import load_state_trie
@@ -813,6 +814,18 @@ def test_get_bootstrap_list():
     assert node_id == boot_list[1]
     assert tail_id == boot_list[0]
     # print(boot_list)
+    NODE_SETTINGS['use_exitnode'].clear()
+
+
+def test_get_target_node_id():
+    from node_tools import ctlr_data as ct
+
+    node_list = ['beefea68e6', 'ee2eedb2e1', 'ff2ffdb2e1']
+    boot_list = ['deadbeef01', 'deadbeef02', 'deadbeef03']
+    NODE_SETTINGS['use_exitnode'].append('beefea68e6')
+
+    res = get_target_node_id(node_list, boot_list)
+    assert res in ['ee2eedb2e1', 'ff2ffdb2e1']
     NODE_SETTINGS['use_exitnode'].clear()
 
 

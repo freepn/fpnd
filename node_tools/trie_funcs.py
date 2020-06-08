@@ -57,8 +57,9 @@ def check_trie_params(nw_id, node_id, needs):
 
 def cleanup_state_tries(net_trie, id_trie, nw_id, node_id, mbr_only=False):
     """
-    Cleanup offlined nets and mbr nodes from state data tries. This needs
-    to run from offline_mbr_node to cleanup stale trie data.
+    Delete offlined mbr nodes/nets from state data tries. This needs to
+    run whenever nodes are disconnected or removed, in order to cleanup
+    stale trie data.
     :param net_trie: net state trie object
     :param id_trie: ID state trie object
     :param nw_id: network ID str
@@ -206,6 +207,22 @@ def get_neighbor_ids(trie, node_id):
                     if node_id != node:
                         exit_node = node
     return src_net, exit_net, src_node, exit_node
+
+
+def get_target_node_id(node_lst, boot_lst):
+    """
+    Return a target node ID from the active network to use as an
+    insertion point for all the nodes in the bootstrap list.
+    :notes: choice of tgt node is random; this may change
+    :param trie: net data trie
+    :param node_lst: list of all active nodes
+    :param boot_lst: list of bootstrap nodes
+    :return: <str> node ID
+    """
+    import random
+    from node_tools.ctlr_funcs import is_exit_node
+
+    return random.choice([x for x in node_lst if x not in boot_lst and not is_exit_node(x)])
 
 
 def get_wedged_node_id(trie, node_id):

@@ -26,6 +26,7 @@ from node_tools.msg_queues import handle_wedged_nodes
 from node_tools.network_funcs import publish_cfg_msg
 from node_tools.trie_funcs import get_active_nodes
 from node_tools.trie_funcs import get_bootstrap_list
+from node_tools.trie_funcs import get_target_node_id
 
 
 logger = logging.getLogger('netstate')
@@ -91,6 +92,15 @@ async def main():
             logger.debug('{} nodes in node_list: {}'.format(len(node_list), node_list))
             boot_list = get_bootstrap_list(ct.net_trie, ct.id_trie)
             logger.debug('{} nodes in boot_list: {}'.format(len(boot_list), boot_list))
+
+            # if true, we only have a boot list
+            if len(node_list) - len(boot_list) == 1:
+                # check if we have enough nodes for a network
+                if len(boot_list) >= 3:
+                    # detach and connect
+                    logger.debug('Creating network from boot_list {}'.format(boot_list))
+            else:
+                logger.debug('Adding bootstrap nodes {} to network'.format(boot_list))
 
         except Exception as exc:
             logger.error('netstate exception was: {}'.format(exc))

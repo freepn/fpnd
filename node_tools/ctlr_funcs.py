@@ -55,7 +55,7 @@ def handle_net_cfg(deque):
     derived from async wrapper funcs.  Context is netstate runner and
     bootstrap_mbr_node.
     :param deque: netobj queue
-    :return tuple: formatted cfg fragments
+    :return: tuple of formatted cfg fragments
     """
 
     ipnet = deque.popleft()
