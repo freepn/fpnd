@@ -15,6 +15,7 @@ from node_tools import ctlr_data as ct
 from node_tools.async_funcs import bootstrap_mbr_node
 from node_tools.async_funcs import close_mbr_net
 from node_tools.async_funcs import offline_mbr_node
+from node_tools.async_funcs import unwrap_mbr_net
 from node_tools.async_funcs import update_state_tries
 from node_tools.cache_funcs import handle_node_status
 from node_tools.ctlr_funcs import is_exit_node
@@ -90,11 +91,14 @@ async def main():
 
             node_list = get_active_nodes(ct.id_trie)
             logger.debug('{} nodes in node_list: {}'.format(len(node_list), node_list))
-            boot_list = get_bootstrap_list(ct.net_trie, ct.id_trie)
-            logger.debug('{} nodes in boot_list: {}'.format(len(boot_list), boot_list))
+            if len(node_list) > 0:
+                boot_list = get_bootstrap_list(ct.net_trie, ct.id_trie)
+                logger.debug('{} nodes in boot_list: {}'.format(len(boot_list), boot_list))
 
-            if len(boot_list) != 0:
-                await close_mbr_net(client, node_list, boot_list, min_nodes=3)
+                if len(boot_list) != 0:
+                    await close_mbr_net(client, node_list, boot_list, min_nodes=3)
+                elif len(boot_list) == 0 and len(node_list) > 1:
+                    await unwrap_mbr_net(client, node_list, boot_list, min_nodes=3)
 
         except Exception as exc:
             logger.error('netstate exception was: {}'.format(exc))
