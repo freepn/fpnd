@@ -13,6 +13,7 @@ from ztcli_api import ZeroTierConnectionError
 from node_tools import ctlr_data as ct
 
 from node_tools.async_funcs import bootstrap_mbr_node
+from node_tools.async_funcs import close_mbr_net
 from node_tools.async_funcs import offline_mbr_node
 from node_tools.async_funcs import update_state_tries
 from node_tools.cache_funcs import handle_node_status
@@ -26,7 +27,6 @@ from node_tools.msg_queues import handle_wedged_nodes
 from node_tools.network_funcs import publish_cfg_msg
 from node_tools.trie_funcs import get_active_nodes
 from node_tools.trie_funcs import get_bootstrap_list
-from node_tools.trie_funcs import get_target_node_id
 
 
 logger = logging.getLogger('netstate')
@@ -93,14 +93,8 @@ async def main():
             boot_list = get_bootstrap_list(ct.net_trie, ct.id_trie)
             logger.debug('{} nodes in boot_list: {}'.format(len(boot_list), boot_list))
 
-            # if true, we only have a boot list
-            if len(node_list) - len(boot_list) == 1:
-                # check if we have enough nodes for a network
-                if len(boot_list) >= 3:
-                    # detach and connect
-                    logger.debug('Creating network from boot_list {}'.format(boot_list))
-            else:
-                logger.debug('Adding bootstrap nodes {} to network'.format(boot_list))
+            if len(boot_list) != 0:
+                await close_mbr_net(client, node_list, boot_list, min_nodes=3)
 
         except Exception as exc:
             logger.error('netstate exception was: {}'.format(exc))

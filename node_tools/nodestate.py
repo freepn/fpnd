@@ -90,7 +90,7 @@ async def main():
 
             # check for reconfiguration events
             for net in netStatus:
-                if net['status'] == 'NOT_FOUND':
+                if net['status'] == 'NOT_FOUND' or net['status'] == 'ACCESS_DENIED':
                     run_ztcli_cmd(action='leave', extra=net['identity'])
                     net_id_handler(None, net['identity'], old=True)
                     nsState.cfg_ref = None

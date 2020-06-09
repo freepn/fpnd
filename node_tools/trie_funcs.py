@@ -96,6 +96,20 @@ def find_dangling_nets(trie):
     return net_list
 
 
+def find_exit_net(trie):
+    """
+    Find the network attached to the exit node (search the ID trie).
+    :param trie: ID state trie
+    :return: network ID for the (only) network on the exit node
+    """
+    net_list = []
+
+    for node in [x for x in list(trie) if len(x) == 10]:
+        if trie[node][1] == [False, False] and len(trie[node][0]) == 1:
+            net_list = trie[node][0]
+    return net_list
+
+
 def get_active_nodes(id_trie):
     """
     Find all the currently active nodes (search the ID trie).

@@ -90,6 +90,73 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
         # logger.debug('TRIE: id_trie has items: {}'.format(ct.id_trie.items()))
 
 
+async def close_mbr_net(client, node_lst, boot_lst, min_nodes=5):
+    """
+    Wrapper for closing the bootstrap chain or adding it to an existing
+    (closed) network. This should run in the ctlr state runner *after*
+    the other handlers.
+    :param client: ztcli_api client object
+    :param node_lst: list of all active nodes
+    :param boot_lst: list of bootstrap nodes
+    :param min_nodes: minimum number of nodes for a closed network
+    """
+    from node_tools import ctlr_data as ct
+    from node_tools import state_data as st
+
+    from node_tools.ctlr_funcs import unset_network_cfg
+    from node_tools.network_funcs import publish_cfg_msg
+    from node_tools.trie_funcs import cleanup_state_tries
+    from node_tools.trie_funcs import find_dangling_nets
+    from node_tools.trie_funcs import find_exit_net
+    from node_tools.trie_funcs import get_neighbor_ids
+    from node_tools.trie_funcs import get_target_node_id
+
+    head_id = boot_lst[-1]
+    tail_id = boot_lst[0]
+    head_exit_net = find_exit_net(ct.id_trie)[0]
+    head_src_net, _, _, _ = get_neighbor_ids(ct.net_trie, head_id)
+    tail_exit_net = find_dangling_nets(ct.id_trie)[0]
+    deauth = unset_network_cfg()
+
+    # if true, we only have a boot list
+    if len(node_lst) - len(boot_lst) == 1:
+        # check if we have enough nodes for a network
+        if len(boot_lst) >= min_nodes:
+            logger.debug('CLOSURE: creating network from boot_list {}'.format(boot_lst))
+            # detach and connect head to tail
+            await config_network_object(client, deauth, head_exit_net, head_id)
+            cleanup_state_tries(ct.net_trie, ct.id_trie, head_exit_net, head_id, mbr_only=True)
+            logger.debug('CLOSURE: deauthed node id {} from exit net {}'.format(head_id, head_exit_net))
+
+            await connect_mbr_node(client, head_id, head_src_net, tail_exit_net, tail_id)
+            publish_cfg_msg(ct.id_trie, head_id, addr='127.0.0.1')
+        else:
+            logger.debug('CLOSURE: not enough bootstrap nodes to wrap')
+    else:
+        logger.debug('CLOSURE: adding bootstrap nodes {} to network'.format(boot_lst))
+        tgt_id = get_target_node_id(node_lst, boot_lst)
+        tgt_net, tgt_exit_net, tgt_src_node, tgt_exit_node = get_neighbor_ids(ct.net_trie, tgt_id)
+        tgt_nets = [tgt_net, tgt_exit_net]
+        logger.debug('CLOSURE: got tgt_nets {}'.format(tgt_nets))
+        tgt_src_net, _, _, _ = get_neighbor_ids(ct.net_trie, tgt_src_node)
+
+        # detach and connect tgt to tail
+        await config_network_object(client, deauth, tgt_exit_net, tgt_id)
+        cleanup_state_tries(ct.net_trie, ct.id_trie, tgt_exit_net, tgt_id, mbr_only=True)
+        logger.debug('CLOSURE: deauthed node id {} from exit net {}'.format(tgt_id, tgt_exit_net))
+
+        await connect_mbr_node(client, tgt_id, tgt_src_net, tail_exit_net, tail_id)
+        publish_cfg_msg(ct.id_trie, tgt_id, addr='127.0.0.1')
+
+        # detach and connect head to tgt exit net
+        await config_network_object(client, deauth, head_exit_net, head_id)
+        cleanup_state_tries(ct.net_trie, ct.id_trie, head_exit_net, head_id, mbr_only=True)
+        logger.debug('CLOSURE: deauthed node id {} from exit net {}'.format(head_id, head_exit_net))
+
+        await connect_mbr_node(client, head_id, head_src_net, tgt_exit_net, tgt_exit_node)
+        publish_cfg_msg(ct.id_trie, head_id, addr='127.0.0.1')
+
+
 async def connect_mbr_node(client, node_id, src_net, exit_net, gw_node):
     """
     Wrapper to reconnect an existing member node; needs the (upstream)
