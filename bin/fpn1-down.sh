@@ -25,8 +25,8 @@ exec 2> >(tee -ia /tmp/fpn1-setup-${DATE}_error.log)
 ports_to_fwd="http https domain submission imaps ircs ircs-u"
 
 [[ -n $VERBOSE ]] && echo "Checking iptables binary..."
-IPTABLES=$(find /sbin -name iptables)
-HAS_LEGACY=$(find /sbin -name iptables-legacy)
+IPTABLES=$(find /sbin /usr/sbin -name iptables)
+HAS_LEGACY=$(find /sbin /usr/sbin -name iptables-legacy)
 if [[ -n $HAS_LEGACY ]]; then
     IPTABLES="${HAS_LEGACY}"
 fi

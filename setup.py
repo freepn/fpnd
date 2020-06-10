@@ -8,14 +8,14 @@ except ImportError:
     from distutils.core import setup
 
 
-__version__ = '0.8.7'
+FPND_VERSION = '0.8.7-2'
 
 # make setuptools happy with PEP 440-compliant post version
 # (enable this for patch releases)
-# REL_TAG = __version__.replace('-', 'p')
+REL_TAG = FPND_VERSION.replace('-', 'p')
 
 FPND_DOWNLOAD_URL = (
-    'https://github.com/sarnold/fpnd/tarball/' + __version__
+    'https://github.com/sarnold/fpnd/tarball/' + REL_TAG
 )
 
 
@@ -43,7 +43,7 @@ setup(
                       'scripts/msg_responder.py',
                       'scripts/msg_subscriber.py']),
     ],
-    version=__version__,
+    version=FPND_VERSION,
     license='AGPL-3.0',
     description='Python and shell fpnd node tools.',
     long_description=read_file('README.rst'),
