@@ -50,6 +50,7 @@ from node_tools.node_funcs import check_daemon
 from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import handle_moon_data
 from node_tools.node_funcs import parse_moon_data
+from node_tools.sched_funcs import catch_exceptions
 from node_tools.sched_funcs import check_return_status
 from node_tools.trie_funcs import cleanup_state_tries
 from node_tools.trie_funcs import create_state_trie
@@ -329,6 +330,10 @@ class NetHostCheckTest(unittest.TestCase):
     def test_run_host_check(self):
         """Requires live internet in test env"""
         res = run_host_check()
+
+    def test_run_host_check_exc(self):
+        """Test the decorator (should move this to decorator tests)"""
+        res = run_host_check('/bin')
 
 
 class NetPeerCheckTest(unittest.TestCase):
