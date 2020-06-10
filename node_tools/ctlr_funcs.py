@@ -55,7 +55,7 @@ def handle_net_cfg(deque):
     derived from async wrapper funcs.  Context is netstate runner and
     bootstrap_mbr_node.
     :param deque: netobj queue
-    :return tuple: formatted cfg fragments
+    :return: tuple of formatted cfg fragments
     """
 
     ipnet = deque.popleft()
@@ -194,7 +194,7 @@ def unset_network_cfg():
     """
     Create a config fragment to unset (remove) the IP address and
     deauthorize the node.
-    :return dict: formatted cfg fragment for async payload
+    :return: <dict> formatted cfg fragment for async payload
     """
 
     src_addr = {

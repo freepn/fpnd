@@ -53,10 +53,12 @@ from node_tools.node_funcs import parse_moon_data
 from node_tools.sched_funcs import check_return_status
 from node_tools.trie_funcs import cleanup_state_tries
 from node_tools.trie_funcs import create_state_trie
+from node_tools.trie_funcs import find_exit_net
 from node_tools.trie_funcs import get_active_nodes
 from node_tools.trie_funcs import get_bootstrap_list
 from node_tools.trie_funcs import get_dangling_net_data
 from node_tools.trie_funcs import get_neighbor_ids
+from node_tools.trie_funcs import get_target_node_id
 from node_tools.trie_funcs import get_wedged_node_id
 from node_tools.trie_funcs import load_id_trie
 from node_tools.trie_funcs import load_state_trie
@@ -761,6 +763,12 @@ def test_load_id_from_net_trie():
     assert ct.id_trie['beefea68e6'] == (['beafde52b4296ea5'], [False, False])
     assert ct.id_trie['beafde52b4a5f7ba'] == (['ee2eedb2e1', 'ff2ffdb2e1'], [False, False])
     assert ct.id_trie['beafde52b4a5e8ab'] == (['ff2ffdb2e1'], [False, True])
+
+    res = find_exit_net(ct.id_trie)
+    assert isinstance(res, list)
+    assert res == ['beafde52b4296ea5']
+    exit_net = find_exit_net(ct.id_trie)[0]
+    assert exit_net == res[0]
     # print(ct.id_trie.items())
 
     node_id = 'beefea68e6'
@@ -810,9 +818,21 @@ def test_get_bootstrap_list():
 
     boot_list = get_bootstrap_list(ct.net_trie, ct.id_trie)
     assert exit_id not in boot_list
-    assert node_id == boot_list[0]
-    assert tail_id == boot_list[1]
+    assert node_id == boot_list[-1]
+    assert tail_id == boot_list[0]
     # print(boot_list)
+    NODE_SETTINGS['use_exitnode'].clear()
+
+
+def test_get_target_node_id():
+    from node_tools import ctlr_data as ct
+
+    node_list = ['beefea68e6', 'ee2eedb2e1', 'ff2ffdb2e1']
+    boot_list = ['deadbeef01', 'deadbeef02', 'deadbeef03']
+    NODE_SETTINGS['use_exitnode'].append('beefea68e6')
+
+    res = get_target_node_id(node_list, boot_list)
+    assert res in ['ee2eedb2e1', 'ff2ffdb2e1']
     NODE_SETTINGS['use_exitnode'].clear()
 
 
@@ -917,6 +937,8 @@ def test_cleanup_state_tries():
     for key in ct.id_trie.keys():
         assert net2 not in key
         assert node2 not in key
+    cleanup_state_tries(ct.net_trie, ct.id_trie, net1, node1)
+    assert node1 not in ct.id_trie
 
 
 def test_get_dangling_net_data():

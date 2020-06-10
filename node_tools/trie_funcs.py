@@ -43,7 +43,7 @@ def check_trie_params(nw_id, node_id, needs):
     """Check load/update trie params for correctness"""
 
     for param in [nw_id, node_id, needs]:
-        if not type(param) is list:
+        if not isinstance(param, list):
             raise AssertionError('Invalid trie parameter: {}'.format(param))
     for param in [nw_id, node_id]:
         if not len(param) < 3:
@@ -57,8 +57,9 @@ def check_trie_params(nw_id, node_id, needs):
 
 def cleanup_state_tries(net_trie, id_trie, nw_id, node_id, mbr_only=False):
     """
-    Cleanup offlined nets and mbr nodes from state data tries. This needs
-    to run from offline_mbr_node to cleanup stale trie data.
+    Delete offlined mbr nodes/nets from state data tries. This needs to
+    run whenever nodes are disconnected or removed, in order to cleanup
+    stale trie data.
     :param net_trie: net state trie object
     :param id_trie: ID state trie object
     :param nw_id: network ID str
@@ -74,6 +75,8 @@ def cleanup_state_tries(net_trie, id_trie, nw_id, node_id, mbr_only=False):
         for key in net_trie.keys(nw_id):
             del net_trie[key]
         del id_trie[nw_id]
+        if node_id in id_trie:
+            del id_trie[node_id]
 
 
 def find_dangling_nets(trie):
@@ -93,17 +96,31 @@ def find_dangling_nets(trie):
     return net_list
 
 
-def get_active_nodes(trie):
+def find_exit_net(trie):
+    """
+    Find the network attached to the exit node (search the ID trie).
+    :param trie: ID state trie
+    :return: network ID for the (only) network on the exit node
+    """
+    net_list = []
+
+    for node in [x for x in list(trie) if len(x) == 10]:
+        if trie[node][1] == [False, False] and len(trie[node][0]) == 1:
+            net_list = trie[node][0]
+    return net_list
+
+
+def get_active_nodes(id_trie):
     """
     Find all the currently active nodes (search the ID trie).
     :notes: In this case the answer depends on when this runs (relative
-            to the `netstate` runner).
-    :param trie: ID state trie
+            to the cmds in `netstate` runner).
+    :param id_trie: ID state trie
     :return: list of node IDs (empty list if None)
     """
     node_list = []
 
-    for node in [x for x in list(trie) if len(x) == 10]:
+    for node in [x for x in list(id_trie) if len(x) == 10]:
         node_list.append(node)
     return node_list
 
@@ -111,8 +128,8 @@ def get_active_nodes(trie):
 def get_bootstrap_list(net_trie, id_trie):
     """
     Find all the nodes in the bootstrap chain (search the net trie).
-    :notes: We start counting from the first node attached to the exit
-            node.
+    :notes: We start counting from the last node in the bootstrap
+    chain.
     :param trie: net data trie
     :param trie: ID state trie
     :return: list of node IDs (empty list if None)
@@ -121,14 +138,16 @@ def get_bootstrap_list(net_trie, id_trie):
 
     node_list = []
     next_node = None
-    prev_node = get_exit_node_id()
+    exit_node = get_exit_node_id()
     dangle_list = find_dangling_nets(id_trie)
     last_node = dangle_list[1]
+    prev_node = last_node
 
-    while next_node != last_node:
-        _, _, next_node, _ = get_neighbor_ids(net_trie, prev_node)
-        node_list.append(next_node)
-        prev_node = next_node
+    if last_node != exit_node:
+        while next_node != exit_node:
+            node_list.append(prev_node)
+            _, _, _, next_node = get_neighbor_ids(net_trie, prev_node)
+            prev_node = next_node
 
     return node_list
 
@@ -178,7 +197,7 @@ def get_neighbor_ids(trie, node_id):
     src_node = None
     exit_node = None
 
-    for key in trie.keys():
+    for key in trie:
         if node_id in key:
             key_list.append(key[0:16])
             node_list.append(trie[key])
@@ -201,8 +220,23 @@ def get_neighbor_ids(trie, node_id):
                 for node in trie.suffixes(exit_net)[1:]:
                     if node_id != node:
                         exit_node = node
-
     return src_net, exit_net, src_node, exit_node
+
+
+def get_target_node_id(node_lst, boot_lst):
+    """
+    Return a target node ID from the active network to use as an
+    insertion point for all the nodes in the bootstrap list.
+    :notes: choice of tgt node is random; this may change
+    :param trie: net data trie
+    :param node_lst: list of all active nodes
+    :param boot_lst: list of bootstrap nodes
+    :return: <str> node ID
+    """
+    import random
+    from node_tools.ctlr_funcs import is_exit_node
+
+    return random.choice([x for x in node_lst if x not in boot_lst and not is_exit_node(x)])
 
 
 def get_wedged_node_id(trie, node_id):
