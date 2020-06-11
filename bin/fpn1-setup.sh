@@ -34,7 +34,7 @@ if [[ -n $HAS_LEGACY ]]; then
     IPTABLES="${HAS_LEGACY}"
 fi
 
-zt_route_tgts=( $(ip route show | grep zt | cut -d" " -f3) )
+zt_route_tgts=( $(ip route show | grep zt | grep -v '169.254' | cut -d" " -f3) )
 num_zt_tgts=${#zt_route_tgts[@]}
 
 if ((num_zt_tgts < 1)); then
@@ -82,7 +82,7 @@ if [[ -n $ETH0_NULL ]]; then
 fi
 
 INET_ADDRESS=$(ip address show "${IPV4_INTERFACE}" | awk '/inet / {print $2}' | cut -d/ -f1)
-ZT_SRC_NET=$(ip route show | grep ${ZT_INTERFACE} | awk '{print $1}')
+ZT_SRC_NET=$(ip route show | grep ${ZT_INTERFACE} | grep -v '169.254' | awk '{print $1}')
 
 if [[ -n $VERBOSE ]]; then
     echo "Found these devices and parameters:"
