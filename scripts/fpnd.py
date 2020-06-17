@@ -13,6 +13,8 @@ import functools
 import diskcache as dc
 from daemon import Daemon
 
+from node_tools import __version__ as fpnd_version
+
 from node_tools.ctlr_funcs import gen_netobj_queue
 from node_tools.cache_funcs import delete_cache_entry
 from node_tools.data_funcs import update_runner
@@ -131,6 +133,7 @@ def do_scheduling():
             logger.error('Have you created a network yet?')
 
     logger.debug('MODE: startup mode is {} and role is {}'.format(mode, node_role))
+    logger.info('You are running fpnd/node_tools version {}'.format(fpnd_version))
 
     while True:
         schedule.run_pending()

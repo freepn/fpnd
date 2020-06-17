@@ -662,8 +662,6 @@ def test_daemon_can_start():
     res = control_daemon('start')
     assert res.returncode == 0
     assert 'Starting' in res.stdout
-    res = check_daemon()
-    assert res is True
 
 
 def test_daemon_can_stop():

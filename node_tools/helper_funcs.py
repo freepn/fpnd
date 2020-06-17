@@ -26,6 +26,7 @@ ENODATA = Constant('ENODATA')  # error return for async state data updates
 NODE_SETTINGS = {
     u'max_cache_age': 60,  # maximum cache age in seconds
     u'use_localhost': False,  # messaging interface to use
+    u'runas_user': False,  # user to run as
     u'node_role': None,  # role this node will run as
     u'ctlr_list': ['edf70dc89a'],  # list of fpn controller nodes
     u'moon_list': ['9790eaaea1'],  # list of fpn moons to orbiit
@@ -67,15 +68,19 @@ def config_from_ini(file_path=None):
 
 def do_setup():
     import os
+    from appdirs import AppDirs
 
+    dirs = AppDirs('fpnd', 'FreePN')
     my_conf, msg = config_from_ini()
     if my_conf:
         role = my_conf['Options']['role']
         mode = my_conf['Options']['mode']
         debug = my_conf.getboolean('Options', 'debug')
+        user_perms = my_conf.getboolean('Options', 'user_perms')
         home = my_conf['Paths']['home_dir']
         NODE_SETTINGS['mode'] = mode
         NODE_SETTINGS['debug'] = debug
+        NODE_SETTINGS['runas_user'] = user_perms
         NODE_SETTINGS['home_dir'] = home
         if 'system' not in msg:
             prefix = my_conf['Options']['prefix']
@@ -83,6 +88,9 @@ def do_setup():
             prefix = ''
         pid_path = my_conf['Paths']['pid_path']
         log_path = my_conf['Paths']['log_path']
+        if user_perms:
+            pid_path = dirs.user_state_dir
+            log_path = dirs.user_log_dir
         pid_file = my_conf['Options']['pid_name']
         log_file = my_conf['Options']['log_name']
         pid = os.path.join(pid_path, prefix, pid_file)
@@ -127,14 +135,25 @@ def find_ipv4_iface(addr_string, strip=True):
         return False
 
 
-def get_cachedir(dir_name='fpn_cache'):
+def get_cachedir(dir_name='fpn_cache', user_dirs=False):
     """
     Get temp cachedir according to OS (create it if needed)
     * override the dir_name arg for non-cache data
     """
     import os
-    import tempfile
-    temp_dir = tempfile.gettempdir()
+    from appdirs import AppDirs
+
+    dirs = AppDirs('fpnd', 'FreePN')
+    temp_dir = dirs.user_cache_dir
+    if not user_dirs and not NODE_SETTINGS['runas_user']:
+        temp_dir = dirs.site_data_dir
+
+    if not os.access(temp_dir, os.X_OK | os.W_OK):
+        logger.error('Cannot use path {}!'.format(temp_dir))
+        import tempfile
+        temp_dir = tempfile.gettempdir()
+        logger.info('Falling back to system temp dir: {}'.format(temp_dir))
+
     cache_dir = os.path.join(temp_dir, dir_name)
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)

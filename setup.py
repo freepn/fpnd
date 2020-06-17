@@ -1,22 +1,12 @@
 # -*- coding: utf-8 -*-
 """Setup file for fpnd node tools."""
+import ast
 import codecs
 
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
-
-
-FPND_VERSION = '0.8.7-2'
-
-# make setuptools happy with PEP 440-compliant post version
-# (enable this for patch releases)
-REL_TAG = FPND_VERSION.replace('-', 'p')
-
-FPND_DOWNLOAD_URL = (
-    'https://github.com/sarnold/fpnd/tarball/' + REL_TAG
-)
 
 
 def read_file(filename):
@@ -26,6 +16,21 @@ def read_file(filename):
     with codecs.open(filename, 'r', 'utf8') as f:
         return f.read()
 
+
+for line in read_file('node_tools/__init__.py').splitlines():
+    if line.startswith('__version__'):
+        version = ast.literal_eval(line.split('=', 1)[1].strip())
+        break
+
+FPND_VERSION = version
+
+# make setuptools happy with PEP 440-compliant post version
+# (enable this for patch releases using n.n.n-n)
+#REL_TAG = FPND_VERSION.replace('-', 'p')
+
+FPND_DOWNLOAD_URL = (
+    'https://github.com/sarnold/fpnd/tarball/' + FPND_VERSION
+)
 
 setup(
     name='fpnd',
@@ -53,6 +58,7 @@ setup(
     download_url=FPND_DOWNLOAD_URL,
     keywords=['freepn', 'vpn', 'p2p'],
     install_requires=[
+        'appdirs @ git+https://github.com/ActiveState/appdirs@1.4.1',
         'datrie @ git+https://github.com/freepn/datrie@0.8.1',
         'diskcache @ git+https://github.com/grantjenks/python-diskcache@v4.1.0',
         'nanoservice @ git+https://github.com/freepn/nanoservice@0.7.2p1',
