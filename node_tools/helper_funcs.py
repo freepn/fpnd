@@ -145,8 +145,14 @@ def get_cachedir(dir_name='fpn_cache', user_dirs=False):
 
     dirs = AppDirs('fpnd', 'FreePN')
     temp_dir = dirs.user_cache_dir
-    if not user_dirs:
+    if not user_dirs and not NODE_SETTINGS['runas_user']:
         temp_dir = dirs.site_data_dir
+
+    if not os.access(temp_dir, os.X_OK | os.W_OK):
+        logger.error('Cannot use path {}!'.format(temp_dir))
+        import tempfile
+        temp_dir = tempfile.gettempdir()
+        logger.info('Falling back to system temp dir: {}'.format(temp_dir))
 
     cache_dir = os.path.join(temp_dir, dir_name)
     if not os.path.exists(cache_dir):

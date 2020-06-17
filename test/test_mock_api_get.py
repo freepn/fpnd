@@ -104,8 +104,8 @@ add_net = {'authTokens': [{}],
 
 
 # has_aging = False
-cache = Index(get_cachedir(dir_name='fpn_test'))
-net_q = Deque(get_cachedir(dir_name='net_queue'))
+cache = Index(get_cachedir(dir_name='fpn_test', user_dirs=True))
+net_q = Deque(get_cachedir(dir_name='net_queue', user_dirs=True))
 max_age = NODE_SETTINGS['max_cache_age']
 utc_stamp = datetime.datetime.now(utc)  # use local time for console
 
@@ -131,7 +131,7 @@ def load_data():
 
 
 def test_dump_and_load_json():
-    data_dir = get_cachedir(dir_name='fpn_test')
+    data_dir = get_cachedir(dir_name='fpn_test', user_dirs=True)
     (node_data, peer_data, net_data, moon_data) = load_data()
     json_dump_file('node', node_data, data_dir)
     node_dump = json_load_file('node', data_dir)
