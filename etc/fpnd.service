@@ -17,8 +17,8 @@ CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_DAC_OVERRIDE
 ExecStart=/usr/lib/fpnd/fpnd.py start
 ExecStop=/bin/kill -TERM $MAINPID
 KillMode=none
-PIDFile=/run/fpnd/fpnd.pid
 Type=forking
+PIDFile=/run/fpnd/fpnd.pid
 TimeoutStartSec=5
 TimeoutStopSec=7
 
