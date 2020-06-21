@@ -131,9 +131,11 @@ Prerequisites
 
 A supported linux distribution, mainly something that uses `.ebuilds`
 (eg, Gentoo or funtoo) or a supported Ubuntu series, currently xenial
-16.0.4 LTS and bionic 18.0.4 LTS (see the above `PPA on Launchpad`_).
+16.0.4 LTS, bionic 18.0.4 LTS, and focal 20.0.4 LTS (see the above
+`PPA on Launchpad`_).  Note you can also use the focal PPA series on
+the latest kali linux.
 
-For the latter, make sure you have the ``gpg`` and ``add-apt-repository``
+For all ubuntu series, make sure you have the ``gpg`` and ``add-apt-repository``
 commands installed and then add the PPA:
 
 ::
@@ -161,12 +163,62 @@ this PPA to your system", eg, ``41113ed57774ed19`` for `Embedded device ppa`_.
 
 .. _Embedded device ppa: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
 
+On kali you will need to edit the file created under ``/etc/apt/sources.list.d``
+for the PPA and change the series name to ``focal``.
 
 Finally, install fpnd:
 
 ::
 
   $ sudo apt-get install python3-fpnd
+
+
+Since the main user daemon ``fpnd.py`` needs to manipulate networks and
+routes, it currently runs under either systemd or openrc as a daemon service,
+which means you will need root (or sudo) priveleges to start and stop the init
+script or service files.  That said, we DO NOT recommend enabling the service
+to run on boot (so it *does not* need to be enabled this way).  We DO
+recommend using start|stop as needed so it only runs when you want it to.
+
+Please choose one of the following user config options for starting and
+stopping the ``fpnd`` Systemd service:
+
+* use ``sudo systemctl start|stop fpnd`` with your current setup
+* install the fpnd.sudoers file to allow ``sudo`` with no password prompt
+  for only the above ``fpnd`` service commands
+* install the polkit rule file ``org.freedesktop.systemd1.pkla`` for polkit
+  versions 0.105 or lower
+* install the polkit rule file ``55-fpnd-systemd.rules`` for newer polkit versions
+
+Note you should only choose **one** of the systemd options, or one for openrc.
+
+* to use ``sudo`` as-is, do nothing
+* to use the sudoers file, rename it just ``fpnd`` and drop it in the
+  ``/etc/sudoers.d/`` directory
+* to use the older polkit rule, drop the file in the directory
+  ``/etc/polkit-1/localauthority/50-local.d/``
+* to use the newer polkit rule, drop the file in the directory
+  ``/etc/polkit-1/rules.d/``
+
+Note to use any other method besides "do nothing" you must first add your
+user to the ``fpnd`` group for the required priveleges, eg:
+``usermod -aG fpnd <user>``
+
+If you are running Openrc as your init system, we have the following
+config options for running the Openrc init script:
+
+* use the usual ``sudo`` prefix and run the init script
+* install the fpnd.sudoers file to allow ``sudo`` with no password prompt
+  for only the above ``fpnd`` service commands
+* use a polkit rule to allow the ``/sbin/openrc`` command without a password
+  using ``pkexec``
+
+The last option above is somewhat klunky but is more restrictive than using
+the ``sudoers`` file with ``NOPASSWD``.  If you want to use this rule, then
+drop the rules file ``55-fpnd-openrc.rules`` into ``/etc/polkit-1/rules.d/``
+and use the following command / args as your normal user::
+
+  $ pkexec /sbin/openrc -s fpnd start|stop
 
 
 Dev Install
@@ -281,10 +333,8 @@ something like this::
     xt_tcpudp              16384  34
     bpfilter               24576  0
     ip_tables              24576  3 iptable_mangle,iptable_filter,iptable_nat
-    x_tables               24576  6 xt_nat,iptable_mangle,ip_tables,iptable_filter,x
-    t_mark,xt_tcpudp
+    x_tables               24576  6 xt_nat,iptable_mangle,ip_tables,iptable_filter,xt_mark,xt_tcpudp
     tun                    45056  0
-
 
 
 Versioning

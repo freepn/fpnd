@@ -1,0 +1,2 @@
+Cmnd_Alias FPND_CMNDS = /usr/bin/systemctl start fpnd, /usr/bin/systemctl stop fpnd
+%fpnd ALL=(ALL) NOPASSWD: FPND_CMNDS

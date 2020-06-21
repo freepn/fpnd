@@ -1,0 +1,6 @@
+[Allow group fpnd to run systemctl commands]
+Identity=unix-group:fpnd
+Action=org.freedesktop.systemd1.manage-units
+ResultInactive=no
+ResultActive=no
+ResultAny=yes
