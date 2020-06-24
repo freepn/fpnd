@@ -40,13 +40,6 @@ peer host.  When running in "peer" mode, each peer is assumed to be an
 untrusted host; when running in "adhoc" mode, the hosts can be assumed
 to be trusted hosts (as they belong to the user).
 
-For now, the prototype daemon ``fpnd`` runs as root, since we require
-access to the following privileged interfaces on each peer host:
-
-* zerotier API via access token (requires tun/tap on Linux)
-* sysctl, kernel routing, and iptables/netfilter interfaces
-
-
 .. _FLOSS: https://www.gnu.org/philosophy/floss-and-foss.en.html
 .. _user experience: https://en.wikipedia.org/wiki/User_experience
 .. _an ISO standard: https://en.wikipedia.org/wiki/ISO_9241#ISO_9241-210
@@ -174,11 +167,22 @@ Finally, install fpnd:
 
 
 Since the main user daemon ``fpnd.py`` needs to manipulate networks and
-routes, it currently runs under either systemd or openrc as a daemon service,
+routes, it currently must run under either systemd or openrc as a daemon service,
 which means you will need root (or sudo) priveleges to start and stop the init
 script or service files.  That said, we DO NOT recommend enabling the service
 to run on boot (so it *does not* need to be enabled this way).  We DO
 recommend using start|stop as needed so it only runs when you want it to.
+
+The fpnd tools require access to the following privileged interfaces on
+each peer host:
+
+* zerotier API via access token (requires tun/tap on Linux)
+* sysctl, kernel routing, and iptables/netfilter interfaces
+
+When running under systemd we can take advantage of some of the isolation
+features and allow the daemon to run as a non-priveleged user (``fpnd``)
+using linux capabilities to gain the required priveleges.  The alternative
+option of running under openrc requires running with full root priveleges.
 
 Please choose one of the following user config options for starting and
 stopping the ``fpnd`` Systemd service:
@@ -190,11 +194,17 @@ stopping the ``fpnd`` Systemd service:
   versions 0.105 or lower
 * install the polkit rule file ``55-fpnd-systemd.rules`` for newer polkit versions
 
-Note you should only choose **one** of the systemd options, or one for openrc.
+The available options depend on whether you use systemd, openrc, or something else:
 
-* to use ``sudo`` as-is, do nothing
+1. Using systemd: sudo or polkit rules
+2. Using openrc: sudo or polkit/pkexec
+3. Anything else: sudo
+
+Use one of the following:
+
+* to use your current ``sudo`` config as-is, do nothing
 * to use the sudoers file, rename it just ``fpnd`` and drop it in the
-  ``/etc/sudoers.d/`` directory
+  ``/etc/sudoers.d/`` directory (perms must be 0440 root:root)
 * to use the older polkit rule, drop the file in the directory
   ``/etc/polkit-1/localauthority/50-local.d/``
 * to use the newer polkit rule, drop the file in the directory
@@ -209,7 +219,7 @@ config options for running the Openrc init script:
 
 * use the usual ``sudo`` prefix and run the init script
 * install the fpnd.sudoers file to allow ``sudo`` with no password prompt
-  for only the above ``fpnd`` service commands
+  for only the openrc ``fpnd`` service commands
 * use a polkit rule to allow the ``/sbin/openrc`` command without a password
   using ``pkexec``
 
@@ -220,13 +230,17 @@ and use the following command / args as your normal user::
 
   $ pkexec /sbin/openrc -s fpnd start|stop
 
+Using the sudo rules instead of ``pkexec``::
+
+  $ sudo openrc -s fpnd start
+
 
 Dev Install
 -----------
 
 As long as you have git and at least Python 3.5, then the "easy" dev
 install is to clone this repository and install `tox`_ (optional) and the
-`nanomsg`_ library (required).
+`nanomsg`_ and `datrie`_ libraries (required).
 
 `Install the overlay`_ and do the usual install dance; add ``FEATURES=test``
 if you want the pytest deps::
@@ -286,6 +300,7 @@ Software Stack and Tool Dependencies
 ====================================
 
 * `python`_ - at least version 3.5
+* `appdirs`_ - standardized app directories
 * `datrie`_ - python interface to libdatrie
 * `schedule`_ - python scheduling engine
 * `python-diskcache`_ - various cache types
@@ -298,6 +313,7 @@ Software Stack and Tool Dependencies
 * `tox`_ and `pytest`_- needed for local testing
 
 .. _Python: https://docs.python.org/3.5/index.html
+.. _appdirs: https://github.com/ActiveState/appdirs
 .. _datrie: https://github.com/pytries/datrie
 .. _schedule: https://github.com/freepn/schedule
 .. _python-diskcache: https://github.com/grantjenks/python-diskcache

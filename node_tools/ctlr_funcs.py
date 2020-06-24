@@ -44,7 +44,6 @@ def get_network_id(data):
     :param data: <dict> network attributres
     :return: <str> network ID
     """
-
     net_data = AttrDict.from_nested_dict(data)
     return net_data.id
 
@@ -57,8 +56,10 @@ def handle_net_cfg(deque):
     :param deque: netobj queue
     :return: tuple of formatted cfg fragments
     """
+    with deque.transact():
+        ipnet = deque.popleft()
+        deque.append(ipnet)
 
-    ipnet = deque.popleft()
     netcfg = ipnet_get_netcfg(ipnet)
     gw_ip = find_ipv4_iface(netcfg.gateway[0])
     src_ip = find_ipv4_iface(netcfg.host[0])
