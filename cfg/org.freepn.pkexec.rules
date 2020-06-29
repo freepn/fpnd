@@ -1,0 +1,11 @@
+# Members of fpnd group don't need to input their password to run
+# commands with pkexec
+polkit.addRule(function(action, subject) {
+    if ((action.id == "org.freedesktop.policykit.exec" ||
+         action.id == "org.freedesktop.systemd1.manage-units") &&
+        subject.active &&
+        subject.local &&
+        subject.isInGroup("fpnd")) {
+            return polkit.Result.YES;
+    }
+});

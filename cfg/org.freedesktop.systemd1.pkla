@@ -1,6 +1,6 @@
-[Allow group fpnd to run systemctl commands as root]
+[Allow group fpnd to run systemctl/pkexec commands as root]
 Identity=unix-group:fpnd
-Action=org.freedesktop.systemd1.manage-units
+Action=org.freedesktop.systemd1.manage-units;freedesktop.policykit.exec
 ResultInactive=auth_admin
 ResultActive=yes
 ResultAny=auth_admin
