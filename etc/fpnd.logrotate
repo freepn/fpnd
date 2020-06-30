@@ -5,3 +5,12 @@
 	missingok
 	copytruncate
 }
+
+/var/log/fpnd/fpnd.log {
+	compress
+	daily
+	rotate 7
+	missingok
+	copytruncate
+}
+

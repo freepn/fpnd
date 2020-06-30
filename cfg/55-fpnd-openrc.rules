@@ -1,6 +1,6 @@
 polkit.addRule(function(action, subject) {
     if ((action.id == "org.freedesktop.policykit.exec" &&
-         action.lookup("program") == "/sbin/openrc") &&
+        action.lookup("program") == "/sbin/openrc") &&
         subject.isInGroup("fpnd"))
     {
         return polkit.Result.YES;
