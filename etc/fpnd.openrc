@@ -6,12 +6,22 @@
 : ${FPND_GROUP:=root}
 : ${FPND_USER:=root}
 
-CONFIG="/etc/fpnd/fpnd.ini"
-
 description="fpnd - FreePN daemon"
 command="/usr/bin/fpnd.py"
 pidfile="/run/${RC_SVCNAME}.pid"
 command_args="start"
+
+check_svc() {
+	ebegin "Checking for services to stop"
+	rc_monitor_stop="zerotier"
+	for svc in $rc_monitor_stop; do
+		if [ "$do_check" = "true" ]; then
+			rc-service -Ds $svc stop
+			continue 2
+		fi
+	done
+	eend $?
+}
 
 depend() {
         need zerotier
@@ -19,8 +29,8 @@ depend() {
 }
 
 start_pre() {
-	if [ ! -f ${CONFIG} ]; then
-		eerror "Configuration file ${CONFIG} not found"
+	if [ ! -e "/etc/conf.d/${SVCNAME}" ]; then
+		eerror "Config file /etc/conf.d/${SVCNAME} does not exist!"
 		return 1
 	fi
 	checkpath \
@@ -33,4 +43,8 @@ start_pre() {
 stop_pre() {
 	[ "${RC_CMD}" = "restart" ] && sleep 1
 	return 0
+}
+
+stop_post() {
+	check_svc || return $?
 }
