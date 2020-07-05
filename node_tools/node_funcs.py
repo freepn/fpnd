@@ -89,6 +89,7 @@ def do_cleanup(path=None, addr=None):
     """
     Run network cleanup commands via daemon cleanup hook.
     :param path: path to scripts dir
+    :param addr: moon address if known
     """
     from node_tools.helper_funcs import AttrDict
     from node_tools.network_funcs import do_net_cmd

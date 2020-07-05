@@ -13,12 +13,14 @@ from diskcache import Index
 
 from node_tools.cache_funcs import get_state
 from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import get_runtimedir
 from node_tools.helper_funcs import log_fpn_state
 from node_tools.helper_funcs import run_event_handlers
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
+from node_tools.network_funcs import send_pub_msg
 
 
 utc = timezone.utc
@@ -137,8 +139,10 @@ def with_state_check(func):
         elif next_state.online and prev_state.online:
             get_state_values(prev_state, next_state)
             logger.debug('State diff is: {}'.format(st.changes))
+            if st.changes:
+                send_pub_msg(get_runtimedir(), 'diff', st.changes)
             if next_state.fallback:
-                logger.error('ZT fallback mode is {} (network is suspect)'.format(next_state.fallback))
+                logger.error('NETSTATE: fallback mode is True (network suspect)')
 
         return result
     return state_check

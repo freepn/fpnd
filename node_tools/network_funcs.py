@@ -318,6 +318,23 @@ def do_net_cmd(cmd):
     return state, res, retcode
 
 
+def send_pub_msg(sock_path, method, data):
+    """
+    """
+    from nanoservice import Publisher
+
+    sock_name = 'fpnd.sock'
+    addr = 'ipc://{}/{}'.format(sock_path, sock_name)
+    logger.debug('NETSTATE: Publish address is {}'.format(addr))
+
+    try:
+        p = Publisher(addr, bind=False)
+        p.publish(method, data)
+    except Exception as exc:
+        logger.warning('NETSTATE: Publish error is {}'.format(exc))
+        raise exc
+
+
 def send_req_msg(addr, method, data):
     """
     """

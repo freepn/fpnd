@@ -106,6 +106,8 @@ def do_scheduling():
                 data = wait_for_moon(timeout=30)
             except Exception as exc:
                 logger.error('ENODATA exception {}'.format(exc))
+            if data == []:
+                logger.error('NETSTATE: no moon data; network unreachable?')
             handle_moon_data(data)
             startup_handlers()
 

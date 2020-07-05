@@ -33,6 +33,7 @@ from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_filepath
+from node_tools.helper_funcs import get_runtimedir
 from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import send_cfg_handler
 from node_tools.helper_funcs import set_initial_role
@@ -695,6 +696,19 @@ def test_path_ecxeption():
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), '/root')
     res = control_daemon('restart')
     assert not res
+
+
+def test_get_runtimedir():
+    import tempfile
+
+    temp_dir = tempfile.gettempdir()
+    NODE_SETTINGS['runas_user'] = False
+    res = get_runtimedir()
+    # print(res)
+    assert res == '/run/fpnd' or res == temp_dir
+    res = get_runtimedir(user_dirs=True)
+    assert '/var/run/user/' in res or res == temp_dir
+    NODE_SETTINGS['runas_user'] = True
 
 
 def test_state_trie_load_save():

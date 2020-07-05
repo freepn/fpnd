@@ -3,7 +3,8 @@
 # Distributed under the terms of the GNU General Public License v2
 
 : ${FPND_STATE_DIR:=/var/lib/${RC_SVCNAME}}
-: ${FPND_GROUP:=root}
+: ${FPND_SOCK_DIR:=/var/run/${RC_SVCNAME}}
+: ${FPND_GROUP:=fpnd}
 : ${FPND_USER:=root}
 
 description="fpnd - FreePN daemon"
@@ -15,8 +16,10 @@ check_svc() {
 	ebegin "Checking for services to stop"
 	rc_monitor_stop="zerotier"
 	for svc in $rc_monitor_stop; do
-		if [ "$do_check" = "true" ]; then
-			rc-service -Ds $svc stop
+		if yesno "$do_check" ; then
+			einfo "Scheduling ${svc} to stop in 1 min"
+			echo "rc-service -Ds ${svc} stop" \
+				| at -M now +1 minute > /dev/null 2>&1
 			continue 2
 		fi
 	done
@@ -24,6 +27,7 @@ check_svc() {
 }
 
 depend() {
+	want atd
         need zerotier
         use logger clock
 }
@@ -35,9 +39,10 @@ start_pre() {
 	fi
 	checkpath \
 		-d \
-		--mode 0755 \
+		--mode 0775 \
 		--owner ${FPND_USER}:${FPND_GROUP} \
-		"${FPND_STATE_DIR}"
+		"${FPND_STATE_DIR}" \
+		"${FPND_SOCK_DIR}"
 }
 
 stop_pre() {
@@ -46,5 +51,5 @@ stop_pre() {
 }
 
 stop_post() {
-	check_svc || return $?
+	[ "${RC_CMD}" != "restart" ] && check_svc || return $?
 }

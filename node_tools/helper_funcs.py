@@ -173,11 +173,38 @@ def get_filepath():
         return "C:\\ProgramData\\ZeroTier\\One"
 
 
+def get_runtimedir(user_dirs=False):
+    """
+    Get runtime directory according to XDG spec, systemd, or LFS,
+    with tempfile fallback. Note this is currently Linux-only.
+    This should really be in appdirs.
+    """
+    import os
+    import tempfile
+
+    from pathlib import Path
+
+    temp_dir = tempfile.gettempdir()
+    if user_dirs or NODE_SETTINGS['runas_user']:
+        run_path = os.getenv('XDG_RUNTIME_DIR', temp_dir)
+    else:
+        run_path = '/run/fpnd'
+        path_chk = Path(run_path)
+        if os.path.exists(run_path) and not path_chk.group() == 'fpnd':
+            run_path = temp_dir
+    if run_path == temp_dir:
+        logger.warning('Falling back to temp dir: {}'.format(temp_dir))
+    return run_path
+
+
 def get_token(zt_home=None):
     """Get ZeroTier authentication token (requires root or user acl)."""
+    import os
+
     if not zt_home:
         zt_home = get_filepath()
-    with open(zt_home + "/authtoken.secret") as file:
+        full_path = os.path.join(zt_home, 'authtoken.secret')
+    with open(full_path) as file:
         auth_token = file.read()
     return auth_token
 
