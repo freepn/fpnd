@@ -1,12 +1,9 @@
-Full Change History
-===================
-
-Since there has been no prior Software Version Description published for this
-software, this section contains the complete change history (see the git logs
-for the detailed source code changes).
-
-0.9.0 (unreleased)
+0.8.xx (unreleased)
 ------------------
+- netstate tries: add prune option to remove stale net IDs
+  [Stephen Arnold]
+- openrc config: add check func to also stop zerotier on shutdown
+  [Stephen Arnold]
 - Add logrotate section for private fpnd log dir, cleanup rules.
   [Stephen Arnold]
 

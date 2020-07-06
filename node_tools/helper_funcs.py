@@ -325,6 +325,28 @@ def network_cruft_cleaner():
         net_q.clear()
 
 
+def put_state_msg(msg, state_file=None, clean=True):
+    """
+    Put a status msg in the state file so the indicator can read it.
+    :defaults: We use the runtime directory returned by `get_runtimedir`
+               and there is only one line with current status.
+    :param msg: <str> state message
+    :param state_file: <str> path to state file
+    :param clean: if true, only the current status msg is retained
+    """
+    import os
+
+    mode = 'w'
+    fmt = '{}'
+    if not clean:
+        mode = 'a'
+        fmt = '{}\n'
+    if not state_file:
+        state_file = os.path.join(get_runtimedir(), 'fpnd.state')
+    with open(state_file, mode) as f:
+        f.write(fmt.format(str(msg)))
+
+
 def run_event_handlers(diff=None):
     """
     Run state change event handlers (currently just the net handlers)

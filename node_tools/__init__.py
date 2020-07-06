@@ -19,6 +19,7 @@ from node_tools.helper_funcs import get_runtimedir as get_runtimedir
 from node_tools.helper_funcs import get_token as get_token
 from node_tools.helper_funcs import json_dump_file as json_dump_file
 from node_tools.helper_funcs import json_load_file as json_load_file
+from node_tools.helper_funcs import put_state_msg as put_state_msg
 from node_tools.helper_funcs import run_event_handlers as run_event_handlers
 from node_tools.helper_funcs import set_initial_role as set_initial_role
 from node_tools.helper_funcs import update_state as update_state
@@ -72,6 +73,7 @@ __all__ = [
     'load_cache_by_type',
     'manage_incoming_nodes',
     'populate_leaf_list',
+    'put_state_msg',
     'run_event_handlers',
     'run_net_cmd',
     'run_ztcli_cmd',

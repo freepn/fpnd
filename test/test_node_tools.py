@@ -12,6 +12,9 @@ import tempfile
 import unittest
 import warnings
 
+from pathlib import Path
+from collections import deque
+
 import datrie
 import pytest
 
@@ -35,6 +38,7 @@ from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_filepath
 from node_tools.helper_funcs import get_runtimedir
 from node_tools.helper_funcs import json_load_file
+from node_tools.helper_funcs import put_state_msg
 from node_tools.helper_funcs import send_cfg_handler
 from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
@@ -86,6 +90,14 @@ def read_file(filename):
 
     with codecs.open(filename, 'r', 'utf8') as f:
         return f.readline().strip()
+
+
+def get_status(filename, n=1):
+    """
+    Return the last n lines of the status file in a deque
+    """
+    with open(filename) as f:
+        return deque(f, n)
 
 
 class mock_zt_api_client(object):
@@ -709,6 +721,38 @@ def test_get_runtimedir():
     res = get_runtimedir(user_dirs=True)
     assert '/var/run/user/' in res or res == temp_dir
     NODE_SETTINGS['runas_user'] = True
+
+
+def test_put_state_msg():
+    """
+    Use get_status() from freepn-gtk3-indicator (replicated above)
+    """
+    state_path = Path(get_runtimedir()).joinpath('fpnd.state')
+
+    msgs = ['STARTING', 'ACTIVE', 'CONFIG']
+    for msg in msgs:
+        put_state_msg(msg)
+        status_queue = get_status(str(state_path))
+        data = status_queue.pop()
+        assert data == msg
+
+    state_path.unlink()
+
+
+def test_put_state_msg_save():
+    """
+    Same as test_put_state_msg but without cleaning
+    """
+    state_path = Path(get_runtimedir()).joinpath('fpnd.state')
+
+    msgs = ['STARTING', 'ACTIVE', 'CONFIG']
+    for msg in msgs:
+        put_state_msg(msg, clean=False)
+        status_queue = get_status(str(state_path))
+        data = status_queue.pop().strip()
+        assert data == msg
+
+    state_path.unlink()
 
 
 def test_state_trie_load_save():
