@@ -75,8 +75,9 @@ def cleanup_state_tries(net_trie, id_trie, nw_id, node_id, mbr_only=False):
         for key in net_trie.keys(nw_id):
             del net_trie[key]
         del id_trie[nw_id]
-        if node_id in id_trie:
-            del id_trie[node_id]
+        if node_id:
+            if node_id in id_trie:
+                del id_trie[node_id]
 
 
 def find_dangling_nets(trie):
@@ -259,7 +260,7 @@ def get_wedged_node_id(trie, node_id):
     return exit_node
 
 
-def load_id_trie(net_trie, id_trie, nw_id, node_id, needs=[], nw=False):
+def load_id_trie(net_trie, id_trie, nw_id, node_id, needs=[], nw=False, prune=False):
     """
     Load ID state trie based on current data from ZT api.  Default key
     is node key with network payload; set `nw` = True for network key
@@ -280,6 +281,7 @@ def load_id_trie(net_trie, id_trie, nw_id, node_id, needs=[], nw=False):
     check_trie_params(nw_id, node_id, needs)
 
     id_list = []
+    prune_list = []
 
     if nw:
         net_id = nw_id[0]
@@ -291,6 +293,8 @@ def load_id_trie(net_trie, id_trie, nw_id, node_id, needs=[], nw=False):
             needs = [False, True]
         key_id = net_id
         id_list = mbr_list
+        if prune and id_list == []:
+            prune_list.append(net_id)
     else:
         net_list = []
         mbr_id = node_id[0]
@@ -310,6 +314,7 @@ def load_id_trie(net_trie, id_trie, nw_id, node_id, needs=[], nw=False):
     payload = (id_list, needs)
     logger.debug('TRIE: loading key {} with payload {}'.format(key_id, payload))
     id_trie[key_id] = payload
+    return prune_list
 
 
 def trie_is_empty(trie):
