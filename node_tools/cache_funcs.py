@@ -108,7 +108,12 @@ def get_net_status(cache):
                              'ztdevice': data.portDeviceName,
                              'ztaddress': zt_addr,
                              'gateway': data.routes[1]['via']}
-                networks.append(netStatus)
+            else:
+                netStatus = {'identity': data.id,
+                             'status': data.status,
+                             'mac': data.mac,
+                             'ztdevice': data.portDeviceName}
+            networks.append(netStatus)
         logger.debug('netStatus list: {}'.format(networks))
     return networks
 

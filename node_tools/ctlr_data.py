@@ -3,8 +3,9 @@
 """
     Default fpn ctlr state variables.  Trie keys must be in the set
     `string.hexdigits`.
-    :var net_trie: a Trie of JSON network/member data objects
-    :var id_trie: a Trie of JSON member node net_id state objects
+    :var net_trie: <Trie> of JSON network/member data objects
+    :var id_trie: <Trie> of JSON member node net_id state objects
+    :var rules: <cfg_dict> default flow rules for each network link
 """
 import string
 

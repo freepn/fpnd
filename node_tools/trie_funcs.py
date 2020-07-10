@@ -80,6 +80,21 @@ def cleanup_state_tries(net_trie, id_trie, nw_id, node_id, mbr_only=False):
                 del id_trie[node_id]
 
 
+# def delete_invalid_keys(trie, node_id, net_id):
+    # """
+    # Delete invalid keys if found in net trie.
+    # :param trie: net data trie
+    # :param node_id: node ID with invalid keys
+    # :param net_id: invalid key data
+    # """
+    # bad_key = net_id + node_id
+
+    # logger.error('Got invalid data: {}'.format([net_id, bad_key]))
+    # for key_str in [net_id, bad_key]:
+        # logger.warning('Removing invalid item: {}'.format(key_str))
+        # del trie[key_str]
+
+
 def find_dangling_nets(trie):
     """
     Find networks with needs that are `True` (search the ID trie).
@@ -176,6 +191,19 @@ def get_dangling_net_data(trie, net_id):
             netcfg = ipnet_get_netcfg(netobj)
 
     return netcfg
+
+
+def get_invalid_net_id(trie, node_id):
+    """
+    Get the network ID from the node_id when invalid keys are found;
+    this is required to handle the AssertionError rasied below.
+    :param trie: net data trie
+    :param node_id: node ID to lookup
+    :return: bogus network ID
+    """
+    for key in trie:
+        if node_id in key:
+            return key[0:16]
 
 
 def get_neighbor_ids(trie, node_id):
