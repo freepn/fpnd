@@ -62,8 +62,6 @@ async def main():
             # for key in list(ct.id_trie):
             #     logger.debug('id key {} has payload: {}'.format(key, ct.id_trie[key]))
             logger.debug('id_trie has keys: {}'.format(list(ct.id_trie)))
-            # update and prune stale networks
-            await update_state_tries(client, ct.net_trie, ct.id_trie, prune=True)
 
             # handle node queues and publish messages
             logger.debug('{} nodes in node queue: {}'.format(len(node_q),

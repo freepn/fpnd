@@ -242,7 +242,7 @@ async def offline_mbr_node(client, node_id):
         logger.warning('OFFLINE: node {} has missing net list {}'.format(node_id, node_nets))
 
 
-async def update_state_tries(client, net_trie, id_trie, prune=False):
+async def update_state_tries(client, net_trie, id_trie):
     """
     Wrapper to update ctlr state tries from ZT client API.  Loads net/id
     tries with new data (does not remove any stale trie data).
@@ -273,12 +273,7 @@ async def update_state_tries(client, net_trie, id_trie, prune=False):
                 net_trie[net_id + mbr_id] = client.data
                 load_id_trie(net_trie, id_trie, [], [mbr_id])
                 mbr_list.append(mbr_id)
-        stale_nets = load_id_trie(net_trie, id_trie, [net_id], mbr_list, nw=True, prune=prune)
-        if prune and len(stale_nets) > 0:
-            for net_id in stale_nets:
-                await delete_network_object(client, net_id)
-                logger.debug('PRUNE: removed stale net {}'.format(net_id))
-            cleanup_state_tries(net_trie, id_trie, net_id, None)
+        load_id_trie(net_trie, id_trie, [net_id], mbr_list, nw=True)
         logger.debug('member key suffixes: {}'.format(net_trie.suffixes(net_id)))
 
 
