@@ -794,6 +794,7 @@ def test_find_orphans():
     from node_tools import ctlr_data as ct
 
     exit_id = 'beefea68e6'
+    empty_nets = ['beafde52b4296eee']
 
     res = find_orphans(ct.net_trie, ct.id_trie)
     assert res == [('beafde52b4296ea5', exit_id)]
@@ -802,6 +803,9 @@ def test_find_orphans():
     res = find_orphans(ct.net_trie, ct.id_trie)
     assert res == []
 
+    load_id_trie(ct.net_trie, ct.id_trie, empty_nets, [], nw=True)
+    res = find_orphans(ct.net_trie, ct.id_trie)
+    assert res == empty_nets
     NODE_SETTINGS['use_exitnode'].clear()
 
 

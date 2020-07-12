@@ -338,6 +338,8 @@ def test_get_peer_status():
 
 
 def test_get_net_status():
+    _, net_data = client.get_data('network')
+    load_cache_by_type(cache, net_data, 'net')
     nets = get_net_status(cache)
     assert isinstance(nets, list)
     for Net in nets:
@@ -347,6 +349,8 @@ def test_get_net_status():
         if Net['status'] != 'ACCESS_DENIED':
             assert 'ztaddress' in Net
             assert 'gateway' in Net
+    del net_data[2]
+    load_cache_by_type(cache, net_data, 'net')
 
 
 def test_populate_leaf_list():
