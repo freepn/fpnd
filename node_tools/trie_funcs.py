@@ -75,8 +75,9 @@ def cleanup_state_tries(net_trie, id_trie, nw_id, node_id, mbr_only=False):
         for key in net_trie.keys(nw_id):
             del net_trie[key]
         del id_trie[nw_id]
-        if node_id in id_trie:
-            del id_trie[node_id]
+        if node_id:
+            if node_id in id_trie:
+                del id_trie[node_id]
 
 
 def find_dangling_nets(trie):
@@ -108,6 +109,37 @@ def find_exit_net(trie):
         if trie[node][1] == [False, False] and len(trie[node][0]) == 1:
             net_list = trie[node][0]
     return net_list
+
+
+def find_orphans(net_trie, id_trie):
+    """
+    Find orphaned nodes/empty nets based on current trie data from ZT api.
+    In this context, an orphan is any node ID with a single net ID who is
+    not the exit node.
+    :param net_trie: datrie trie object
+    :param id_trie: datrie trie object
+    :return: list of empty/orphan net IDs
+    """
+    from node_tools.ctlr_funcs import is_exit_node
+
+    empty_nets = []
+
+    for net_id in [x for x in list(id_trie) if len(x) == 16]:
+        mbr_list = net_trie.suffixes(net_id)[1:]
+        if mbr_list == []:
+            empty_nets.append(net_id)
+            logger.warning('CLEANUP: found empty net: {}'.format(net_id))
+    for node_id in [x for x in list(id_trie) if len(x) == 10]:
+        net_list = []
+        for key in list(net_trie):
+            if node_id in key:
+                net_list.append((key[0:16], node_id))
+        if len(net_list) == 1:
+            if not is_exit_node(node_id):
+                empty_nets.append(net_list[0])
+                logger.warning('CLEANUP: found orphan net {}'.format(net_list))
+
+    return empty_nets
 
 
 def get_active_nodes(id_trie):
@@ -166,6 +198,7 @@ def get_dangling_net_data(trie, net_id):
     from node_tools.ctlr_funcs import netcfg_get_ipnet
 
     payload = trie[net_id]
+    # logger.debug('TRIE: net {} has payload {}'.format(net_id, payload))
     netcfg = None
 
     for route in payload['routes']:
@@ -181,7 +214,7 @@ def get_invalid_net_id(trie, node_id):
     """
     Get the network ID from the node_id when invalid keys are found;
     this is required to handle the AssertionError rasied below. All
-    we actually do is get the net ID.
+    we actually do is get the net ID net/node key.
     :param trie: net data trie
     :param node_id: node ID to lookup
     :return: bogus network ID

@@ -94,7 +94,7 @@ async def main():
                     run_ztcli_cmd(action='leave', extra=net['identity'])
                     net_id_handler(None, net['identity'], old=True)
                     nsState.cfg_ref = None
-                    net_wait.set('offline_wait', True, 90)
+                    net_wait.set('offline_wait', True, 60)
             if len(net_data) != 0 and not nsState.cfg_ref:
                 send_cfg_handler()
 
