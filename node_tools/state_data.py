@@ -9,7 +9,7 @@
 from node_tools.timing_funcs import Cache as waitCache
 
 
-# A hack to avoid repeatedly hammering infra nodes with wedged node msgs
+# avoid repeatedly hammering infra nodes with wedged node msgs
 wait_cache = waitCache()
 
 defState = dict.fromkeys(['online',

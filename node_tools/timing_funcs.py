@@ -1,6 +1,6 @@
 # coding: utf-8
 
-"""Timing helper functions (some borrowed from Eric/NTPsec utils.py)."""
+"""Timing helper functions (some borrowed from NTPsec utils.py)."""
 
 import time
 import logging

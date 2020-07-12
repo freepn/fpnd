@@ -11,8 +11,10 @@ from ztcli_api import ZeroTier
 from ztcli_api import ZeroTierConnectionError
 
 from node_tools import ctlr_data as ct
+from node_tools import state_data as st
 
 from node_tools.async_funcs import bootstrap_mbr_node
+from node_tools.async_funcs import cleanup_orphans
 from node_tools.async_funcs import close_mbr_net
 from node_tools.async_funcs import offline_mbr_node
 from node_tools.async_funcs import unwrap_mbr_net
@@ -50,6 +52,9 @@ async def main():
                 off_q.remove(node_id)
             logger.debug('{} nodes in offline queue: {}'.format(len(off_q), list(off_q)))
 
+            # check for leftover cruft
+            await cleanup_orphans(client)
+
             # get ID and status details of ctlr node
             await client.get_data('status')
             ctlr_id = handle_node_status(client.data, cache)
@@ -62,8 +67,6 @@ async def main():
             # for key in list(ct.id_trie):
             #     logger.debug('id key {} has payload: {}'.format(key, ct.id_trie[key]))
             logger.debug('id_trie has keys: {}'.format(list(ct.id_trie)))
-            # update and prune stale networks
-            await update_state_tries(client, ct.net_trie, ct.id_trie, prune=True)
 
             # handle node queues and publish messages
             logger.debug('{} nodes in node queue: {}'.format(len(node_q),
@@ -75,12 +78,12 @@ async def main():
             logger.debug('{} nodes in staging queue: {}'.format(len(staging_q),
                                                                 list(staging_q)))
 
-            for mbr_id in staging_q:
-                if mbr_id not in list(ct.id_trie):
-                    if is_exit_node(mbr_id):
-                        await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q, ex=True)
-                    else:
-                        await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q)
+            for mbr_id in [x for x in staging_q if x not in list(ct.id_trie)]:
+                if is_exit_node(mbr_id):
+                    await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q, ex=True)
+                else:
+                    await bootstrap_mbr_node(client, ctlr_id, mbr_id, netobj_q)
+                st.wait_cache.set(mbr_id, True, 90)
                 publish_cfg_msg(ct.id_trie, mbr_id, addr='127.0.0.1')
 
             for mbr_id in [x for x in staging_q if x in list(ct.id_trie)]:

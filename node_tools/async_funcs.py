@@ -5,6 +5,7 @@
 import asyncio
 import aiohttp
 import logging
+import time
 
 
 logger = logging.getLogger(__name__)
@@ -71,11 +72,14 @@ async def bootstrap_mbr_node(client, ctlr_id, node_id, deque, ex=False):
                 exit_node = data_list[1]
                 await add_network_object(client, exit_net, node_id)
                 logger.debug('BOOTSTRAP: added node id {} to exit net {}'.format(node_id, exit_net))
+                time.sleep(0.01)
                 netcfg = get_dangling_net_data(ct.net_trie, exit_net)
                 gw_cfg = set_network_cfg(netcfg.host)
                 logger.debug('BOOTSTRAP: got node addr {} for exit net'.format(gw_cfg))
                 await config_network_object(client, gw_cfg, exit_net, node_id)
                 trie_nets = [net_id, exit_net]
+            else:
+                logger.error('BOOTSTRAP: malformed exit net data {}'.format(data_list))
 
         await config_network_object(client, gw, net_id, node_id)
         logger.debug('BOOTSTRAP: set gw addr {} for src net {}'.format(gw, net_id))
@@ -123,10 +127,12 @@ async def close_mbr_net(client, node_lst, boot_lst, min_nodes=5):
         # check if we have enough nodes for a network
         if len(boot_lst) >= min_nodes:
             logger.debug('CLOSURE: creating network from boot_list {}'.format(boot_lst))
+            for mbr_id in [head_id, tail_id]:
+                st.wait_cache.set(mbr_id, True, 90)
             # detach and connect head to tail
             await config_network_object(client, deauth, head_exit_net, head_id)
             cleanup_state_tries(ct.net_trie, ct.id_trie, head_exit_net, head_id, mbr_only=True)
-            logger.debug('CLOSURE: deauthed node id {} from exit net {}'.format(head_id, head_exit_net))
+            logger.debug('CLOSURE: deauthed head id {} from exit net {}'.format(head_id, head_exit_net))
 
             await connect_mbr_node(client, head_id, head_src_net, tail_exit_net, tail_id)
             publish_cfg_msg(ct.id_trie, head_id, addr='127.0.0.1')
@@ -138,10 +144,12 @@ async def close_mbr_net(client, node_lst, boot_lst, min_nodes=5):
         tgt_net, tgt_exit_net, tgt_src_node, tgt_exit_node = get_neighbor_ids(ct.net_trie, tgt_id)
         tgt_src_net, _, _, _ = get_neighbor_ids(ct.net_trie, tgt_src_node)
 
+        for mbr_id in [tgt_id, tail_id, head_id, tgt_exit_node]:
+            st.wait_cache.set(mbr_id, True, 90)
         # detach and connect tgt to tail
         await config_network_object(client, deauth, tgt_exit_net, tgt_id)
         cleanup_state_tries(ct.net_trie, ct.id_trie, tgt_exit_net, tgt_id, mbr_only=True)
-        logger.debug('CLOSURE: deauthed node id {} from tgt exit net {}'.format(tgt_id, tgt_exit_net))
+        logger.debug('CLOSURE: deauthed tgt id {} from tgt exit net {}'.format(tgt_id, tgt_exit_net))
 
         await connect_mbr_node(client, tgt_id, tgt_src_net, tail_exit_net, tail_id)
         publish_cfg_msg(ct.id_trie, tgt_id, addr='127.0.0.1')
@@ -152,7 +160,37 @@ async def close_mbr_net(client, node_lst, boot_lst, min_nodes=5):
         logger.debug('CLOSURE: deauthed node id {} from head exit net {}'.format(head_id, head_exit_net))
 
         await connect_mbr_node(client, head_id, head_src_net, tgt_exit_net, tgt_exit_node)
+        time.sleep(0.01)
         publish_cfg_msg(ct.id_trie, head_id, addr='127.0.0.1')
+
+
+async def cleanup_orphans(client):
+    """
+    Simple cleanup function to run after node juggling and before the
+    tries are updated (in the main netstate context).
+    :param client: ztcli_api client object
+    """
+    from node_tools import ctlr_data as ct
+    from node_tools import state_data as st
+
+    from node_tools.trie_funcs import cleanup_state_tries
+    from node_tools.trie_funcs import find_orphans
+
+    check_list = find_orphans(ct.net_trie, ct.id_trie)
+    logger.debug('{} nets in check_list: {}'.format(len(check_list), check_list))
+    if check_list != []:
+        for thing in check_list:
+            if isinstance(thing, str):
+                await delete_network_object(client, thing)
+                time.sleep(0.01)
+                cleanup_state_tries(ct.net_trie, ct.id_trie, thing, None)
+                logger.warning('CLEANUP: removed orphan: {}'.format(thing))
+            elif isinstance(thing, tuple):
+                if st.wait_cache.get(thing[1]) is None:
+                    await delete_network_object(client, thing[0])
+                    time.sleep(0.01)
+                    cleanup_state_tries(ct.net_trie, ct.id_trie, thing[0], thing[1])
+                    logger.warning('CLEANUP: removed orphan: {}'.format(thing))
 
 
 async def connect_mbr_node(client, node_id, src_net, exit_net, gw_node):
@@ -205,7 +243,7 @@ async def offline_mbr_node(client, node_id):
     try:
         node_net, exit_net, src_node, exit_node = get_neighbor_ids(ct.net_trie, node_id)
         node_nets = [node_net, exit_net]
-        logger.debug('OFFLINE: got node_nets {}'.format(node_nets))
+        logger.debug('OFFLINE: got node_nets {} and nodes {} {}'.format(node_nets, src_node, exit_node))
         if exit_node is not None:
             st.wait_cache.set(exit_node, True, 90)
             logger.debug('OFFLINE: added exit_node {} to wait cache'.format(exit_node))
@@ -240,7 +278,7 @@ async def offline_mbr_node(client, node_id):
         logger.warning('OFFLINE: node {} has missing net list {}'.format(node_id, node_nets))
 
 
-async def update_state_tries(client, net_trie, id_trie, prune=False):
+async def update_state_tries(client, net_trie, id_trie):
     """
     Wrapper to update ctlr state tries from ZT client API.  Loads net/id
     tries with new data (does not remove any stale trie data).
@@ -258,7 +296,6 @@ async def update_state_tries(client, net_trie, id_trie, prune=False):
         # get details about each network and update trie data
         await get_network_object_data(client, net_id)
         net_trie[net_id] = client.data
-        # load_id_trie(net_trie, id_trie, [net_id], [], nw=True)
         await get_network_object_ids(client, net_id)
         logger.debug('network {} has {} possible member(s)'.format(net_id, len(client.data)))
         member_dict = client.data
@@ -270,12 +307,7 @@ async def update_state_tries(client, net_trie, id_trie, prune=False):
                 net_trie[net_id + mbr_id] = client.data
                 load_id_trie(net_trie, id_trie, [], [mbr_id])
                 mbr_list.append(mbr_id)
-        stale_nets = load_id_trie(net_trie, id_trie, [net_id], mbr_list, nw=True, prune=prune)
-        if prune and len(stale_nets) > 0:
-            for net_id in stale_nets:
-                await delete_network_object(client, net_id)
-                logger.debug('PRUNE: removed stale net {}'.format(net_id))
-            cleanup_state_tries(net_trie, id_trie, net_id, None)
+        load_id_trie(net_trie, id_trie, [net_id], mbr_list, nw=True)
         logger.debug('member key suffixes: {}'.format(net_trie.suffixes(net_id)))
 
 
@@ -290,7 +322,6 @@ async def unwrap_mbr_net(client, node_lst, boot_lst, min_nodes=5):
     :param min_nodes: minimum number of nodes for a closed network
     """
     from node_tools import ctlr_data as ct
-    from node_tools import state_data as st
 
     from node_tools.ctlr_funcs import unset_network_cfg
     from node_tools.network_funcs import publish_cfg_msg
@@ -299,7 +330,7 @@ async def unwrap_mbr_net(client, node_lst, boot_lst, min_nodes=5):
     from node_tools.trie_funcs import get_neighbor_ids
     from node_tools.trie_funcs import get_target_node_id
 
-    if len(node_lst) <= min_nodes and len(node_lst) > 1:
+    if len(node_lst) <= min_nodes and len(boot_lst) == 0:
         logger.debug('UNWRAP: creating bootstrap list from network {}'.format(node_lst))
         tgt_id = get_target_node_id(node_lst, boot_lst)
         tgt_net, tgt_exit_net, _, _ = get_neighbor_ids(ct.net_trie, tgt_id)
@@ -317,7 +348,7 @@ async def unwrap_mbr_net(client, node_lst, boot_lst, min_nodes=5):
         await connect_mbr_node(client, tgt_id, tgt_net, exit_net, exit_node)
         publish_cfg_msg(ct.id_trie, tgt_id, addr='127.0.0.1')
     else:
-        logger.debug('UNWRAP: num nodes greater than {} so not unwrapping'.format(min_nodes))
+        logger.debug('UNWRAP: num nodes more than {} so not unwrapping'.format(min_nodes))
 
 
 async def add_network_object(client, net_id=None, mbr_id=None, ctlr_id=None):

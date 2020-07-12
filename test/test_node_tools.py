@@ -55,9 +55,11 @@ from node_tools.sched_funcs import check_return_status
 from node_tools.trie_funcs import cleanup_state_tries
 from node_tools.trie_funcs import create_state_trie
 from node_tools.trie_funcs import find_exit_net
+from node_tools.trie_funcs import find_orphans
 from node_tools.trie_funcs import get_active_nodes
 from node_tools.trie_funcs import get_bootstrap_list
 from node_tools.trie_funcs import get_dangling_net_data
+from node_tools.trie_funcs import get_invalid_net_id
 from node_tools.trie_funcs import get_neighbor_ids
 from node_tools.trie_funcs import get_target_node_id
 from node_tools.trie_funcs import get_wedged_node_id
@@ -785,6 +787,38 @@ def test_load_id_from_net_trie():
         load_id_trie(ct.net_trie, ct.id_trie, [], [])
 
     NODE_SETTINGS['use_exitnode'].clear()
+
+
+# this depends on trie data from this series of tests
+def test_find_orphans():
+    from node_tools import ctlr_data as ct
+
+    exit_id = 'beefea68e6'
+    empty_nets = ['beafde52b4296eee']
+
+    res = find_orphans(ct.net_trie, ct.id_trie)
+    assert res == [('beafde52b4296ea5', exit_id)]
+
+    NODE_SETTINGS['use_exitnode'].append(exit_id)
+    res = find_orphans(ct.net_trie, ct.id_trie)
+    assert res == []
+
+    load_id_trie(ct.net_trie, ct.id_trie, empty_nets, [], nw=True)
+    res = find_orphans(ct.net_trie, ct.id_trie)
+    assert res == empty_nets
+    NODE_SETTINGS['use_exitnode'].clear()
+
+
+def test_get_invalid_net_id():
+    from node_tools import ctlr_data as ct
+
+    trie = ct.net_trie
+    node_id = 'ee2eedb2e1'
+    exit_id = 'beefea68e6'
+    tail_id = 'ff2ffdb2e1'
+
+    res = get_invalid_net_id(trie, node_id)
+    assert res == 'beafde52b4296ea5'
 
 
 def test_get_neighbor_ids():

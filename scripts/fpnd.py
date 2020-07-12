@@ -80,7 +80,7 @@ def check_daemon_status(script='msg_responder.py'):
 
 def setup_scheduling(max_age):
     """Initial setup for scheduled jobs"""
-    sleep_time = max_age / 6
+    sleep_time = int(max_age / 6)
 
     baseUpdateJob = schedule.every(sleep_time).seconds
     baseUpdateJob.do(update_runner).tag('base-tasks', 'get-updates')

@@ -55,9 +55,11 @@ def do_net_check(path=None):
             else:
                 if host_state:
                     fpn_data['route'] = False
+                elif not net_wait.get('failed_once') and not fpn_data['route']:
+                    fpn_data['route'] = False
             logger.error('HEALTH: network route state is {}'.format(fpn_data['route']))
             logger.error('HEALTH: host route state is {}'.format(host_state))
-            logger.debug('HEALTH: net_wait is {}'.format(repr(net_wait)))
+            logger.debug('HEALTH: net_wait is {}'.format(net_wait.get('failed_once')))
         else:
             logger.error('do_net_check {} returned: {}'.format(cmd, result))
     else:

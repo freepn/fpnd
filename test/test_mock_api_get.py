@@ -158,7 +158,7 @@ def test_net_client_status():
     _, net_data = client.get_data('network')
     for net in net_data:
         status = net.get('status')
-        assert status == 'OK'
+        assert status == 'OK' or status == 'ACCESS_DENIED'
 
 
 def test_load_rules():
@@ -274,14 +274,18 @@ def test_cache_loading():
     def test_load_cache_net():
         _, net_data = client.get_data('network')
         load_cache_by_type(cache, net_data, 'net')
-        assert len(list(cache)) == 9
+        assert len(list(cache)) == 10
 
     def test_update_cache_net():
         _, net_data = client.get_data('network')
         del net_data[1]
         load_cache_by_type(cache, net_data, 'net')
-        assert len(list(cache)) == 8
+        assert len(list(cache)) == 9
         _, net_data = client.get_data('network')
+        load_cache_by_type(cache, net_data, 'net')
+        assert len(list(cache)) == 10
+        _, net_data = client.get_data('network')
+        del net_data[2]
         load_cache_by_type(cache, net_data, 'net')
         assert len(list(cache)) == 9
 
@@ -334,13 +338,19 @@ def test_get_peer_status():
 
 
 def test_get_net_status():
+    _, net_data = client.get_data('network')
+    load_cache_by_type(cache, net_data, 'net')
     nets = get_net_status(cache)
     assert isinstance(nets, list)
     for Net in nets:
         assert isinstance(Net, dict)
         assert 'mac' in Net
-        assert 'ztaddress' in Net
-        assert 'gateway' in Net
+        assert 'status' in Net
+        if Net['status'] != 'ACCESS_DENIED':
+            assert 'ztaddress' in Net
+            assert 'gateway' in Net
+    del net_data[2]
+    load_cache_by_type(cache, net_data, 'net')
 
 
 def test_populate_leaf_list():
