@@ -1,7 +1,9 @@
 #! /bin/sh
 #
-# this copies and runs the update script to each fpnd host
+# this copies the update script to each fpnd host and then runs it
 #
+
+set -e
 
 INFRA_HOSTS="infra-k1  infra-k2"
 GEN_HOSTS="node-01 node-02 node-03 node-04"

@@ -92,14 +92,6 @@ def read_file(filename):
         return f.readline().strip()
 
 
-def get_status(filename, n=1):
-    """
-    Return the last n lines of the status file in a deque
-    """
-    with open(filename) as f:
-        return deque(f, n)
-
-
 class mock_zt_api_client(object):
     """
     Client API to serve simple GET data endpoints
@@ -130,6 +122,7 @@ class BasicConfigTest(unittest.TestCase):
         self.saved_handler_list = logging._handlerList[:]
         self.original_logging_level = logging.root.level
         self.addCleanup(self.cleanup)
+        self.log = logging.getLogger('test')
         logging.root.handlers = []
 
     def tearDown(self):
@@ -162,6 +155,9 @@ class BasicConfigTest(unittest.TestCase):
 
         debug = False
         setup_logging(debug, '/dev/null')
+        str_level = logging.getLevelName(self.log.getEffectiveLevel())
+        # print('log level is {}'.format(str_level))
+        self.assertEqual(str_level, 'INFO')
         self.assertEqual(logging.root.level, logging.INFO)
         # Test that second call has no effect
         logging.basicConfig(level=58)
@@ -647,6 +643,29 @@ def load_net_trie_data(trie):
                 trie[net_id + mbr_id] = mbr
 
 
+def get_state_icon(state):
+    """
+    Match the state msg and return the icon name.
+    """
+    state_dict = {
+        'CONNECTED': 'network-vpn-symbolic',
+        'WAITING': 'network-vpn-acquiring-symbolic',
+        'CONFIG': 'network-vpn-no-route-symbolic',
+        'ERROR': 'network-error-symbolic',
+        'STARTING': 'network-idle-symbolic',
+        'NONE': 'network-offline-symbolic'
+    }
+    return state_dict.get(state, state_dict['NONE'])
+
+
+def get_status(filename, n=1):
+    """
+    Return the last n lines of the status file in a deque
+    """
+    with open(filename) as f:
+        return deque(f, n)
+
+
 def test_file_is_found():
     """
     Test if we can find the msg_responder daemon.
@@ -723,18 +742,38 @@ def test_get_runtimedir():
     NODE_SETTINGS['runas_user'] = True
 
 
+def test_get_icon_from_state():
+    """
+    This is really in the gtk indicator source, test it here fr now
+    """
+    msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'WAITING', 'NONE', 'FOO']
+    for state in msgs:
+        res = get_state_icon(state)
+        assert 'symbolic' in res
+
+
 def test_put_state_msg():
     """
     Use get_status() from freepn-gtk3-indicator (replicated above)
     """
     state_path = Path(get_runtimedir()).joinpath('fpnd.state')
 
-    msgs = ['STARTING', 'ACTIVE', 'CONFIG']
+    msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'WAITING', 'NONE']
     for msg in msgs:
         put_state_msg(msg)
         status_queue = get_status(str(state_path))
-        data = status_queue.pop()
+        assert len(list(status_queue)) == 1
+        data = status_queue.pop().strip()
         assert data == msg
+        assert len(list(status_queue)) == 0
+
+    for msg in msgs:
+        put_state_msg(msg)
+    status_queue = get_status(str(state_path), 6)
+    assert len(list(status_queue)) == 1
+    data = status_queue.pop().strip()
+    assert data == 'NONE'
+    assert len(list(status_queue)) == 0
 
     state_path.unlink()
 
@@ -745,12 +784,22 @@ def test_put_state_msg_save():
     """
     state_path = Path(get_runtimedir()).joinpath('fpnd.state')
 
-    msgs = ['STARTING', 'ACTIVE', 'CONFIG']
+    msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'WAITING', 'NONE']
     for msg in msgs:
         put_state_msg(msg, clean=False)
         status_queue = get_status(str(state_path))
+        assert len(list(status_queue)) == 1
         data = status_queue.pop().strip()
         assert data == msg
+        assert len(list(status_queue)) == 0
+
+    for msg in msgs:
+        put_state_msg(msg, clean=False)
+    status_queue = get_status(str(state_path), 6)
+    assert len(list(status_queue)) == 6
+    data = status_queue.pop().strip()
+    assert data == 'NONE'
+    assert len(list(status_queue)) == 5
 
     state_path.unlink()
 

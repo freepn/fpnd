@@ -7,6 +7,7 @@ import logging
 
 from node_tools.exceptions import MemberNodeError
 from node_tools.helper_funcs import NODE_SETTINGS
+from node_tools.helper_funcs import put_state_msg
 
 
 logger = logging.getLogger(__name__)
@@ -133,6 +134,8 @@ def do_cleanup(path=None, addr=None):
             run_moon_cmd(moon_id, action='deorbit')
             reply = send_req_msg(addr, 'offline', node_id)
             logger.debug('CLEANUP: offline reply: {}'.format(reply))
+
+        put_state_msg('NONE')
 
 
 def do_startup(nwid):

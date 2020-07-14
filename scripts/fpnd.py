@@ -111,11 +111,12 @@ def do_scheduling():
 
             try:
                 handle_moon_data(data)
-                put_state_msg('STARTUP: Successful handshake')
+                put_state_msg('STARTING')
             except MemberNodeError as exc:
                 logger.error('ENODATA exception {}'.format(exc))
-                put_state_msg('ERROR: network unreachable, restart required')
-
+                put_state_msg('ERROR')
+            str_level = logging.getLevelName(logger.getEffectiveLevel())
+            print('Current log level is: {}'.format(str_level))
             startup_handlers()
 
         else:

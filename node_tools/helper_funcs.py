@@ -336,6 +336,10 @@ def put_state_msg(msg, state_file=None, clean=True):
     """
     import os
 
+    log_level = logging.getLevelName(logger.getEffectiveLevel())
+    if log_level == 'DEBUG':
+        clean = False
+
     mode = 'w'
     fmt = '{}'
     if not clean:
