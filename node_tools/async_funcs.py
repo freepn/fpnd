@@ -145,7 +145,7 @@ async def close_mbr_net(client, node_lst, boot_lst, min_nodes=5):
         tgt_src_net, _, _, _ = get_neighbor_ids(ct.net_trie, tgt_src_node)
 
         for mbr_id in [tgt_id, tail_id, head_id, tgt_exit_node]:
-            st.wait_cache.set(mbr_id, True, 90)
+            st.wait_cache.set(mbr_id, True, 120)
         # detach and connect tgt to tail
         await config_network_object(client, deauth, tgt_exit_net, tgt_id)
         cleanup_state_tries(ct.net_trie, ct.id_trie, tgt_exit_net, tgt_id, mbr_only=True)

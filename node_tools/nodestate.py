@@ -25,6 +25,7 @@ from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_token
 from node_tools.helper_funcs import net_id_handler
+from node_tools.helper_funcs import put_state_msg
 from node_tools.helper_funcs import send_cfg_handler
 from node_tools.network_funcs import do_peer_check
 from node_tools.network_funcs import send_req_msg
@@ -77,9 +78,16 @@ async def main():
             await client.get_data('network')
             net_data = client.data
             logger.info('Found {} networks'.format(len(net_data)))
-            # this only handles the initial node bootstrap state
-            if len(net_data) == 0 and not nsState.cfg_ref:
-                send_cfg_handler()
+
+            if NODE_SETTINGS['mode'] == 'peer':
+                wait_for_nets = net_wait.get('offline_wait')
+                if len(net_data) == 0:
+                    if not nsState.cfg_ref:
+                        send_cfg_handler()
+                        put_state_msg('WAITING')
+                    elif not wait_for_nets:
+                        put_state_msg('ERROR')
+
             net_keys = find_keys(cache, 'net')
             logger.debug('Returned network keys: {}'.format(net_keys))
             load_cache_by_type(cache, net_data, 'net')
@@ -88,39 +96,42 @@ async def main():
             logger.debug('Got net state: {}'.format(netStatus))
             load_cache_by_type(cache, netStatus, 'istate')
 
-            # check for reconfiguration events
-            for net in netStatus:
-                if net['status'] == 'NOT_FOUND' or net['status'] == 'ACCESS_DENIED':
-                    run_ztcli_cmd(action='leave', extra=net['identity'])
-                    net_id_handler(None, net['identity'], old=True)
-                    nsState.cfg_ref = None
-                    net_wait.set('offline_wait', True, 60)
-            if len(net_data) != 0 and not nsState.cfg_ref:
-                send_cfg_handler()
-
-            # check the state of exit network/route
-            exit_id = get_ztnwid('fpn0', 'fpn_id0', nsState)
-            if exit_id is not None:
+            if NODE_SETTINGS['mode'] == 'peer':
+                # check for reconfiguration events
                 for net in netStatus:
-                    if net['identity'] == exit_id:
-                        ztaddr = net['ztaddress']
-                        break
-                exit_state, _, _ = do_peer_check(ztaddr)
-                logger.debug('HEALTH: peer state is {}'.format(exit_state))
+                    if net['status'] == 'NOT_FOUND' or net['status'] == 'ACCESS_DENIED':
+                        run_ztcli_cmd(action='leave', extra=net['identity'])
+                        net_id_handler(None, net['identity'], old=True)
+                        nsState.cfg_ref = None
+                        net_wait.set('offline_wait', True, 90)
+                if len(net_data) != 0 and not nsState.cfg_ref:
+                    send_cfg_handler()
+                    put_state_msg('WAITING')
 
-                wait_for_nets = net_wait.get('offline_wait')
-                logger.debug('HEALTH: network route state is {}'.format(nsState.route))
-                if nsState.route is False:
-                    if not st.fpnState['wdg_ref'] and not wait_for_nets:
-                        # logger.error('HEALTH: net_health state is {}'.format(nsState.route))
-                        reply = send_req_msg(nsState.moon_addr, 'wedged', node_id)
-                        if 'result' in reply[0]:
-                            st.fpnState['wdg_ref'] = True
-                        logger.error('HEALTH: network is unreachable!!')
-                else:
-                    logger.debug('HEALTH: wait_for_nets is {}'.format(wait_for_nets))
+                # check the state of exit network/route
+                exit_id = get_ztnwid('fpn0', 'fpn_id0', nsState)
+                if exit_id is not None:
+                    for net in netStatus:
+                        if net['identity'] == exit_id:
+                            ztaddr = net['ztaddress']
+                            break
+                    exit_state, _, _ = do_peer_check(ztaddr)
+                    logger.debug('HEALTH: peer state is {}'.format(exit_state))
 
-            if NODE_SETTINGS['mode'] == 'adhoc':
+                    wait_for_nets = net_wait.get('offline_wait')
+                    logger.debug('HEALTH: network route state is {}'.format(nsState.route))
+                    if nsState.route is False:
+                        if not st.fpnState['wdg_ref'] and not wait_for_nets:
+                            # logger.error('HEALTH: net_health state is {}'.format(nsState.route))
+                            reply = send_req_msg(nsState.moon_addr, 'wedged', node_id)
+                            if 'result' in reply[0]:
+                                st.fpnState['wdg_ref'] = True
+                            logger.error('HEALTH: network is unreachable!!')
+                            put_state_msg('ERROR')
+                    else:
+                        logger.debug('HEALTH: wait_for_nets is {}'.format(wait_for_nets))
+
+            elif NODE_SETTINGS['mode'] == 'adhoc':
                 if not NODE_SETTINGS['nwid']:
                     logger.warning('ADHOC: network ID not set {}'.format(NODE_SETTINGS['nwid']))
                 else:

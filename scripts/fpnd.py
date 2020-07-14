@@ -22,6 +22,7 @@ from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import do_setup
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import network_cruft_cleaner
+from node_tools.helper_funcs import put_state_msg
 from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
@@ -102,11 +103,20 @@ def do_scheduling():
             check_time = 33
             baseCheckJob = schedule.every(check_time).seconds
             baseCheckJob.do(run_net_check).tag('base-tasks', 'route-status')
+
             try:
                 data = wait_for_moon(timeout=30)
             except Exception as exc:
                 logger.error('ENODATA exception {}'.format(exc))
-            handle_moon_data(data)
+
+            try:
+                handle_moon_data(data)
+                put_state_msg('STARTING')
+            except MemberNodeError as exc:
+                logger.error('ENODATA exception {}'.format(exc))
+                put_state_msg('ERROR')
+            str_level = logging.getLevelName(logger.getEffectiveLevel())
+            print('Current log level is: {}'.format(str_level))
             startup_handlers()
 
         else:

@@ -12,6 +12,9 @@ import tempfile
 import unittest
 import warnings
 
+from pathlib import Path
+from collections import deque
+
 import datrie
 import pytest
 
@@ -33,7 +36,9 @@ from node_tools.helper_funcs import ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_filepath
+from node_tools.helper_funcs import get_runtimedir
 from node_tools.helper_funcs import json_load_file
+from node_tools.helper_funcs import put_state_msg
 from node_tools.helper_funcs import send_cfg_handler
 from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
@@ -117,6 +122,7 @@ class BasicConfigTest(unittest.TestCase):
         self.saved_handler_list = logging._handlerList[:]
         self.original_logging_level = logging.root.level
         self.addCleanup(self.cleanup)
+        self.log = logging.getLogger('test')
         logging.root.handlers = []
 
     def tearDown(self):
@@ -149,6 +155,9 @@ class BasicConfigTest(unittest.TestCase):
 
         debug = False
         setup_logging(debug, '/dev/null')
+        str_level = logging.getLevelName(self.log.getEffectiveLevel())
+        # print('log level is {}'.format(str_level))
+        self.assertEqual(str_level, 'INFO')
         self.assertEqual(logging.root.level, logging.INFO)
         # Test that second call has no effect
         logging.basicConfig(level=58)
@@ -634,6 +643,29 @@ def load_net_trie_data(trie):
                 trie[net_id + mbr_id] = mbr
 
 
+def get_state_icon(state):
+    """
+    Match the state msg and return the icon name.
+    """
+    state_dict = {
+        'CONNECTED': 'network-vpn-symbolic',
+        'WAITING': 'network-vpn-acquiring-symbolic',
+        'CONFIG': 'network-vpn-no-route-symbolic',
+        'ERROR': 'network-error-symbolic',
+        'STARTING': 'network-idle-symbolic',
+        'NONE': 'network-offline-symbolic'
+    }
+    return state_dict.get(state, state_dict['NONE'])
+
+
+def get_status(filename, n=1):
+    """
+    Return the last n lines of the status file in a deque
+    """
+    with open(filename) as f:
+        return deque(f, n)
+
+
 def test_file_is_found():
     """
     Test if we can find the msg_responder daemon.
@@ -695,6 +727,81 @@ def test_path_ecxeption():
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), '/root')
     res = control_daemon('restart')
     assert not res
+
+
+def test_get_runtimedir():
+    import tempfile
+
+    temp_dir = tempfile.gettempdir()
+    NODE_SETTINGS['runas_user'] = False
+    res = get_runtimedir()
+    # print(res)
+    assert res == '/run/fpnd' or res == temp_dir
+    res = get_runtimedir(user_dirs=True)
+    assert '/var/run/user/' in res or res == temp_dir
+    NODE_SETTINGS['runas_user'] = True
+
+
+def test_get_icon_from_state():
+    """
+    This is really in the gtk indicator source, test it here fr now
+    """
+    msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'WAITING', 'NONE', 'FOO']
+    for state in msgs:
+        res = get_state_icon(state)
+        assert 'symbolic' in res
+
+
+def test_put_state_msg():
+    """
+    Use get_status() from freepn-gtk3-indicator (replicated above)
+    """
+    state_path = Path(get_runtimedir()).joinpath('fpnd.state')
+
+    msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'WAITING', 'NONE']
+    for msg in msgs:
+        put_state_msg(msg)
+        status_queue = get_status(str(state_path))
+        assert len(list(status_queue)) == 1
+        data = status_queue.pop().strip()
+        assert data == msg
+        assert len(list(status_queue)) == 0
+
+    for msg in msgs:
+        put_state_msg(msg)
+    status_queue = get_status(str(state_path), 6)
+    assert len(list(status_queue)) == 1
+    data = status_queue.pop().strip()
+    assert data == 'NONE'
+    assert len(list(status_queue)) == 0
+
+    state_path.unlink()
+
+
+def test_put_state_msg_save():
+    """
+    Same as test_put_state_msg but without cleaning
+    """
+    state_path = Path(get_runtimedir()).joinpath('fpnd.state')
+
+    msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'WAITING', 'NONE']
+    for msg in msgs:
+        put_state_msg(msg, clean=False)
+        status_queue = get_status(str(state_path))
+        assert len(list(status_queue)) == 1
+        data = status_queue.pop().strip()
+        assert data == msg
+        assert len(list(status_queue)) == 0
+
+    for msg in msgs:
+        put_state_msg(msg, clean=False)
+    status_queue = get_status(str(state_path), 6)
+    assert len(list(status_queue)) == 6
+    data = status_queue.pop().strip()
+    assert data == 'NONE'
+    assert len(list(status_queue)) == 5
+
+    state_path.unlink()
 
 
 def test_state_trie_load_save():

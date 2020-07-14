@@ -13,12 +13,13 @@ from node_tools.cache_funcs import get_node_status as get_node_status
 from node_tools.cache_funcs import get_peer_status as get_peer_status
 from node_tools.cache_funcs import get_state as get_state
 from node_tools.cache_funcs import load_cache_by_type as load_cache_by_type
-from node_tools.data_funcs import update_runner as update_runner
 from node_tools.helper_funcs import find_ipv4_iface as find_ipv4_iface
 from node_tools.helper_funcs import get_cachedir as get_cachedir
+from node_tools.helper_funcs import get_runtimedir as get_runtimedir
 from node_tools.helper_funcs import get_token as get_token
 from node_tools.helper_funcs import json_dump_file as json_dump_file
 from node_tools.helper_funcs import json_load_file as json_load_file
+from node_tools.helper_funcs import put_state_msg as put_state_msg
 from node_tools.helper_funcs import run_event_handlers as run_event_handlers
 from node_tools.helper_funcs import set_initial_role as set_initial_role
 from node_tools.helper_funcs import update_state as update_state
@@ -61,6 +62,7 @@ __all__ = [
     'get_network_object_ids',
     'get_node_status',
     'get_peer_status',
+    'get_runtimedir',
     'get_state',
     'get_token',
     'handle_announce_msg',
@@ -71,11 +73,11 @@ __all__ = [
     'load_cache_by_type',
     'manage_incoming_nodes',
     'populate_leaf_list',
+    'put_state_msg',
     'run_event_handlers',
     'run_net_cmd',
     'run_ztcli_cmd',
     'set_initial_role',
-    'update_runner',
     'update_state',
     'valid_announce_msg',
     'valid_cfg_msg',

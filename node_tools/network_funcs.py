@@ -8,6 +8,7 @@ import logging
 from node_tools import state_data as st
 
 from node_tools.helper_funcs import NODE_SETTINGS
+from node_tools.helper_funcs import put_state_msg
 from node_tools.sched_funcs import catch_exceptions
 from node_tools.sched_funcs import run_until_success
 
@@ -67,6 +68,7 @@ def do_net_check(path=None):
             if retcode == 0:
                 fpn_data['route'] = True
                 fpn_data['wdg_ref'] = None
+                put_state_msg('CONNECTED')
             logger.info('HEALTH: network route state is {}'.format(fpn_data['route']))
         elif fpn_data['route'] is None:
             logger.info('HEALTH: no state yet (state is {})'.format(fpn_data['route']))

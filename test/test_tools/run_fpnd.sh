@@ -6,6 +6,7 @@
 CMD_ARG=${1:-start}
 
 INFRA_HOSTS="infra-k1  infra-k2"
+# node-01
 GEN_HOSTS="node-01 node-02 node-03 node-04"
 ALL_HOSTS="${INFRA_HOSTS} ${GEN_HOSTS}"
 

@@ -13,7 +13,9 @@ from diskcache import Index
 
 from node_tools.cache_funcs import get_state
 from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import get_runtimedir
 from node_tools.helper_funcs import log_fpn_state
+from node_tools.helper_funcs import put_state_msg
 from node_tools.helper_funcs import run_event_handlers
 from node_tools.helper_funcs import update_state
 from node_tools.helper_funcs import AttrDict
@@ -136,9 +138,11 @@ def with_state_check(func):
             logger.warning('nodeState still not initialized (node not online)')
         elif next_state.online and prev_state.online:
             get_state_values(prev_state, next_state)
-            logger.debug('State diff is: {}'.format(st.changes))
+            if st.changes:
+                logger.info('NETSTATE: diff is {}'.format(st.changes))
+                put_state_msg('CONFIG')
             if next_state.fallback:
-                logger.error('ZT fallback mode is {} (network is suspect)'.format(next_state.fallback))
+                logger.error('NETSTATE: fallback mode is True (network suspect)')
 
         return result
     return state_check
