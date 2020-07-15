@@ -88,7 +88,18 @@ else
     [[ -n $VERBOSE ]] && echo "  FPN routing table not found!!"
 fi
 
-IPV4_INTERFACE=$(ip -o link show up | awk -F': ' '{print $2}' | grep -e 'usb' -e 'en' -e 'wl' -e 'lan' -e 'wan' -e 'eth' -e 'net' | head -n 1)
+DEFAULT_IFACE=$(ip route show default | awk '{print $5}')
+while read -r line; do
+    [[ -n $VERBOSE ]] && echo "Checking interfaces..."
+    IFACE=$(echo "$line")
+    if [[ $DEFAULT_IFACE = $IFACE ]]; then
+        IPV4_INTERFACE="${IFACE}"
+        [[ -n $VERBOSE ]] && echo "  Found interface $IFACE"
+        break
+    else
+        [[ -n $VERBOSE ]] && echo "  Skipping $IFACE"
+    fi
+done < <(ip -o link show up  | awk -F': ' '{print $2}' | grep -v lo)
 
 # set this to your "normal" network interface if needed
 #IPV4_INTERFACE="eth0"
