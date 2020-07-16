@@ -69,8 +69,20 @@ ZT_INTERFACE=$(zerotier-cli get "${ZT_SRC_NETID}" portDeviceName)
 ZT_SRC_ADDR=$(zerotier-cli get "${ZT_SRC_NETID}" ip4)
 
 # this should be the active interface with default route
-IPV4_INTERFACE=$(ip -o link show up | awk -F': ' '{print $2}' | grep -e 'usb' -e 'en' -e 'wl' -e 'lan' -e 'wan' -e 'eth' -e 'net' | head -n 1)
-INET_GATEWAY=$(ip route show | awk '/default / {print $3}')
+DEFAULT_IFACE=$(ip route show default | awk '{print $5}')
+while read -r line; do
+    [[ -n $VERBOSE ]] && echo "Checking interfaces..."
+    IFACE=$(echo "$line")
+    if [[ $DEFAULT_IFACE = $IFACE ]]; then
+        IPV4_INTERFACE="${IFACE}"
+        [[ -n $VERBOSE ]] && echo "  Found interface $IFACE"
+        break
+    else
+        [[ -n $VERBOSE ]] && echo "  Skipping $IFACE"
+    fi
+done < <(ip -o link show up  | awk -F': ' '{print $2}' | grep -v lo)
+
+INET_GATEWAY=$(ip route show default | awk '{print $3}')
 
 if [[ -n $ETH0_NULL ]]; then
     IPV4_INTERFACE="${ETH0_NULL}"
