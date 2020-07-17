@@ -27,6 +27,7 @@ from node_tools.helper_funcs import get_token
 from node_tools.helper_funcs import net_id_handler
 from node_tools.helper_funcs import put_state_msg
 from node_tools.helper_funcs import send_cfg_handler
+from node_tools.helper_funcs import startup_handlers
 from node_tools.network_funcs import do_peer_check
 from node_tools.network_funcs import send_req_msg
 from node_tools.node_funcs import get_ztnwid
@@ -82,11 +83,19 @@ async def main():
             if NODE_SETTINGS['mode'] == 'peer':
                 wait_for_nets = net_wait.get('offline_wait')
                 if len(net_data) == 0:
-                    if not nsState.cfg_ref:
+                    if nsState.msg_ref is not None and not nsState.cfg_ref:
                         send_cfg_handler()
                         put_state_msg('WAITING')
-                    elif not wait_for_nets:
-                        put_state_msg('ERROR')
+                    elif not nsState.msg_ref and not nsState.cfg_ref:
+                        net_wait.set('restart_now', True, 5)
+                    elif nsState.msg_ref is not None and nsState.cfg_ref is not None:
+                        if not wait_for_nets and not net_wait.get('restart_wait'):
+                            st.fpnState['cfg_ref'] = None
+                            st.fpnState['msg_ref'] = None
+                            reply = send_req_msg(nsState.moon_addr, 'offline', node_id)
+                            logger.debug('RESTART: offline reply: {}'.format(reply))
+                            net_wait.set('restart_wait', True, 35)
+                            put_state_msg('ERROR')
 
             net_keys = find_keys(cache, 'net')
             logger.debug('Returned network keys: {}'.format(net_keys))
@@ -102,11 +111,20 @@ async def main():
                     if net['status'] == 'NOT_FOUND' or net['status'] == 'ACCESS_DENIED':
                         run_ztcli_cmd(action='leave', extra=net['identity'])
                         net_id_handler(None, net['identity'], old=True)
-                        nsState.cfg_ref = None
-                        net_wait.set('offline_wait', True, 90)
-                if len(net_data) != 0 and not nsState.cfg_ref:
-                    send_cfg_handler()
-                    put_state_msg('WAITING')
+                        st.fpnState[cfg_ref] = None
+                        net_wait.set('offline_wait', True, 75)
+                wait_for_nets = net_wait.get('offline_wait')
+                if len(net_data) != 0:
+                    if not nsState.cfg_ref:
+                        send_cfg_handler()
+                        put_state_msg('WAITING')
+                elif len(net_data) == 0:
+                    if net_wait.get('restart_now') and not nsState.msg_ref:
+                        if not net_wait.get('restart_wait'):
+                            startup_handlers()
+                            put_state_msg('STARTING')
+                        else:
+                            put_state_msg('WAITING')
 
                 # check the state of exit network/route
                 exit_id = get_ztnwid('fpn0', 'fpn_id0', nsState)
