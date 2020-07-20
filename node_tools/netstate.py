@@ -102,11 +102,13 @@ async def main():
 
                 if len(boot_list) != 0:
                     await close_mbr_net(client, node_list, boot_list, min_nodes=3)
-                elif len(boot_list) == 0 and len(node_list) > 1:
+                else:
                     await unwrap_mbr_net(client, node_list, boot_list, min_nodes=3)
 
         except Exception as exc:
             logger.error('netstate exception was: {}'.format(exc))
+            if list(ct.net_trie) == [] and list(ct.id_trie) != []:
+                ct.id_trie.clear()
             raise exc
 
 

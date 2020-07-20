@@ -66,7 +66,6 @@ def cleanup_state_tries(net_trie, id_trie, nw_id, node_id, mbr_only=False):
     :param node_id: mbr node ID str
     :param mbr_only: if True, delete only the member node keys
     """
-
     if mbr_only:
         mbr_key = nw_id + node_id
         del net_trie[mbr_key]
@@ -144,15 +143,18 @@ def find_orphans(net_trie, id_trie):
 
 def get_active_nodes(id_trie):
     """
-    Find all the currently active nodes (search the ID trie).
+    Find all the currently active nodes except the exit node (search the
+    ID trie).
     :notes: In this case the answer depends on when this runs (relative
             to the cmds in `netstate` runner).
     :param id_trie: ID state trie
     :return: list of node IDs (empty list if None)
     """
+    from node_tools.ctlr_funcs import is_exit_node
+
     node_list = []
 
-    for node in [x for x in list(id_trie) if len(x) == 10]:
+    for node in [x for x in list(id_trie) if len(x) == 10 and not is_exit_node(x)]:
         node_list.append(node)
     return node_list
 

@@ -123,7 +123,7 @@ async def close_mbr_net(client, node_lst, boot_lst, min_nodes=5):
     deauth = unset_network_cfg()
 
     # if true, we only have a boot list
-    if len(node_lst) - len(boot_lst) == 1:
+    if len(node_lst) == len(boot_lst):
         # check if we have enough nodes for a network
         if len(boot_lst) >= min_nodes:
             logger.debug('CLOSURE: creating network from boot_list {}'.format(boot_lst))

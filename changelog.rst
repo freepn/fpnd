@@ -1,11 +1,43 @@
-0.8.xx (unreleased)
-------------------
-- netstate tries: add prune option to remove stale net IDs
-  [Stephen Arnold]
-- openrc config: add check func to also stop zerotier on shutdown
-  [Stephen Arnold]
-- Add logrotate section for private fpnd log dir, cleanup rules.
-  [Stephen Arnold]
+0.8.15 (2020-07-14)
+-------------------
+- Node_tools/__init__.py: version bump for packaging. [Stephen Arnold]
+- Merge pull request #48 from freepn/state-msgs. [Steve Arnold]
+- State msgs for gui status, switched from msg socket to state file.
+
+  * Flesh out state msgs and cleanup tests.
+  * Add state msg handler and tests, update changelog, add draft SVD doc.
+  * Add publisher for state msgs, update tests/logging, cleanup doc strings.
+
+
+0.8.14 (2020-07-12)
+-------------------
+- Merge pull request #47 from freepn/netstate-ref. [Steve Arnold]
+- Netstate refactor, nodestate cleanup:
+
+  * allow bad nets in netStatus so they can be removed
+  * check for orphans and cleanup after wait_cache timeout
+
+- Add some missing test bits for updated trie and cache funcs. [Stephen Arnold]
+- Add netstate orphan cleanup and some wait_cache handling of nodes. [Stephen Arnold]
+
+  * allow bad nets in netStatus so they can be removed
+  * add 10 msec sleep to bootstrap/close to let things catch up
+  * check for orphans and cleanup after wait_cache timeout
+  * fix missing import, add more tests
+
+- Add missing test plus more cleanup in trie_funcs. [Stephen Arnold]
+- Revert "netstate tries: add prune option to remove stale net IDs" [Stephen Arnold]
+
+  * This reverts commit 8f9bdf4e830368b7abbf99d576fae368b8dc29e0.
+
+- Cleanup for new testing baseline, add some test tools and data. [Stephen Arnold]
+
+
+0.8.13 (2020-07-06)
+-------------------
+- Netstate tries: add prune option to remove stale net IDs. [Stephen Arnold]
+- Openrc config: add check func to also stop zerotier on shutdown. [Stephen Arnold]
+- Add logrotate section for private fpnd log dir, cleanup rules. [Stephen Arnold]
 
 
 0.8.12 (2020-06-29)

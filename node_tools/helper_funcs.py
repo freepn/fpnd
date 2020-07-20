@@ -190,7 +190,7 @@ def get_runtimedir(user_dirs=False):
     else:
         run_path = '/run/fpnd'
         path_chk = Path(run_path)
-        if os.path.exists(run_path) and not path_chk.group() == 'fpnd':
+        if path_chk.exists() and not path_chk.group() == 'fpnd':
             run_path = temp_dir
     if run_path == temp_dir:
         logger.warning('Falling back to temp dir: {}'.format(temp_dir))
