@@ -203,15 +203,32 @@ Portage notes
 Build Instructions
 ------------------
 
+For Gentoo and related derivatives, all packages are built from source by design,
+while ``.deb`` packages are built automatically by the PPA tools.
 
+The Gentoo ebuilds generally enable only the package tests (without any extras
+like code coverage, linting, etc) so you'll need to manually install those if
+desired. You can find the additional test packages in the package-specific
+requirements*.txt files (for python packages) and ``.travis.yml`` files (and
+sometimes as comments in the ebuilds).  You can start by installing ``fpnd``
+with ``test`` in both FEATURES and USE.
+
+If you're on Ubuntu you can make a local build directory and ``cd`` into it,
+then issue the following commands to get started::
+
+  $ sudo apt-get build-dep python3-fpnd
+  $ sudo apt-get install tox
+  $ git clone https://github.com/freepn/fpnd
+
+Using the Debian developer/packaging tools is beyond the scope of this document.
 
 Data integrity
 --------------
 
 The canonical source code repositories are maintained on github_ and verified
-by both github keys (for pull requests) and developer keys are used to sign
-releases (tags and ``tar.gz`` archives).  Note this also includes the
-``.ebuild`` packages in the `python-overlay`_.
+by both github keys (for pull requests) and developer keys; the latter are used
+to sign releases (both tags and ``tar.gz`` archives).  Note this also includes
+the ``.ebuild`` packages in the `python-overlay`_.
 
 For the ``.deb`` package format:
 
@@ -231,6 +248,7 @@ run-time requirements also include a recent Linux kernel with ``bash``,
 * python_ - at least version 3.5
 * appdirs_ - standardized app directories
 * datrie_ - python interface to libdatrie
+* libdatrie_ - a Double-Array Trie library
 * schedule_ - python scheduling engine
 * python-diskcache_ - persistent cache types
 * python-daemon_ - python daemon class
@@ -244,6 +262,7 @@ run-time requirements also include a recent Linux kernel with ``bash``,
 .. _python: https://docs.python.org/3.5/index.html
 .. _appdirs: https://github.com/ActiveState/appdirs
 .. _datrie: https://github.com/pytries/datrie
+.. _libdatrie: https://github.com/tlwg/libdatrie
 .. _schedule: https://github.com/freepn/schedule
 .. _python-diskcache: https://github.com/grantjenks/python-diskcache
 .. _python-daemon: https://github.com/freepn/python-daemon
@@ -259,10 +278,29 @@ run-time requirements also include a recent Linux kernel with ``bash``,
 Known Issues
 ------------
 
+* avahi-autoipd link-local conflicts with zerotier interfaces
+
+This is currently an open "watch item" issue (see `issue 39`_) for Linux hosts
+running the avahi autoipd daemon.  Using autoipd is incompatible with both fpnd
+and ZeroTier (see the github issue for details) so you must disable the autoipd
+daemon before running fpnd.
+
+* missing kernel module(s) cause net script failures
+
+This is mainly a potential issue with user-configured/custom kernels; currently
+the standard kernel packages on Ubuntu and Kali have the required modules enabled.
+
+.. _issue 39: https://github.com/freepn/fpnd/issues/39
+.. _issue 30: https://github.com/freepn/fpnd/issues/30
+
 
 Resolved Issues
 ---------------
 
+See the `closed issues list`_ on github for details.
+
+
+.. _closed issues list: https://github.com/freepn/fpnd/issues?q=is%3Aissue+is%3Aclosed
 
 
 .. raw:: pdf
