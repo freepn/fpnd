@@ -21,8 +21,8 @@
 
    PageBreak
 
-FreePN Overview
-===============
+1.0 - Identification and Overview
+=================================
 
 
 The FreePN_ network daemon (fpnd) is a P2P implementation of a distributed virtual
@@ -30,8 +30,8 @@ private network (dVPN) designed to create an anonymous network "cloud" where eac
 user is both a client and an exit.  Peers are randomly connected on startup and
 reconnected as needed.
 
-System Design
--------------
+1.1 - System Design
+-------------------
 
 The FreePN network daemon uses ZeroTier_ virtual networks to provide enhanced user
 privacy, anonymity, and security when accessing the Internet.  The current prototype
@@ -45,8 +45,8 @@ more granular user controls.
 
 .. _FreePN: https://github.com/freepn
 
-Required / Optional Software
-----------------------------
+1.2 - Required / Optional Software
+----------------------------------
 
 FreePN packages are available for Ubuntu and Gentoo using the live ebuilds in our
 `python-overlay`_ or the Embedded device `PPA on Launchpad`_. The PPA sources can
@@ -67,8 +67,16 @@ components:
 .. _PPA on Launchpad: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
 
 
-Prerequisites
--------------
+2.0 - Referenced Documents
+==========================
+
+* DI-IPSC-81442 - Software Version Description (SVD) Data Item Description
+
+
+3.0 - Version Description
+=========================
+
+Prerequisites:
 
 A supported linux distribution, mainly something that uses `.ebuilds`
 (eg, Gentoo or funtoo) or a supported Ubuntu series, currently xenial
@@ -76,8 +84,8 @@ A supported linux distribution, mainly something that uses `.ebuilds`
 `PPA on Launchpad`_).  Note you can also use the focal PPA series on
 the latest kali linux.
 
-Packages and Source Code
-------------------------
+3.1 - Packages and Source Code
+------------------------------
 
 Released packages come in three different formats, which are verified in at
 least one or more places.
@@ -108,8 +116,8 @@ For other distributions:
 .. _fpnd source release on github: https://github.com/freepn/fpnd/releases
 
 
-Install Instructions
---------------------
+3.2 - Install Instructions
+--------------------------
 
 Before you can install any Freepn packages, you'll need to add the required
 package repository or overlay.
@@ -187,8 +195,7 @@ Or::
           as one of the dependencies, so you do not need to manually install both
           packages (ie, choose one or the other).
 
-Portage notes
--------------
+Portage notes:
 
 * almost nothing in the overlay is keyworded stable yet; use your preferred
   method to accept ``~`` packages
@@ -200,8 +207,8 @@ Portage notes
 
 .. _Portage: https://wiki.gentoo.org/wiki/Portage
 
-Build Instructions
-------------------
+3.3 - Build Instructions
+------------------------
 
 For Gentoo and related derivatives, all packages are built from source by design,
 while ``.deb`` packages are built automatically by the PPA tools.
@@ -222,8 +229,8 @@ then issue the following commands to get started::
 
 Using the Debian developer/packaging tools is beyond the scope of this document.
 
-Data integrity
---------------
+3.4 - Data integrity
+--------------------
 
 The canonical source code repositories are maintained on github_ and verified
 by both github keys (for pull requests) and developer keys; the latter are used
@@ -237,8 +244,8 @@ For the ``.deb`` package format:
 * signatures are verified using the package manager via the ubuntu key server
 
 
-Dependencies
-------------
+3.5 - Dependencies
+------------------
 
 Core dependencies for the FreePN network daemon are shown below.  Dependency
 resolution is handled by the respective package managers and test tools. The
@@ -275,8 +282,8 @@ run-time requirements also include a recent Linux kernel with ``bash``,
 .. _pytest: https://github.com/pytest-dev/pytest
 
 
-Known Issues
-------------
+3.6 - Known Issues
+------------------
 
 * avahi-autoipd link-local conflicts with zerotier interfaces
 
@@ -287,15 +294,17 @@ daemon before running fpnd.
 
 * missing kernel module(s) cause net script failures
 
-This is mainly a potential issue with user-configured/custom kernels; currently
-the standard kernel packages on Ubuntu and Kali have the required modules enabled.
+This is also an open "watch item" issue (see `issue 30`_) and is mainly a potential
+issue with user-configured/custom kernels; currently the standard kernel packages
+on Ubuntu and Kali have the required modules enabled (on Gentoo this is handled
+by checking for the required modules when building the package).
 
 .. _issue 39: https://github.com/freepn/fpnd/issues/39
 .. _issue 30: https://github.com/freepn/fpnd/issues/30
 
 
-Resolved Issues
----------------
+3.7 - Resolved Issues
+---------------------
 
 See the `closed issues list`_ on github for details.
 
@@ -308,8 +317,8 @@ See the `closed issues list`_ on github for details.
     PageBreak
 
 
-Full Change History
-===================
+Appendix A - Full Change History
+================================
 
 Since there has been no prior Software Version Description published for this
 software, this section should contain the `complete change history`_ (see the
