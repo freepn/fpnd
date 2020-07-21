@@ -247,7 +247,7 @@ if you want the pytest deps::
 
   # FEATURES=test emerge net-misc/fpnd
 
-or::
+or on Ubuntu::
 
   $ sudo apt-get build-dep python3-fpnd
   $ sudo apt-get install tox

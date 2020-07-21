@@ -1,3 +1,17 @@
+0.8.17 (2020-07-17)
+-------------------
+- Merge pull request #51 from freepn/reconnect. [Steve Arnold]
+- Reconnect user node on hard network error
+
+  * Initial implementation of reconnect after error (and some initial tuning) [Stephen Arnold]
+
+
+0.8.16 (2020-07-16)
+-------------------
+- Merge pull request #50 from freepn/net-scripts. [Steve Arnold]
+- Net-scripts: check interfaces that are up against default route. [Stephen Arnold]
+
+
 0.8.15 (2020-07-14)
 -------------------
 - Node_tools/__init__.py: version bump for packaging. [Stephen Arnold]
