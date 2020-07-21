@@ -10,7 +10,8 @@
 :category: release
 :slug: engineering_process
 :summary: Software version/release description and full change history
-:sw version: |Version|
+:asset name: fpnd
+:software version: |Version|
 
 .. |date| date::
 .. |time| date:: %H:%M
@@ -26,8 +27,8 @@
 
 
 The FreePN_ network daemon (fpnd) is a P2P implementation of a distributed virtual
-private network (dVPN) designed to create an anonymous network "cloud" where each
-user is both a client and an exit.  Peers are randomly connected on startup and
+private network (dVPN) designed to create an anonymous "cloud" of peers where each
+peer is both a client and an exit.  Peers are randomly connected on startup and
 reconnected as needed.
 
 1.1 - System Design
@@ -48,10 +49,10 @@ more granular user controls.
 1.2 - Required / Optional Software
 ----------------------------------
 
-FreePN packages are available for Ubuntu and Gentoo using the live ebuilds in our
-`python-overlay`_ or the Embedded device `PPA on Launchpad`_. The PPA sources can
-also be used to build Debian packages, however, we don't (yet) support any
-"official" Debian releases.
+FreePN packages are available for Ubuntu and Gentoo using the ebuilds in our
+`python-overlay`_ or the ``.deb`` packages hosted on our Embedded device
+`PPA on Launchpad`_. The PPA sources can also be used to build Debian packages,
+however, we don't (yet) support any "official" Debian releases.
 
 In addition to the existing (FOSS_) package dependencies, there is one primary
 package (and related repository on github_) for each of the following two
@@ -70,7 +71,7 @@ components:
 2.0 - Referenced Documents
 ==========================
 
-* DI-IPSC-81442 - Software Version Description (SVD) Data Item Description
+* DI-IPSC-81442 - Software Version Description (SVD) Data Item Description (DID)
 
 
 3.0 - Version Description
@@ -297,7 +298,8 @@ daemon before running fpnd.
 This is also an open "watch item" issue (see `issue 30`_) and is mainly a potential
 issue with user-configured/custom kernels; currently the standard kernel packages
 on Ubuntu and Kali have the required modules enabled (on Gentoo this is handled
-by checking for the required modules when building the package).
+by checking for the required modules when building the package and issuing a
+warning to the user if necessary).
 
 .. _issue 39: https://github.com/freepn/fpnd/issues/39
 .. _issue 30: https://github.com/freepn/fpnd/issues/30
