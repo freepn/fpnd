@@ -25,17 +25,18 @@ FreePN Overview
 ===============
 
 
-`FreePN`_ is a P2P implementation of a distributed virtual private network (dVPN)
-based on ZeroTier to create a network "cloud" where each user is both a client
-and an exit.  Peers are randomly connected on startup and reconnected as needed.
+The FreePN_ network daemon (fpnd) is a P2P implementation of a distributed virtual
+private network (dVPN) designed to create an anonymous network "cloud" where each
+user is both a client and an exit.  Peers are randomly connected on startup and
+reconnected as needed.
 
 System Design
 -------------
 
-The FreePN network daemon uses `ZeroTier`_ virtual networks to provide enhanced
-privacy, anonymity, and security over the Internet.  The current prototype design
-supports these goals in the following ways; planned (future) features include more
-granular user controls.
+The FreePN network daemon uses ZeroTier_ virtual networks to provide enhanced user
+privacy, anonymity, and security when accessing the Internet.  The current prototype
+design supports these goals in the following ways; planned (future) features include
+more granular user controls.
 
 * each peer VPN link is a private ZeroTier network with its own IPv4 address space
 * each network link allows only 2 hosts, and only the routed traffic (currently http/https)
@@ -43,27 +44,27 @@ granular user controls.
 * FreePN infrastructure traffic is restricted to only node and network IDs (the minimum required for this stuff to actually work)
 
 .. _FreePN: https://github.com/freepn
-.. _ZeroTier: https://www.zerotier.com
 
 Required / Optional Software
 ----------------------------
 
 FreePN packages are available for Ubuntu and Gentoo using the live ebuilds in our
-`python overlay`_ and a `PPA on Launchpad`_. The PPA sources can also be used
-to build Debian packages, however, we don't (yet) support any "official" Debian
-releases.
+`python-overlay`_ or the Embedded device `PPA on Launchpad`_. The PPA sources can
+also be used to build Debian packages, however, we don't (yet) support any
+"official" Debian releases.
 
-In addition to the existing (`FOSS`_) package dependencies, there is one primary
-package (and related repository on `github`_) for each of the following two
+In addition to the existing (FOSS_) package dependencies, there is one primary
+package (and related repository on github_) for each of the following two
 components:
 
-* the FreePN network daemon - `fpnd`_
-* the FreePN desktop UI (optional) - `freepn-gtk3-tray`_
+* the FreePN network daemon - fpnd_
+* the FreePN desktop UI (optional) - freepn-gtk3-tray_
 
 .. _FOSS: https://www.gnu.org/philosophy/floss-and-foss.en.html
 .. _github: https://github.com/freepn
 .. _fpnd: https://github.com/freepn/fpnd
 .. _freepn-gtk3-tray: https://github.com/freepn/freepn-gtk3-tray
+.. _PPA on Launchpad: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
 
 
 Prerequisites
@@ -86,7 +87,7 @@ For supported Linux distributions:
 * Ubuntu xenial, bionic, focal
 * Kali rolling (other ubuntu derivatives should also work)
 
-  + use the `Launchpad PPA`_
+  + use the `PPA on Launchpad`_
 
 * Gentoo (funtoo, Sabayon)
 
@@ -96,14 +97,13 @@ For other distributions:
 
 * debian-ish
 
-  + use the `Launchpad PPA`_ (source build)
+  + use the `PPA on Launchpad`_ (source build)
 
 * Other:
 
   + use the latest `fpnd source release on github`_
 
 
-.. _Launchpad PPA: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
 .. _python-overlay: https://github.com/freepn/python-overlay
 .. _fpnd source release on github: https://github.com/freepn/fpnd/releases
 
@@ -130,10 +130,8 @@ signing key like so:
   $ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys <PPA_KEY>
 
 where <PPA_KEY> is the key shown in the launchpad PPA page under "Adding
-this PPA to your system", eg, ``41113ed57774ed19`` for `Embedded device ppa`_.
+this PPA to your system", eg, ``41113ed57774ed19`` for the Embedded device PPA.
 
-
-.. _Embedded device ppa: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
 
 On kali you will need to edit the file created under ``/etc/apt/sources.list.d``
 for the PPA and change the series name to ``focal``, then run the above
@@ -210,7 +208,7 @@ Build Instructions
 Data integrity
 --------------
 
-The canonical source code repositories are maintained on `github`_ and verified
+The canonical source code repositories are maintained on github_ and verified
 by both github keys (for pull requests) and developer keys are used to sign
 releases (tags and ``tar.gz`` archives).  Note this also includes the
 ``.ebuild`` packages in the `python-overlay`_.
@@ -230,20 +228,20 @@ resolution is handled by the respective package managers and test tools. The
 run-time requirements also include a recent Linux kernel with ``bash``,
 ``iptables``, and ``iproute2`` installed.
 
-* `python`_ - at least version 3.5
-* `appdirs`_ - standardized app directories
-* `datrie`_ - python interface to libdatrie
-* `schedule`_ - python scheduling engine
-* `python-diskcache`_ - persistent cache types
-* `python-daemon`_ - python daemon class
-* `nanoservice`_ - python micro-messaging services
-* `nanomsg-python`_ - python interface to nanomsg
-* `nanomsg`_ - library for messaging protocols
-* `ztcli-async`_ - python async client for zerotier API
-* `ZeroTier`_ - network virtualization engine
-* `tox`_ and `pytest`_- optional; needed for local testing
+* python_ - at least version 3.5
+* appdirs_ - standardized app directories
+* datrie_ - python interface to libdatrie
+* schedule_ - python scheduling engine
+* python-diskcache_ - persistent cache types
+* python-daemon_ - python daemon class
+* nanoservice_ - python micro-messaging services
+* nanomsg-python_ - python interface to nanomsg
+* nanomsg_ - library for messaging protocols
+* ztcli-async_ - python async client for zerotier API
+* ZeroTier_ - network virtualization engine
+* tox_ and pytest_- optional; needed for local testing
 
-.. _Python: https://docs.python.org/3.5/index.html
+.. _python: https://docs.python.org/3.5/index.html
 .. _appdirs: https://github.com/ActiveState/appdirs
 .. _datrie: https://github.com/pytries/datrie
 .. _schedule: https://github.com/freepn/schedule
