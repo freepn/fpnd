@@ -180,7 +180,7 @@ Adjust the path in the ``location`` field as needed, then save and exit nano.
 
 Run the following command to sync the repo::
 
-  # emaint sync --repo python-overlay
+  $ sudo emaint sync --repo python-overlay
 
 Once the overlay is synced, install the daemon and/or UI package::
 
