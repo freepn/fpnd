@@ -94,7 +94,7 @@ least one or more places.
 For supported Linux distributions:
 
 * Ubuntu xenial, bionic, focal
-* Kali rolling (other ubuntu derivatives should also work)
+* Kali (other ubuntu derivatives should also work)
 
   + use the `PPA on Launchpad`_
 

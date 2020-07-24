@@ -160,7 +160,7 @@ async def close_mbr_net(client, node_lst, boot_lst, min_nodes=5):
         logger.debug('CLOSURE: deauthed node id {} from head exit net {}'.format(head_id, head_exit_net))
 
         await connect_mbr_node(client, head_id, head_src_net, tgt_exit_net, tgt_exit_node)
-        time.sleep(0.01)
+        time.sleep(0.02)
         publish_cfg_msg(ct.id_trie, head_id, addr='127.0.0.1')
 
 
@@ -188,7 +188,7 @@ async def cleanup_orphans(client):
             elif isinstance(thing, tuple):
                 if st.wait_cache.get(thing[1]) is None:
                     await delete_network_object(client, thing[0])
-                    time.sleep(0.01)
+                    time.sleep(0.02)
                     cleanup_state_tries(ct.net_trie, ct.id_trie, thing[0], thing[1])
                     logger.warning('CLEANUP: removed orphan: {}'.format(thing))
 
@@ -330,7 +330,7 @@ async def unwrap_mbr_net(client, node_lst, boot_lst, min_nodes=5):
     from node_tools.trie_funcs import get_neighbor_ids
     from node_tools.trie_funcs import get_target_node_id
 
-    if len(node_lst) <= min_nodes and len(boot_lst) == 0:
+    if len(node_lst) < min_nodes and len(boot_lst) == 0:
         logger.debug('UNWRAP: creating bootstrap list from network {}'.format(node_lst))
         tgt_id = get_target_node_id(node_lst, boot_lst)
         tgt_net, tgt_exit_net, _, _ = get_neighbor_ids(ct.net_trie, tgt_id)
@@ -348,7 +348,7 @@ async def unwrap_mbr_net(client, node_lst, boot_lst, min_nodes=5):
         await connect_mbr_node(client, tgt_id, tgt_net, exit_net, exit_node)
         publish_cfg_msg(ct.id_trie, tgt_id, addr='127.0.0.1')
     else:
-        logger.debug('UNWRAP: num nodes more than {} so not unwrapping'.format(min_nodes))
+        logger.debug('UNWRAP: num nodes at least {} so not unwrapping'.format(min_nodes))
 
 
 async def add_network_object(client, net_id=None, mbr_id=None, ctlr_id=None):
