@@ -1,3 +1,23 @@
+0.8.18 (2020-07-25)
+-------------------
+- Version bump for tag/packaging [Steve Arnold]
+- Merge pull request #52 from freepn/nets-and-docs. [Steve Arnold]
+- Refactor netstate/nodestate and orphan cleanup, update tests/test tools. [Stephen Arnold]
+
+  * added update_mbr_data func to bootstrap, removed timing hacks
+  * updated find/clean orphans, moved to exception handler
+  * cleanup stale cfg msgs and refactor some msg queues
+  * revert and refactor nodestate, update tests
+
+- Misc fixes for netstate, test tools, and release doc. [Stephen Arnold]
+- README_0.9.0-release-notes_DRAFT.rst: flesh out the rest of the draft. [Stephen Arnold]
+- Release-notes: cleanup links, limit includes to changelog only. [Stephen Arnold]
+- Update new docs, provide a link to changelog.rst (include not rendered) [Stephen Arnold]
+- Handle netstate trie exception, update netstate node_list comparisons. [Stephen Arnold]
+
+  * remove exit node from node list, update tests
+
+
 0.8.17 (2020-07-17)
 -------------------
 - Merge pull request #51 from freepn/reconnect. [Steve Arnold]
