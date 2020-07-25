@@ -108,6 +108,7 @@ def do_scheduling():
                 data = wait_for_moon(timeout=30)
             except Exception as exc:
                 logger.error('ENODATA exception {}'.format(exc))
+                put_state_msg('ERROR')
 
             try:
                 handle_moon_data(data)
@@ -115,8 +116,9 @@ def do_scheduling():
             except MemberNodeError as exc:
                 logger.error('ENODATA exception {}'.format(exc))
                 put_state_msg('ERROR')
+
             str_level = logging.getLevelName(logger.getEffectiveLevel())
-            print('Current log level is: {}'.format(str_level))
+            logger.debug('Current log level is: {}'.format(str_level))
             startup_handlers()
 
         else:

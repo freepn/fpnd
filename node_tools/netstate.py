@@ -52,9 +52,6 @@ async def main():
                 off_q.remove(node_id)
             logger.debug('{} nodes in offline queue: {}'.format(len(off_q), list(off_q)))
 
-            # check for leftover cruft
-            await cleanup_orphans(client)
-
             # get ID and status details of ctlr node
             await client.get_data('status')
             ctlr_id = handle_node_status(client.data, cache)
@@ -102,11 +99,14 @@ async def main():
 
                 if len(boot_list) != 0:
                     await close_mbr_net(client, node_list, boot_list, min_nodes=3)
-                elif len(boot_list) == 0 and len(node_list) > 1:
+                else:
                     await unwrap_mbr_net(client, node_list, boot_list, min_nodes=3)
 
         except Exception as exc:
             logger.error('netstate exception was: {}'.format(exc))
+            await cleanup_orphans(client)
+            if list(ct.net_trie) == [] and list(ct.id_trie) != []:
+                ct.id_trie.clear()
             raise exc
 
 

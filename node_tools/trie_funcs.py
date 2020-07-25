@@ -66,7 +66,6 @@ def cleanup_state_tries(net_trie, id_trie, nw_id, node_id, mbr_only=False):
     :param node_id: mbr node ID str
     :param mbr_only: if True, delete only the member node keys
     """
-
     if mbr_only:
         mbr_key = nw_id + node_id
         del net_trie[mbr_key]
@@ -114,45 +113,53 @@ def find_exit_net(trie):
 def find_orphans(net_trie, id_trie):
     """
     Find orphaned nodes/empty nets based on current trie data from ZT api.
-    In this context, an orphan is any node ID with a single net ID who is
-    not the exit node.
+    In this context, an orphan is:
+    * an empty net ID
+    * a node ID with a single net ID (except the exit node)
+    * a node ID without any networks
     :param net_trie: datrie trie object
     :param id_trie: datrie trie object
-    :return: list of empty/orphan net IDs
+    :return: tuple of lists (orphan net list, orphan node list)
     """
     from node_tools.ctlr_funcs import is_exit_node
 
-    empty_nets = []
+    orphan_nets = []
+    orphan_nodes = []
 
     for net_id in [x for x in list(id_trie) if len(x) == 16]:
         mbr_list = net_trie.suffixes(net_id)[1:]
         if mbr_list == []:
-            empty_nets.append(net_id)
+            orphan_nets.append(net_id)
             logger.warning('CLEANUP: found empty net: {}'.format(net_id))
-    for node_id in [x for x in list(id_trie) if len(x) == 10]:
+    for node_id in [x for x in list(id_trie) if len(x) == 10 and not is_exit_node(x)]:
         net_list = []
         for key in list(net_trie):
             if node_id in key:
                 net_list.append((key[0:16], node_id))
         if len(net_list) == 1:
-            if not is_exit_node(node_id):
-                empty_nets.append(net_list[0])
-                logger.warning('CLEANUP: found orphan net {}'.format(net_list))
+            orphan_nets.append(net_list[0])
+            logger.warning('CLEANUP: found orphan net {}'.format(net_list))
+        elif len(net_list) == 0:
+            orphan_nodes.append(node_id)
+            logger.warning('CLEANUP: found orphan node {}'.format(node_id))
 
-    return empty_nets
+    return orphan_nets, orphan_nodes
 
 
 def get_active_nodes(id_trie):
     """
-    Find all the currently active nodes (search the ID trie).
+    Find all the currently active nodes except the exit node (search the
+    ID trie).
     :notes: In this case the answer depends on when this runs (relative
             to the cmds in `netstate` runner).
     :param id_trie: ID state trie
     :return: list of node IDs (empty list if None)
     """
+    from node_tools.ctlr_funcs import is_exit_node
+
     node_list = []
 
-    for node in [x for x in list(id_trie) if len(x) == 10]:
+    for node in [x for x in list(id_trie) if len(x) == 10 and not is_exit_node(x)]:
         node_list.append(node)
     return node_list
 

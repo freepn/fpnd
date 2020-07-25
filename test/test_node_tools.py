@@ -738,7 +738,7 @@ def test_get_runtimedir():
     # print(res)
     assert res == '/run/fpnd' or res == temp_dir
     res = get_runtimedir(user_dirs=True)
-    assert '/var/run/user/' in res or res == temp_dir
+    assert '/run/user/' in res or 'tmp/portage' in res or res == temp_dir
     NODE_SETTINGS['runas_user'] = True
 
 
@@ -756,7 +756,7 @@ def test_put_state_msg():
     """
     Use get_status() from freepn-gtk3-indicator (replicated above)
     """
-    state_path = Path(get_runtimedir()).joinpath('fpnd.state')
+    state_path = Path(get_runtimedir(user_dirs=True)).joinpath('fpnd.state')
 
     msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'WAITING', 'NONE']
     for msg in msgs:
@@ -782,7 +782,7 @@ def test_put_state_msg_save():
     """
     Same as test_put_state_msg but without cleaning
     """
-    state_path = Path(get_runtimedir()).joinpath('fpnd.state')
+    state_path = Path(get_runtimedir(user_dirs=True)).joinpath('fpnd.state')
 
     msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'WAITING', 'NONE']
     for msg in msgs:
@@ -853,6 +853,7 @@ def test_load_id_from_net_trie():
     from node_tools import ctlr_data as ct
 
     NODE_SETTINGS['use_exitnode'].append('beefea68e6')
+    dead_key = 'dead99dead'
 
     res = trie_is_empty(ct.net_trie)
     assert res is True
@@ -862,7 +863,7 @@ def test_load_id_from_net_trie():
 
     for net_id in ['beafde52b4296ea5', 'beafde52b4a5f7ba', 'beafde52b4a5e8ab']:
         load_id_trie(ct.net_trie, ct.id_trie, [net_id], [], nw=True)
-    for node_id in ['beefea68e6', 'ee2eedb2e1', 'ff2ffdb2e1']:
+    for node_id in ['beefea68e6', 'ee2eedb2e1', 'ff2ffdb2e1', dead_key]:
         load_id_trie(ct.net_trie, ct.id_trie, [], [node_id])
 
     for key in ['beafde52b4296ea5', 'beafde52b4a5f7ba', 'ee2eedb2e1', 'ff2ffdb2e1']:
@@ -901,18 +902,19 @@ def test_find_orphans():
     from node_tools import ctlr_data as ct
 
     exit_id = 'beefea68e6'
+    dead_key = 'dead99dead'
     empty_nets = ['beafde52b4296eee']
 
     res = find_orphans(ct.net_trie, ct.id_trie)
-    assert res == [('beafde52b4296ea5', exit_id)]
+    assert res == ([('beafde52b4296ea5', exit_id)], [dead_key])
 
     NODE_SETTINGS['use_exitnode'].append(exit_id)
     res = find_orphans(ct.net_trie, ct.id_trie)
-    assert res == []
+    assert res == ([], [dead_key])
 
     load_id_trie(ct.net_trie, ct.id_trie, empty_nets, [], nw=True)
     res = find_orphans(ct.net_trie, ct.id_trie)
-    assert res == empty_nets
+    assert res == (empty_nets, [dead_key])
     NODE_SETTINGS['use_exitnode'].clear()
 
 
@@ -971,9 +973,10 @@ def test_get_bootstrap_list():
 def test_get_target_node_id():
     from node_tools import ctlr_data as ct
 
-    node_list = ['beefea68e6', 'ee2eedb2e1', 'ff2ffdb2e1']
-    boot_list = ['deadbeef01', 'deadbeef02', 'deadbeef03']
     NODE_SETTINGS['use_exitnode'].append('beefea68e6')
+    node_list = get_active_nodes(ct.id_trie)
+    assert 'beefea68e6' not in node_list
+    boot_list = ['deadbeef01', 'deadbeef02', 'deadbeef03']
 
     res = get_target_node_id(node_list, boot_list)
     assert res in ['ee2eedb2e1', 'ff2ffdb2e1']
