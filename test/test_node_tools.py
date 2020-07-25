@@ -853,6 +853,7 @@ def test_load_id_from_net_trie():
     from node_tools import ctlr_data as ct
 
     NODE_SETTINGS['use_exitnode'].append('beefea68e6')
+    dead_key = 'dead99dead'
 
     res = trie_is_empty(ct.net_trie)
     assert res is True
@@ -862,7 +863,7 @@ def test_load_id_from_net_trie():
 
     for net_id in ['beafde52b4296ea5', 'beafde52b4a5f7ba', 'beafde52b4a5e8ab']:
         load_id_trie(ct.net_trie, ct.id_trie, [net_id], [], nw=True)
-    for node_id in ['beefea68e6', 'ee2eedb2e1', 'ff2ffdb2e1']:
+    for node_id in ['beefea68e6', 'ee2eedb2e1', 'ff2ffdb2e1', dead_key]:
         load_id_trie(ct.net_trie, ct.id_trie, [], [node_id])
 
     for key in ['beafde52b4296ea5', 'beafde52b4a5f7ba', 'ee2eedb2e1', 'ff2ffdb2e1']:
@@ -901,18 +902,19 @@ def test_find_orphans():
     from node_tools import ctlr_data as ct
 
     exit_id = 'beefea68e6'
+    dead_key = 'dead99dead'
     empty_nets = ['beafde52b4296eee']
 
     res = find_orphans(ct.net_trie, ct.id_trie)
-    assert res == [('beafde52b4296ea5', exit_id)]
+    assert res == ([('beafde52b4296ea5', exit_id)], [dead_key])
 
     NODE_SETTINGS['use_exitnode'].append(exit_id)
     res = find_orphans(ct.net_trie, ct.id_trie)
-    assert res == []
+    assert res == ([], [dead_key])
 
     load_id_trie(ct.net_trie, ct.id_trie, empty_nets, [], nw=True)
     res = find_orphans(ct.net_trie, ct.id_trie)
-    assert res == empty_nets
+    assert res == (empty_nets, [dead_key])
     NODE_SETTINGS['use_exitnode'].clear()
 
 

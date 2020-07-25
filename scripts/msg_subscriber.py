@@ -15,6 +15,7 @@ from nanoservice import Subscriber
 
 from node_tools.helper_funcs import get_cachedir
 from node_tools.msg_queues import add_one_only
+from node_tools.msg_queues import avoid_and_update
 from node_tools.msg_queues import valid_announce_msg
 from node_tools.msg_queues import valid_cfg_msg
 
@@ -58,9 +59,10 @@ def handle_cfg(msg):
     if valid_cfg_msg(msg):
         logger.debug('Got valid cfg msg: {}'.format(msg))
         cfg_msg = json.loads(msg)
-        if cfg_msg['node_id'] in pub_q:
+        mbr_id = cfg_msg['node_id']
+        if mbr_id in pub_q:
             with cfg_q.transact():
-                add_one_only(msg, cfg_q)
+                avoid_and_update(mbr_id, msg, cfg_q)
             logger.debug('Adding node cfg: {}'.format(msg))
         logger.info('{} msgs in cfg queue'.format(len(cfg_q)))
     else:

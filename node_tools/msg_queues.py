@@ -90,13 +90,12 @@ def lookup_node_id(key_str, deque):
     :param deque: target queue to search
     :return: queue item <dict> or None
     """
-    result = None
 
     for item in list(deque):
         if isinstance(item, dict):
             if key_str in item:
-                result = item
-    return result
+                return item
+    return None
 
 
 def make_cfg_msg(trie, key_str):
@@ -219,6 +218,7 @@ def wait_for_cfg_msg(cfg_q, hold_q, reg_q, msg):
                 if msg in list(hold_q):
                     with hold_q.transact():
                         clean_from_queue(msg, hold_q)
+                return result
             else:
                 process_hold_queue(msg, hold_q, reg_q, max_hold=3)
 
