@@ -84,7 +84,7 @@ async def main():
                 if len(net_data) == 0 and not nsState.cfg_ref:
                     send_cfg_handler()
                     put_state_msg('WAITING')
-                elif not wait_for_nets:
+                elif len(net_data) == 0 and nsState.cfg_ref and not wait_for_nets:
                     put_state_msg('ERROR')
 
             net_keys = find_keys(cache, 'net')
