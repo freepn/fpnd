@@ -912,9 +912,11 @@ def test_find_orphans():
     res = find_orphans(ct.net_trie, ct.id_trie)
     assert res == ([], [dead_key])
 
+    del ct.id_trie[dead_key]
     load_id_trie(ct.net_trie, ct.id_trie, empty_nets, [], nw=True)
     res = find_orphans(ct.net_trie, ct.id_trie)
-    assert res == (empty_nets, [dead_key])
+    assert res == (empty_nets, [])
+
     NODE_SETTINGS['use_exitnode'].clear()
 
 
