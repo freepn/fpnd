@@ -6,7 +6,8 @@ python:
     - "3.5"
     - "3.6"
     - "3.7"
-    - "3.8-dev"
+    - "3.8"
+    - "3.9-dev"
     - "nightly"
 
 before_install:
@@ -20,8 +21,6 @@ before_install:
 # command to install dependencies
 install:
   - pip install pytest
-  - pip install pytest-pep8
-  - pip install pytest-flake8
   - pip install tox-travis codecov
 
 # command to run tests
@@ -34,7 +33,7 @@ after_success:
 matrix:
   fast_finish: true
   allow_failures:
-    - python: "3.8-dev"
+    - python: "3.9-dev"
     - python: "nightly"
 
 notifications:
