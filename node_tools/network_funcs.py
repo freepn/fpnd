@@ -138,7 +138,7 @@ def drain_msg_queue(reg_q, pub_q=None, tmp_q=None, addr=None, method='handle_nod
         logger.debug('Published msg {} to {}'.format(node_id, addr))
 
 
-@run_until_success(max_retry=4)
+@run_until_success()  # default max_retry is 2
 def echo_client(fpn_id, addr, send_cfg=False):
     import json
     from node_tools import state_data as st

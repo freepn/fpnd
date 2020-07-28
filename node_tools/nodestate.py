@@ -84,7 +84,7 @@ async def main():
                 if len(net_data) == 0 and not nsState.cfg_ref:
                     send_cfg_handler()
                     put_state_msg('WAITING')
-                elif not wait_for_nets:
+                elif len(net_data) == 0 and nsState.cfg_ref and not wait_for_nets:
                     put_state_msg('ERROR')
 
             net_keys = find_keys(cache, 'net')
@@ -129,10 +129,6 @@ async def main():
                             put_state_msg('ERROR')
                     else:
                         logger.debug('HEALTH: wait_for_nets is {}'.format(wait_for_nets))
-                else:
-                    if nsState.msg_ref and nsState.cfg_ref and not wait_for_nets:
-                        send_cfg_handler()
-                        put_state_msg('WAITING')
 
             elif NODE_SETTINGS['mode'] == 'adhoc':
                 if not NODE_SETTINGS['nwid']:

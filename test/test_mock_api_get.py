@@ -483,7 +483,7 @@ def test_do_cleanup():
     get_state(cache)
     nodeState = AttrDict.from_nested_dict(stest.fpnState)
     # print(nodeState)
-    with pytest.raises(nanomsg.NanoMsgAPIError):
+    with pytest.raises(FileNotFoundError):
         do_cleanup('./bin', '127.0.0.1')
 
 

@@ -94,6 +94,7 @@ def do_scheduling():
     set_initial_role()
     network_cruft_cleaner()
     schedule.run_all(1, 'base-tasks')
+    put_state_msg('NONE')
     validate_role()
     node_role = NODE_SETTINGS['node_role']
     mode = NODE_SETTINGS['mode']
