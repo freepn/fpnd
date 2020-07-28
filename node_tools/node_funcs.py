@@ -7,7 +7,6 @@ import logging
 
 from node_tools.exceptions import MemberNodeError
 from node_tools.helper_funcs import NODE_SETTINGS
-from node_tools.helper_funcs import put_state_msg
 
 
 logger = logging.getLogger(__name__)
@@ -95,6 +94,7 @@ def do_cleanup(path=None, addr=None):
     from node_tools.helper_funcs import AttrDict
     from node_tools.network_funcs import do_net_cmd
     from node_tools.network_funcs import get_net_cmds
+    from node_tools.helper_funcs import put_state_msg
     from node_tools.network_funcs import send_req_msg
 
     from node_tools import state_data as st
@@ -114,6 +114,7 @@ def do_cleanup(path=None, addr=None):
         node_id = state.fpn_id
         if not addr:
             addr = state.moon_addr
+        put_state_msg('NONE')
 
         if not path:
             path = NODE_SETTINGS['home_dir']
@@ -134,8 +135,6 @@ def do_cleanup(path=None, addr=None):
             run_moon_cmd(moon_id, action='deorbit')
             reply = send_req_msg(addr, 'offline', node_id)
             logger.debug('CLEANUP: offline reply: {}'.format(reply))
-
-        put_state_msg('NONE')
 
 
 def do_startup(nwid):
