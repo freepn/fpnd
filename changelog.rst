@@ -1,3 +1,16 @@
+0.8.19 (2020-07-28)
+-------------------
+- Update tox/travis python versions, remove pep8/flake8 bits. [Stephen Arnold]
+- Bump version for packaging/testing. [Stephen Arnold]
+- Merge pull request #53 from freepn/state-testing. [Steve Arnold]
+  collect post-test state fixes/cleanup, push out new pkgs for testing
+
+  * Test/test_mock_api_get.py: fix expected exception in do_cleanup() [Stephen Arnold]
+  * Reduce message retrys, update initial NONE state. [Stephen Arnold]
+  * Nodestate: remove trailing cfg handler, fix test cleanup. [Stephen Arnold]
+  * Node_tools/nodestate.py: fix error state (and msgs) [Stephen Arnold]
+
+
 0.8.18 (2020-07-25)
 -------------------
 - Version bump for tag/packaging [Steve Arnold]

@@ -103,7 +103,7 @@ async def main():
                         net_id_handler(None, net['identity'], old=True)
                         st.fpnState['cfg_ref'] = None
                         net_wait.set('offline_wait', True, 75)
-                if len(net_data) != 0 and not nsState.cfg_ref:
+                if len(net_data) < 2 and not nsState.cfg_ref:
                     send_cfg_handler()
                     put_state_msg('WAITING')
 
