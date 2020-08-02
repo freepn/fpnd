@@ -1,3 +1,12 @@
+0.8.20 (2020-08-02)
+-------------------
+- Merge pull request #55 from freepn/more-test. [Steve Arnold]
+  More test and integration fixes.
+
+  * Remove NONE msg on startup, bump version for packaging. [Stephen Arnold]
+  * Node_tools: fix edge state detection, set mbr node wait_cache to 65 sec. [Stephen Arnold]
+
+
 0.8.19 (2020-07-28)
 -------------------
 - Update tox/travis python versions, remove pep8/flake8 bits. [Stephen Arnold]
