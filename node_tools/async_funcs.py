@@ -249,7 +249,7 @@ async def offline_mbr_node(client, node_id):
         node_nets = [node_net, exit_net]
         logger.debug('OFFLINE: got node_nets {} and nodes {} {}'.format(node_nets, src_node, exit_node))
         if exit_node is not None:
-            st.wait_cache.set(exit_node, True, 90)
+            st.wait_cache.set(exit_node, True, 65)
             logger.debug('OFFLINE: added exit_node {} to wait cache'.format(exit_node))
     except Exception as exc:
         logger.error('OFFLINE: {}'.format(exc))
