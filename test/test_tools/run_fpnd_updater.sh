@@ -1,16 +1,24 @@
 #! /bin/sh
 #
-# this copies the update script to each fpnd host and then runs it
+# this copies the gentoo update script to each fpnd host and then runs it
 #
+
+failures=0
+trap 'failures=$((failures+1))' ERR
 
 set -e
 
-INFRA_HOSTS="infra-k1  infra-k2"
-# node-05
-GEN_HOSTS="node-01 node-02 node-03 node-04"
+# override DO_ALL on the commnd line to also update infra nodes
+#DO_ALL="anything"
+
+INFRA_HOSTS="infra-01 infra-02 exit-01"
+# node-04
+GEN_HOSTS="node-01 node-02 node-03 node-04 node-05"
 ALL_HOSTS="${INFRA_HOSTS} ${GEN_HOSTS}"
 
-SCRIPT="update_fpnd_local.sh"
+[[ -n $DO_ALL ]] && GEN_HOSTS="${ALL_HOSTS}"
+
+SCRIPT="update_fpnd_gentoo.sh"
 
 for HOST in $GEN_HOSTS ; do
     echo "copying ${SCRIPT} to ${HOST}"
@@ -21,3 +29,11 @@ for HOST in $GEN_HOSTS ; do
     echo "running ${SCRIPT} on ${HOST}"
     ssh $HOST -t bash ./$SCRIPT ;
 done
+
+if ((failures == 0)); then
+    echo "Success"
+else
+    echo "Failure"
+    exit 1
+fi
+
