@@ -39,6 +39,13 @@ rules = {
             'ipProtocol': 6
         },
         {
+            "type": "MATCH_IP_DEST_PORT_RANGE",
+            "not": False,
+            "or": False,
+            "start": 53,
+            "end": 53
+        },
+        {
             'type': 'MATCH_IP_DEST_PORT_RANGE',
             'not': False,
             'or': False,
@@ -51,6 +58,13 @@ rules = {
             'or': True,
             'start': 443,
             'end': 443
+        },
+        {
+            'type': 'MATCH_IP_DEST_PORT_RANGE',
+            'not': False,
+            'or': True,
+            'start': 853,
+            'end': 853
         },
         {
             'type': 'ACTION_ACCEPT'

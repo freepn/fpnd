@@ -1,1 +1,91 @@
-[{"config": {"rules": [{"not": false, "or": false, "type": "ACTION_ACCEPT"}], "capabilities": [], "tags": []}, "capabilitiesByName": {}, "tagsByName": {}}]
+{
+ "config": {
+  "rules": [
+   {
+    "type": "MATCH_ETHERTYPE",
+    "not": true,
+    "or": false,
+    "etherType": 2048
+   },
+   {
+    "type": "MATCH_ETHERTYPE",
+    "not": true,
+    "or": false,
+    "etherType": 2054
+   },
+   {
+    "type": "ACTION_DROP"
+   },
+   {
+    "type": "MATCH_IP_PROTOCOL",
+    "not": false,
+    "or": false,
+    "ipProtocol": 6
+   },
+   {
+    "type": "MATCH_IP_DEST_PORT_RANGE",
+    "not": false,
+    "or": false,
+    "start": 53,
+    "end": 53
+   },
+   {
+    "type": "MATCH_IP_DEST_PORT_RANGE",
+    "not": false,
+    "or": true,
+    "start": 80,
+    "end": 80
+   },
+   {
+    "type": "MATCH_IP_DEST_PORT_RANGE",
+    "not": false,
+    "or": true,
+    "start": 443,
+    "end": 443
+   },
+   {
+    "type": "ACTION_ACCEPT"
+   },
+   {
+    "type": "MATCH_CHARACTERISTICS",
+    "not": false,
+    "or": false,
+    "mask": "0000000000000002"
+   },
+   {
+    "type": "MATCH_CHARACTERISTICS",
+    "not": true,
+    "or": false,
+    "mask": "0000000000000010"
+   },
+   {
+    "type": "ACTION_BREAK"
+   },
+   {
+    "type": "MATCH_IP_PROTOCOL",
+    "not": false,
+    "or": false,
+    "ipProtocol": 1
+   },
+   {
+    "type": "ACTION_ACCEPT"
+   },
+   {
+    "type": "MATCH_IP_PROTOCOL",
+    "not": false,
+    "or": false,
+    "ipProtocol": 2
+   },
+   {
+    "type": "ACTION_ACCEPT"
+   },
+   {
+    "type": "ACTION_ACCEPT"
+   }
+  ],
+  "capabilities": [],
+  "tags": []
+ },
+ "capabilitiesByName": {},
+ "tagsByName": {}
+}

@@ -7,7 +7,7 @@
 : ${FPND_GROUP:=fpnd}
 : ${FPND_USER:=root}
 
-description="fpnd - FreePN daemon"
+description="fpnd - FreePN network daemon"
 command="/usr/bin/fpnd.py"
 pidfile="/run/${RC_SVCNAME}.pid"
 command_args="start"
@@ -34,6 +34,11 @@ depend() {
 }
 
 start_pre() {
+	if [ -e "${FPND_SOCK_DIR}/fpnd.state" ]; then
+		ewarn "Removing stale state file..."
+		rm -f "${FPND_SOCK_DIR}"/fpnd.state
+	fi
+
 	if [ ! -e "/etc/conf.d/${SVCNAME}" ]; then
 		eerror "Config file /etc/conf.d/${SVCNAME} does not exist!"
 		return 1
