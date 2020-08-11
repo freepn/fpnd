@@ -325,6 +325,9 @@ def send_req_msg(addr, method, data):
     """
     from nanoservice import Requester
 
+    if NODE_SETTINGS['use_localhost'] or not addr:
+        addr = '127.0.0.1'
+
     c = Requester('tcp://{}:9443'.format(addr), timeouts=(1000, 1000))
     reply = []
 
@@ -334,3 +337,30 @@ def send_req_msg(addr, method, data):
     except Exception as exc:
         logger.warning('Call error is {}'.format(exc))
         raise exc
+
+
+def send_wedged_msg(addr=None):
+    """
+    Send a special msg type if my routing is stuffed.
+    :param addr: moon address if known
+    """
+    from node_tools.helper_funcs import AttrDict
+    from node_tools import state_data as st
+
+    state = AttrDict.from_nested_dict(st.fpnState)
+    node_id = state.fpn_id
+    reply = []
+
+    if not addr:
+        addr = state.moon_addr
+    if NODE_SETTINGS['use_localhost'] or not moon_addr:
+        addr = '127.0.0.1'
+
+    try:
+        reply = send_req_msg(addr, 'wedged', node_id)
+        logger.warning('WEDGED: msg reply: {}'.format(reply))
+
+    except Exception as exc:
+        logger.error('Send error is {}'.format(exc))
+
+    return reply

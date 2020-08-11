@@ -28,7 +28,7 @@ from node_tools.helper_funcs import net_id_handler
 from node_tools.helper_funcs import put_state_msg
 from node_tools.helper_funcs import send_cfg_handler
 from node_tools.network_funcs import do_peer_check
-from node_tools.network_funcs import send_req_msg
+from node_tools.network_funcs import send_wedged_msg
 from node_tools.node_funcs import get_ztnwid
 from node_tools.node_funcs import run_ztcli_cmd
 
@@ -122,7 +122,7 @@ async def main():
                     if nsState.route is False:
                         if not st.fpnState['wdg_ref'] and not wait_for_nets:
                             # logger.error('HEALTH: net_health state is {}'.format(nsState.route))
-                            reply = send_req_msg(nsState.moon_addr, 'wedged', node_id)
+                            reply = send_wedged_msg()
                             if 'result' in reply[0]:
                                 st.fpnState['wdg_ref'] = True
                             logger.error('HEALTH: network is unreachable!!')

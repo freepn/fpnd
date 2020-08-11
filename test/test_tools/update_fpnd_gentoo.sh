@@ -10,17 +10,22 @@ TEMP_LIST="fpnd-pkgs.txt"
 INSTALLED="fpnd-pkgs_current.txt"
 
 USE_FLAGS="test-infra polkit"
-PKGS="net-misc/fpnd app-admin/freepn-gtk3-tray"
+PKGS="net-misc/fpnd-9999"
+#PKGS="net-misc/stunnel-5.56-r1 net-misc/fpnd-9999 app-admin/freepn-gtk3-tray-9999"
+UNAME_N=$(uname -n)
 
-echo "setting fpnd use flags to ${USE_FLAGS}"
+sudo rc-service -N zerotier start
+NODE_ID=$(sudo zerotier-cli info | awk '{print $3}')
+
+echo "setting fpnd use flags to ${USE_FLAGS} on ${UNAME_N}"
 sudo /bin/bash -c "echo 'net-misc/fpnd ${USE_FLAGS}' > /etc/portage/package.use/fpnd"
 
-sudo rc-service -Di netmount restart
+sudo rc-service -DN netmount start
 
-equery list $PKGS |cut -d" " -f2|grep -v ^\*$ > $TEMP_LIST
+equery list -o $PKGS | cut -d" " -f2|grep -v ^\*$ > $TEMP_LIST
 
 for pkg in $(cat $TEMP_LIST) ; do
-    echo "rebuilding  =${pkg}"
+    echo "rebuilding  =${pkg} for ${NODE_ID}"
     sudo emerge -q "=$pkg" ;
 done
 
@@ -36,4 +41,3 @@ else
     echo "Failure"
     exit 1
 fi
-

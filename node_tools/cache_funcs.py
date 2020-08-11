@@ -176,6 +176,8 @@ def get_state(cache):
             if 'mstate' in str(key) and not NODE_SETTINGS['node_role']:
                 d['moon_id0'] = data.identity
                 d['moon_addr'] = data.address
+                if NODE_SETTINGS['use_localhost']:
+                    d['moon_addr'] = '127.0.0.1'
             if 'istate' in str(key) and 'OK' in data.status:
                 if data.ztaddress == data.gateway:
                     d['fpn1'] = True
