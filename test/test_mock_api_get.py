@@ -36,6 +36,7 @@ from node_tools.helper_funcs import do_setup
 from node_tools.helper_funcs import find_ipv4_iface
 from node_tools.helper_funcs import get_cachedir
 from node_tools.helper_funcs import get_filepath
+from node_tools.helper_funcs import get_runtimedir
 from node_tools.helper_funcs import json_dump_file
 from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import log_fpn_state
@@ -485,6 +486,9 @@ def test_do_cleanup():
     # print(nodeState)
     with pytest.raises(FileNotFoundError):
         do_cleanup('./bin', '127.0.0.1')
+
+    with pytest.raises(FileNotFoundError):
+        do_cleanup(path='./bin')
 
 
 def test_get_state_values():
