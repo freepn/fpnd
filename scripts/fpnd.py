@@ -97,6 +97,8 @@ def do_scheduling():
     validate_role()
     node_role = NODE_SETTINGS['node_role']
     mode = NODE_SETTINGS['mode']
+    if node_role is None and mode == 'peer':
+        NODE_SETTINGS['use_localhost'] = True
 
     if mode == 'peer':
         if node_role is None:

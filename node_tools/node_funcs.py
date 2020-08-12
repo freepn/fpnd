@@ -110,10 +110,14 @@ def do_cleanup(path=None, addr=None):
 
     else:
         state = AttrDict.from_nested_dict(st.fpnState)
+        moon_addr = addr
         moon_id = state.moon_id0
         node_id = state.fpn_id
         if not addr:
-            addr = state.moon_addr
+            moon_addr = state.moon_addr
+        if not NODE_SETTINGS['use_localhost'] and not addr:
+            addr = moon_addr
+
         put_state_msg('NONE')
 
         if not path:
