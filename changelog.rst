@@ -1,3 +1,16 @@
+0.8.21 (2020-08-11)
+-------------------
+- Merge pull request #60 from freepn/tls-msgs. [Steve Arnold]
+  TLS msgs using stunnel (new testing baseline)
+
+  * Add missing test and fix yet another typo.
+  * Bin/fpn0-down.sh: cleanup any stale rules found on shutdown.
+  * Node_tools/node_funcs.py: fix addr fallback and typo, update tests.
+  * Make PKI the default config for ubuntu packages.
+  * Add tls msg changes and new/updated config files, update test scripts.
+  * Update test drivers with new node names, rename pkg build script.
+
+
 0.8.20 (2020-08-02)
 -------------------
 - Merge pull request #55 from freepn/more-test. [Steve Arnold]
