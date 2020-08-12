@@ -353,7 +353,7 @@ def send_wedged_msg(addr=None):
 
     if not addr:
         addr = state.moon_addr
-    if NODE_SETTINGS['use_localhost'] or not moon_addr:
+    if NODE_SETTINGS['use_localhost'] or not addr:
         addr = '127.0.0.1'
 
     try:
