@@ -123,10 +123,9 @@ Prerequisites
 -------------
 
 A supported linux distribution, mainly something that uses `.ebuilds`
-(eg, Gentoo or funtoo) or a supported Ubuntu series, currently xenial
-16.0.4 LTS, bionic 18.0.4 LTS, and focal 20.0.4 LTS (see the above
-`PPA on Launchpad`_).  Note you can also use the focal PPA series on
-the latest kali linux.
+(eg, Gentoo or funtoo) or a supported Ubuntu series, currently bionic
+18.0.4 LTS, and focal 20.0.4 LTS (see the above `PPA on Launchpad`_).
+Note you can also use the focal PPA series on the latest kali linux.
 
 For all ubuntu series, make sure you have the ``gpg`` and ``add-apt-repository``
 commands installed and then add the PPA:

@@ -80,10 +80,9 @@ components:
 Prerequisites:
 
 A supported linux distribution, mainly something that uses `.ebuilds`
-(eg, Gentoo or funtoo) or a supported Ubuntu series, currently xenial
-16.0.4 LTS, bionic 18.0.4 LTS, or focal 20.0.4 LTS (see the above
-`PPA on Launchpad`_).  Note you can also use the focal PPA series on
-the latest kali linux.
+(eg, Gentoo or funtoo) or a supported Ubuntu series, currently bionic
+18.0.4 LTS, or focal 20.0.4 LTS (see the above`PPA on Launchpad`_).
+Note you can also use the focal PPA series on the latest kali images.
 
 3.1 - Packages and Source Code
 ------------------------------
@@ -93,7 +92,7 @@ least one or more places.
 
 For supported Linux distributions:
 
-* Ubuntu xenial, bionic, focal
+* Ubuntu bionic, focal
 * Kali (other ubuntu derivatives should also work)
 
   + use the `PPA on Launchpad`_

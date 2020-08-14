@@ -1,5 +1,6 @@
 [Unit]
-Description=fpnd control daemon
+Description=fpnd network control daemon
+Requires=stunnel4.service
 Requires=zerotier-one.service
 After=zerotier-one.service
 

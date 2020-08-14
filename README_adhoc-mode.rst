@@ -1,7 +1,7 @@
 Setup process for adhoc mode
 ============================
 
-* requires 2 (two) Linux hosts (Gentoo or Ubuntu xenial/bionic LTS)
+* requires 2 (two) Linux hosts (Gentoo or Ubuntu bionic/focal LTS)
 * one "mobile" host and one "exit" host
 
   + "mobile" host can be any Linux desktop (pkgs for arm, arm64, x86, x86_64)
