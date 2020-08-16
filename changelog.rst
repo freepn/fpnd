@@ -1,3 +1,11 @@
+0.8.22 (2020-08-16)
+-------------------
+- etc/fpnd.service: fix service deps for stunnel, cleanup docs/test config. [St$
+
+  * remove python 3.5 from CI build/test
+  * remove xenial from supported ubuntu series
+
+
 0.8.21 (2020-08-11)
 -------------------
 - Merge pull request #60 from freepn/tls-msgs. [Steve Arnold]

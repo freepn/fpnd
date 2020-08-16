@@ -1,0 +1,12 @@
+# note this is only the pi-dns US upstream server list for now (this is only
+# a fragment, not a complete config)
+
+upstream_recursive_servers:
+  - address_data: 2a04:bdc7:100:70::abcd
+    tls_auth_name: "dot.westus.pi-dns.com"
+  - address_data: 2a0d:5600:33:3::abcd
+    tls_auth_name: "dot.eastus.pi-dns.com"
+  - address_data: 45.67.219.208
+    tls_auth_name: "dot.westus.pi-dns.com"
+  - address_data: 185.213.26.187
+    tls_auth_name: "dot.eastus.pi-dns.com"
