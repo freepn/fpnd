@@ -24,6 +24,7 @@ exec &> >(tee -ia /tmp/fpn0-setup-${DATE}_output.log)
 exec 2> >(tee -ia /tmp/fpn0-setup-${DATE}_error.log)
 
 #VERBOSE="anything"
+#DROP_DNS_53="anything"
 
 # set allowed ports (still TBD))
 ports_to_fwd="80 443 53 853"
@@ -145,6 +146,9 @@ $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --d
 $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 853 -j MASQUERADE
 $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j MASQUERADE
 $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j MASQUERADE
+if [[ -n $DROP_DNS_53 ]]; then
+    $IPTABLES -A POSTROUTING -t nat -p tcp --dport 53 -j DROP
+fi
 
 [[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then

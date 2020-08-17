@@ -18,6 +18,7 @@ exec &> >(tee -ia /tmp/fpn0-down-${DATE}_output.log)
 exec 2> >(tee -ia /tmp/fpn0-down-${DATE}_error.log)
 
 #VERBOSE="anything"
+#DROP_DNS_53="anything"
 
 # set allowed ports (still TBD))
 ports_to_fwd="http https domain submission imaps ircs ircs-u"
@@ -123,6 +124,10 @@ if [[ -n $VERBOSE ]]; then
 fi
 
 [[ -n $VERBOSE ]] && echo "Deleting nat and mangle rules..."
+if [[ -n $DROP_DNS_53 ]]; then
+    $IPTABLES -D POSTROUTING -t nat -p tcp --dport 53 -j DROP
+fi
+
 $IPTABLES -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j MASQUERADE
 $IPTABLES -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j MASQUERADE
 $IPTABLES -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 853 -j MASQUERADE

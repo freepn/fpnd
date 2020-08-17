@@ -24,6 +24,7 @@ class Constant(tuple):
 ENODATA = Constant('ENODATA')  # error return for async state data updates
 
 NODE_SETTINGS = {
+    u'private_dns_only': False,  # drop routed port 53 traffic
     u'max_cache_age': 60,  # maximum cache age in seconds
     u'use_localhost': False,  # messaging interface to use
     u'runas_user': False,  # user to run as
@@ -77,11 +78,13 @@ def do_setup():
         mode = my_conf['Options']['mode']
         debug = my_conf.getboolean('Options', 'debug')
         user_perms = my_conf.getboolean('Options', 'user_perms')
+        private_dns = my_conf.getboolean('Options', 'private_dns_only')
         home = my_conf['Paths']['home_dir']
         NODE_SETTINGS['mode'] = mode
         NODE_SETTINGS['debug'] = debug
         NODE_SETTINGS['runas_user'] = user_perms
         NODE_SETTINGS['home_dir'] = home
+        NODE_SETTINGS['private_dns_only'] = private_dns
         if 'system' not in msg:
             prefix = my_conf['Options']['prefix']
         else:

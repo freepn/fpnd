@@ -7,15 +7,13 @@ set -e
 PATH=/usr/bin:/bin:/usr/sbin:/sbin
 export LC_ALL=C
 
-if [[ -d "/run/fpnd" ]] ; then
-    TMP_DATA="/run/fpnd"
-else
-    TMP_DATA="/tmp"
-fi
+TEMP_DIR="/tmp"
+RUN_DIR="/run/fpnd"
+[[ -d "${RUN_DIR}" ]] && TEMP_DIR="${RUN_DIR}"
 
 # Fetch data from Ubuntu's geoip server, requires route to internet
-xml_file="${TMP_DATA}/geoip-location.xml"
-log_file="${TMP_DATA}/wget.log"
+xml_file="${TEMP_DIR}/geoip-location.xml"
+log_file="${TEMP_DIR}/wget.log"
 
 /usr/bin/wget -T 3 -t 1 -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
 

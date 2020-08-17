@@ -286,13 +286,19 @@ def do_net_cmd(cmd):
     if not head or not tail:
         logger.error('Bad cmd or path: {}'.format(cmd[0]))
 
+    env_dict = {'VERBOSE': '',
+                'DROP_DNS_53': ''}
+
+    if NODE_SETTINGS['private_dns_only']:
+        env_dict['DROP_DNS_53'] = 'yes'
+
     # with shell=false cmd must be a sequence not a string
     try:
         b = subprocess.Popen(cmd,
                              stderr=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              shell=False,
-                             env={'VERBOSE': ''})
+                             env=env_dict)
 
         out, err = b.communicate()
         retcode = b.returncode
