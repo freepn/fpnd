@@ -125,20 +125,30 @@ fi
 
 [[ -n $VERBOSE ]] && echo "Deleting nat and mangle rules..."
 if [[ -n $DROP_DNS_53 ]]; then
-    $IPTABLES -D POSTROUTING -t nat -p tcp --dport 53 -j DROP
+    $IPTABLES -D OUTPUT -t filter -p tcp --dport 53 -j DROP
+    $IPTABLES -D OUTPUT -t filter -p tcp --dport 53 -m limit --limit 5/min -j LOG --log-prefix "DROP PORT 53: " --log-level 7
+    $IPTABLES -D OUTPUT -t filter -p udp --dport 53 -j DROP
+    $IPTABLES -D OUTPUT -t filter -p udp --dport 53 -m limit --limit 5/min -j LOG --log-prefix "DROP PORT 53: " --log-level 7
+    $IPTABLES -D OUTPUT -o lo -j ACCEPT
+    $IPTABLES -D INPUT ! -i lo -s 127.0.0.0/8 -j REJECT
+    $IPTABLES -D INPUT -i lo -j ACCEPT
 fi
 
 $IPTABLES -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j MASQUERADE
 $IPTABLES -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j MASQUERADE
 $IPTABLES -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 853 -j MASQUERADE
-$IPTABLES -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j MASQUERADE
-$IPTABLES -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j MASQUERADE
+if ! [[ -n $DROP_DNS_53 ]]; then
+    $IPTABLES -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j MASQUERADE
+    $IPTABLES -D POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j MASQUERADE
+fi
 
 $IPTABLES -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
 $IPTABLES -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
 $IPTABLES -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 853 -j MARK --set-mark 1
-$IPTABLES -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 53 -j MARK --set-mark 1
-$IPTABLES -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p udp --dport 53 -j MARK --set-mark 1
+if ! [[ -n $DROP_DNS_53 ]]; then
+    $IPTABLES -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 53 -j MARK --set-mark 1
+    $IPTABLES -D OUTPUT -t mangle -o ${IPV4_INTERFACE} -p udp --dport 53 -j MARK --set-mark 1
+fi
 
 [[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then

@@ -40,9 +40,16 @@ def do_net_check(path=None):
 
     if not path:
         path = NODE_SETTINGS['home_dir']
-    cmd = os.path.join(path, 'show-geoip.sh')
 
-    result = do_net_cmd([cmd])
+    cmd_file = os.path.join(path, 'show-geoip.sh')
+    cmd = [cmd_file]
+    doh_host = NODE_SETTINGS['doh_host']
+
+    if doh_host is not None:
+        cmd = [cmd_file, doh_host]
+        logger.debug('ENV: geoip script using doh_host: {}'.format(doh_host))
+
+    result = do_net_cmd(cmd)
     state, res, retcode = result
     fpn_data = st.fpnState
     net_wait = st.wait_cache
@@ -291,6 +298,7 @@ def do_net_cmd(cmd):
 
     if NODE_SETTINGS['private_dns_only']:
         env_dict['DROP_DNS_53'] = 'yes'
+    logger.debug('ENV: net script settings are {}'.format(env_dict.items()))
 
     # with shell=false cmd must be a sequence not a string
     try:

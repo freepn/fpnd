@@ -171,7 +171,7 @@ def test_load_rules():
 
     # print(rule_data)
     assert isinstance(rule_data, dict)
-    assert rule_size == 15
+    assert rule_size == 17
     # print(json.dumps(rule_data))
 
 

@@ -15,11 +15,11 @@ retry="TERM/8/TERM/5"
 
 check_svc() {
 	ebegin "Checking for services to stop"
-	rc_monitor_stop="zerotier stunnel.fpnd"
+	rc_monitor_stop="zerotier stunnel.fpnd mini-dot stubby"
 	for svc in $rc_monitor_stop; do
 		if yesno "$do_check" ; then
 			einfo "Scheduling ${svc} to stop in 1 min"
-			echo "rc-service -Ds ${svc} stop" \
+			echo "rc-service -Dis ${svc} stop" \
 				| at -M now +1 minute > /dev/null 2>&1
 			continue 2
 		fi
@@ -28,7 +28,7 @@ check_svc() {
 }
 
 depend() {
-	want atd stunnel.fpnd
+	want atd stunnel.fpnd dns-crypt
         need zerotier
         use logger clock
 }

@@ -95,12 +95,12 @@ def echo(msg):
         handle_announce_msg(node_q, reg_q, wait_q, msg)
         node_data = lookup_node_id(msg, tmp_q)
         if node_data:
-            logger.info('Handled announce msg from host {}'.format(node_data[msg]))
+            logger.info('Got valid announce msg from host {} (node {})'.format(node_data[msg], msg))
         return msg
     else:
         node_data = lookup_node_id(msg, tmp_q)
         if node_data:
-            logger.info('Bad announce msg from host {}'.format(node_data[msg]))
+            logger.info('Bad announce msg from host {} (node {})'.format(node_data[msg], msg))
         else:
             logger.warning('Bad announce msg: {}'.format(msg))
 
@@ -116,7 +116,7 @@ def get_node_cfg(msg):
     if valid_announce_msg(msg):
         node_data = lookup_node_id(msg, tmp_q)
         if node_data:
-            logger.info('Got valid cfg request msg from host {}'.format(node_data[msg]))
+            logger.info('Got valid cfg request msg from host {} (node {})'.format(node_data[msg], msg))
         res = wait_for_cfg_msg(cfg_q, hold_q, reg_q, msg)
         logger.debug('hold_q contents: {}'.format(list(hold_q)))
         if res:
@@ -128,7 +128,7 @@ def get_node_cfg(msg):
     else:
         node_data = lookup_node_id(msg, tmp_q)
         if node_data:
-            logger.info('Bad cfg msg from host {}'.format(node_data[msg]))
+            logger.info('Bad cfg msg from host {} (node {})'.format(node_data[msg], msg))
         else:
             logger.warning('Bad cfg msg: {}'.format(msg))
 
@@ -143,7 +143,7 @@ def offline(msg):
         clean_stale_cfgs(msg, cfg_q)
         node_data = lookup_node_id(msg, tmp_q)
         if node_data:
-            logger.info('Got valid offline msg from host {}'.format(node_data[msg]))
+            logger.info('Got valid offline msg from host {} (node {})'.format(node_data[msg], msg))
         with off_q.transact():
             add_one_only(msg, off_q)
         with pub_q.transact():
@@ -153,7 +153,7 @@ def offline(msg):
     else:
         node_data = lookup_node_id(msg, tmp_q)
         if node_data:
-            logger.info('Bad offline msg from host {}'.format(node_data[msg]))
+            logger.info('Bad offline msg from host {} (node {})'.format(node_data[msg], msg))
         else:
             logger.warning('Bad offline msg: {}'.format(msg))
 
@@ -168,7 +168,7 @@ def wedged(msg):
     if valid_announce_msg(msg):
         node_data = lookup_node_id(msg, tmp_q)
         if node_data:
-            logger.info('Got valid wedged msg from host {}'.format(node_data[msg]))
+            logger.info('Got valid wedged msg from host {} (node {})'.format(node_data[msg], msg))
         with wdg_q.transact():
             # re-enable msg processing for testing
             add_one_only(msg, wdg_q)
@@ -176,7 +176,7 @@ def wedged(msg):
     else:
         node_data = lookup_node_id(msg, tmp_q)
         if node_data:
-            logger.info('Bad wedged msg from host {}'.format(node_data[msg]))
+            logger.info('Bad wedged msg from host {} (node {})'.format(node_data[msg], msg))
         else:
             logger.warning('Bad wedged msg: {}'.format(msg))
 

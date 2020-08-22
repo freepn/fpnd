@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-# check-geoip.sh
+# show-geoip.sh
 #
 
 set -e
@@ -7,15 +7,49 @@ set -e
 PATH=/usr/bin:/bin:/usr/sbin:/sbin
 export LC_ALL=C
 
+# environemt vars
+# use doh for curl if we have a server FQDN
+DOH_HOST=${1:-}
+#VERBOSE="anything"
+
 TEMP_DIR="/tmp"
 RUN_DIR="/run/fpnd"
 [[ -d "${RUN_DIR}" ]] && TEMP_DIR="${RUN_DIR}"
 
+# use --doh-url if curl is new enough
+CURL_SEMVER=$(curl --version | head -n1 | awk '{ print $2 }')
+CURL_BASEVER="7.62.0"
+doh_arg=""
+
+# FUNC semver_to_int
+# converts a "semantic version" string to integer for sorting and comparison
+# version components can range from 0 - 999
+semver_to_int() {
+    local IFS=.
+    parts=($1)
+    (( val=1000000*parts[0]+1000*parts[1]+parts[2] ))
+    echo $val
+}
+
+CURL_INT=$(semver_to_int "${CURL_SEMVER}")
+CURL_BASE=$(semver_to_int "${CURL_BASEVER}")
+
+if [[ $CURL_INT -ge $CURL_BASE ]]; then
+    if [[ -n $DOH_HOST ]]; then
+        doh_arg="--doh-url https://${DOH_HOST}/dns-query"
+    fi
+fi
+
+if [[ -n $VERBOSE ]]; then
+    echo "Using curl doh_arg valus: $doh_arg"
+fi
+
 # Fetch data from Ubuntu's geoip server, requires route to internet
 xml_file="${TEMP_DIR}/geoip-location.xml"
-log_file="${TEMP_DIR}/wget.log"
+log_file="${TEMP_DIR}/curl.log"
 
-/usr/bin/wget -T 3 -t 1 -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
+/usr/bin/curl --stderr $log_file --silent -m 3 $doh_arg https://geoip.ubuntu.com/lookup > $xml_file
+#/usr/bin/wget -T 3 -t 1 -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
 
 IP_ADDR=$(cat $xml_file | sed -n -e 's/.*<Ip>\(.*\)<\/Ip>.*/\1/p')
 LAT_FULL=$(cat $xml_file | sed -n -e 's/.*<Latitude>\(.*\)<\/Latitude>.*/\1/p')
@@ -29,4 +63,8 @@ LAT=$(printf "%.2f" "$LAT_FULL")
 LON=$(printf "%.2f" "$LON_FULL")
 LOCATION="$CITY, $STATE $ZIPCODE ($COUNTRY)"
 
-echo "Public IP and geolocation: ${IP_ADDR}, ${LOCATION}"
+if [[ "${CITY}" = "NONE" ]]; then
+    echo "Public IP and geolocation: ${IP_ADDR}, ${LON}, ${LAT} ($COUNTRY)"
+else
+    echo "Public IP and geolocation: ${IP_ADDR}, ${LOCATION}"
+fi

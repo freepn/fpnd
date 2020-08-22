@@ -137,17 +137,29 @@ sleep 2
 $IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
 $IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
 $IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 853 -j MARK --set-mark 1
-$IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 53 -j MARK --set-mark 1
-$IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p udp --dport 53 -j MARK --set-mark 1
+if ! [[ -n $DROP_DNS_53 ]]; then
+    $IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p udp --dport 53 -j MARK --set-mark 1
+    $IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 53 -j MARK --set-mark 1
+fi
 
 # now rewrite the src-addr using snat
 $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j MASQUERADE
 $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j MASQUERADE
 $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 853 -j MASQUERADE
-$IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j MASQUERADE
-$IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j MASQUERADE
+if ! [[ -n $DROP_DNS_53 ]]; then
+    $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j MASQUERADE
+    $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j MASQUERADE
+fi
+
 if [[ -n $DROP_DNS_53 ]]; then
-    $IPTABLES -A POSTROUTING -t nat -p tcp --dport 53 -j DROP
+    $IPTABLES -A INPUT -i lo -j ACCEPT
+    $IPTABLES -A INPUT ! -i lo -s 127.0.0.0/8 -j REJECT
+    $IPTABLES -A OUTPUT -o lo -j ACCEPT
+
+    $IPTABLES -A OUTPUT -t filter -p udp --dport 53 -m limit --limit 5/min -j LOG --log-prefix "DROP PORT 53: " --log-level 7
+    $IPTABLES -A OUTPUT -t filter -p udp --dport 53 -j DROP
+    $IPTABLES -A OUTPUT -t filter -p tcp --dport 53 -m limit --limit 5/min -j LOG --log-prefix "DROP PORT 53: " --log-level 7
+    $IPTABLES -A OUTPUT -t filter -p tcp --dport 53 -j DROP
 fi
 
 [[ -n $VERBOSE ]] && echo ""
