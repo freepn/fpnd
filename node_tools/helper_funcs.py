@@ -31,7 +31,7 @@ NODE_SETTINGS = {
     u'runas_user': False,  # user to run as
     u'node_role': None,  # role this node will run as
     u'ctlr_list': ['edf70dc89a'],  # list of fpn controller nodes
-    u'moon_list': ['9790eaaea1'],  # list of fpn moons to orbiit
+    u'moon_list': ['ab37e685af'],  # list of fpn moons to orbit
     u'home_dir': None,
     u'debug': False,
     u'node_runner': 'nodestate.py',

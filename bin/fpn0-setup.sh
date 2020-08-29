@@ -27,7 +27,7 @@ exec 2> >(tee -ia /tmp/fpn0-setup-${DATE}_error.log)
 #DROP_DNS_53="anything"
 
 # set allowed ports (still TBD))
-ports_to_fwd="80 443 53 853"
+ports_to_fwd="80 443 53"
 
 [[ -n $VERBOSE ]] && echo "Checking iptables binary..."
 IPTABLES=$(find /sbin /usr/sbin -name iptables)
@@ -136,19 +136,17 @@ sleep 2
 # Mark these packets so that ip can route web traffic through fpn0
 $IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
 $IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
-$IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 853 -j MARK --set-mark 1
 if ! [[ -n $DROP_DNS_53 ]]; then
     $IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p udp --dport 53 -j MARK --set-mark 1
     $IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 53 -j MARK --set-mark 1
 fi
 
 # now rewrite the src-addr using snat
-$IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j MASQUERADE
-$IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j MASQUERADE
-$IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 853 -j MASQUERADE
+$IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
+$IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
 if ! [[ -n $DROP_DNS_53 ]]; then
-    $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j MASQUERADE
-    $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j MASQUERADE
+    $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j SNAT --to ${ZT_ADDRESS}
+    $IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j SNAT --to ${ZT_ADDRESS}
 fi
 
 if [[ -n $DROP_DNS_53 ]]; then

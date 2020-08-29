@@ -324,7 +324,7 @@ def do_net_cmd(cmd):
             else:
                 msg = err
             logger.error('net cmd {} msg: {}'.format(tail, msg.decode().strip()))
-        if retcode == 4:
+        if retcode in [4, 6, 28]:
             logger.error('health check shows network failure!')
 
     except Exception as exc:

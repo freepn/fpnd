@@ -15,8 +15,8 @@ trap 'failures=$((failures+1))' ERR
 
 DATE=$(date +%Y%m%d)
 # very simple log capture
-exec &> >(tee -ia /tmp/fpn1-setup-${DATE}_output.log)
-exec 2> >(tee -ia /tmp/fpn1-setup-${DATE}_error.log)
+exec &> >(tee -ia /tmp/fpn1-down-${DATE}_output.log)
+exec 2> >(tee -ia /tmp/fpn1-down-${DATE}_error.log)
 
 # uncomment for more output
 #VERBOSE="anything"
@@ -113,15 +113,13 @@ fi
 
 # setup nat/masq to forward outbound/return traffic
 [[ -n $VERBOSE ]] && echo "Deleting nat and forwarding rules..."
+$IPTABLES -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 53 -j ACCEPT
+$IPTABLES -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 53 -j ACCEPT
 $IPTABLES -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 80 -j ACCEPT
 $IPTABLES -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 443 -j ACCEPT
 $IPTABLES -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
 $IPTABLES -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 443 -j ACCEPT
-$IPTABLES -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 53 -j ACCEPT
-$IPTABLES -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 853 -j ACCEPT
-$IPTABLES -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 53 -j ACCEPT
-$IPTABLES -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 853 -j ACCEPT
-$IPTABLES -t nat -D POSTROUTING -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -j MASQUERADE
+$IPTABLES -t nat -D POSTROUTING -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -j SNAT --to-source "${INET_ADDRESS}"
 
 #echo "Leaving FPN1 network..."
 #zerotier-cli leave "${ZT_SRC_NETID}"
