@@ -3,21 +3,36 @@
 # this rebuilds all (gentoo) fpnd packages that are currently installed
 #
 
+# set -x
+
 failures=0
 trap 'failures=$((failures+1))' ERR
 
+HOST=$1
+UNAME_N=$(uname -n)
 TEMP_LIST="fpnd-pkgs.txt"
 INSTALLED="fpnd-pkgs_current.txt"
 
 USE_FLAGS="test-infra polkit"
-PKGS="net-misc/fpnd-9999"
-#PKGS="net-misc/stunnel-5.56-r1 net-misc/fpnd-9999 app-admin/freepn-gtk3-tray-9999"
-CHK_DM=$(qlist -ICv gdm sddm lightdm slim)
-if [[ -n $CHK_DM ]]; then
-    PKGS="${PKGS} app-admin/freepn-gtk3-tray-9999"
+if [[ $HOST = 'infra-01' || $HOST = 'infra-02' ]]; then
+    echo "Found infra host $UNAME_N $HOST"
+    USE_FLAGS="test-infra polkit server"
 fi
 
-UNAME_N=$(uname -n)
+PKGS="net-misc/fpnd-9999"
+#PKGS="net-misc/stunnel-5.56-r1 net-misc/fpnd-9999 app-admin/freepn-gtk3-tray-9999"
+
+update_pkgs() {
+    ret=$?
+    CHK_DM=$(qlist -ICv gdm sddm lightdm slim)
+    if [[ -n $CHK_DM ]]; then
+        PKGS="${PKGS} app-admin/freepn-gtk3-tray-9999"
+    fi
+}
+
+if ! [[ $HOST = 'infra-01' || $HOST = 'infra-02' ]]; then
+    update_pkgs
+fi
 
 sudo rc-service -N zerotier start
 NODE_ID=$(sudo zerotier-cli info | awk '{print $3}')
