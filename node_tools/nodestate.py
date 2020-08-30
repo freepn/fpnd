@@ -99,6 +99,8 @@ async def main():
                 # check for reconfiguration events
                 for net in netStatus:
                     if net['status'] == 'NOT_FOUND' or net['status'] == 'ACCESS_DENIED':
+                        # if net['ztaddress'] != net['gateway']:
+                        #     do_net_cmd(get_net_cmds(NODE_SETTINGS['home_dir'], 'fpn0'))
                         run_ztcli_cmd(action='leave', extra=net['identity'])
                         net_id_handler(None, net['identity'], old=True)
                         st.fpnState['cfg_ref'] = None

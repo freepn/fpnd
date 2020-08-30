@@ -24,9 +24,10 @@ exec &> >(tee -ia /tmp/fpn0-setup-${DATE}_output.log)
 exec 2> >(tee -ia /tmp/fpn0-setup-${DATE}_error.log)
 
 #VERBOSE="anything"
+#DROP_DNS_53="anything"
 
 # set allowed ports (still TBD))
-ports_to_fwd="http https domain submission imaps ircs ircs-u"
+ports_to_fwd="80 443 53"
 
 [[ -n $VERBOSE ]] && echo "Checking iptables binary..."
 IPTABLES=$(find /sbin /usr/sbin -name iptables)
@@ -130,15 +131,45 @@ ip route add default via ${ZT_GATEWAY} dev ${ZT_INTERFACE} table "${TABLE_NAME}"
 
 # Anything with this fwmark will use the secondary routing table
 ip rule add fwmark 0x1 table "${TABLE_NAME}"
-sleep 2
+#sleep 2
+
+# add mangle chain
+$IPTABLES -N fpn0-mangleout -t mangle
+$IPTABLES -t mangle -A OUTPUT -j fpn0-mangleout
 
 # Mark these packets so that ip can route web traffic through fpn0
-$IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
-$IPTABLES -A OUTPUT -t mangle -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
+$IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
+$IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
+if ! [[ -n $DROP_DNS_53 ]]; then
+    $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p udp --dport 53 -j MARK --set-mark 1
+    $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 53 -j MARK --set-mark 1
+fi
 
-# now rewrite the src-addr using snat
-$IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
-$IPTABLES -A POSTROUTING -t nat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
+# nat/postrouting chain
+$IPTABLES -N fpn0-postnat -t nat
+$IPTABLES -t nat -A POSTROUTING -j fpn0-postnat
+# now rewrite the src-addr using snat/masq
+$IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
+$IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
+if ! [[ -n $DROP_DNS_53 ]]; then
+    $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j MASQUERADE
+    $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j MASQUERADE
+fi
+
+if [[ -n $DROP_DNS_53 ]]; then
+    $IPTABLES -N fpn0-dns-dropin
+    $IPTABLES -A INPUT -j fpn0-dns-dropin
+    $IPTABLES -A fpn0-dns-dropin -i lo -j ACCEPT
+    $IPTABLES -A fpn0-dns-dropin ! -i lo -s 127.0.0.0/8 -j REJECT
+    $IPTABLES -N fpn0-dns-dropout
+    $IPTABLES -A OUTPUT -j fpn0-dns-dropout
+    $IPTABLES -A fpn0-dns-dropout -o lo -j ACCEPT
+
+    $IPTABLES -A fpn0-dns-dropout -t filter -p udp --dport 53 -m limit --limit 5/min -j LOG --log-prefix "DROP PORT 53: " --log-level 7
+    $IPTABLES -A fpn0-dns-dropout -t filter -p udp --dport 53 -j DROP
+    $IPTABLES -A fpn0-dns-dropout -t filter -p tcp --dport 53 -m limit --limit 5/min -j LOG --log-prefix "DROP PORT 53: " --log-level 7
+    $IPTABLES -A fpn0-dns-dropout -t filter -p tcp --dport 53 -j DROP
+fi
 
 [[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then

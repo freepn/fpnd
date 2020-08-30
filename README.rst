@@ -75,12 +75,14 @@ called a feature!
 What does it do?
 ----------------
 
-Currently all web traffic (ie, ports 80 and 443) is routed over virtual
-network links to an "exit" peer (although other ports may be added/dropped
-in future releases).  In adhoc mode, the default network rules allow all
-traffic, however, only the ports above are automatically routed over FPN
+Currently all web and dns traffic (ie, ports 80, 443, 53, and 853) is routed
+over virtual network links to an "exit" peer (although other ports may be
+added/dropped in future releases).  In adhoc mode, the default network rules
+allow all traffic, however, only the ports above are automatically routed over FPN
 network links.  In peer mode *no* other TCP/UDP traffic is allowed between
-peers *except* the routed ports above.
+peers *except* the routed ports above (some IGMP traffic is also allowed
+to check peer connectivity, ie, you are allowed to ping your gateway, but
+the gateway may or may not allow the replies).
 
 The general advice is: **do** use ``https`` for everything (*especially* anything
 sensitive/private) and **don't** use ``http`` for anything.  At all.  Period.

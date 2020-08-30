@@ -49,8 +49,8 @@ more granular user controls.
 1.2 - Required / Optional Software
 ----------------------------------
 
-FreePN packages are available for Ubuntu and Gentoo using the ebuilds in our
-`python-overlay`_ or the ``.deb`` packages hosted on our Embedded device
+FreePN packages are available for Ubuntu and Gentoo using the ebuilds in the
+`python-overlay`_ or the ``.deb`` packages hosted on the Embedded device
 `PPA on Launchpad`_. The PPA sources can also be used to build Debian packages,
 however, we don't (yet) support any "official" Debian releases.
 
@@ -60,6 +60,11 @@ components:
 
 * the FreePN network daemon - fpnd_
 * the FreePN desktop UI (optional) - freepn-gtk3-tray_
+
+Required Linux kernel modules and tools
+
+Required network ports
+
 
 .. _FOSS: https://www.gnu.org/philosophy/floss-and-foss.en.html
 .. _github: https://github.com/freepn
@@ -250,7 +255,7 @@ For the ``.deb`` package format:
 Core dependencies for the FreePN network daemon are shown below.  Dependency
 resolution is handled by the respective package managers and test tools. The
 run-time requirements also include a recent Linux kernel with ``bash``,
-``iptables``, and ``iproute2`` installed.
+``iptables`` (legacy), and ``iproute2`` installed.
 
 * python_ - at least version 3.5
 * appdirs_ - standardized app directories
@@ -327,6 +332,13 @@ git logs for the detailed source code changes).  Sadly github does not render
 included ``.rst`` documents.
 
 .. _complete change history: changelog.rst
+
+
+.. note:: You can build a (complete) PDF version of this document using the
+          ``rst2pdf`` tool.  After cloning this repository, cd into the top
+          level directory and run the following command::
+          
+            $ rst2pdf -o README_0.9.0-release-notes_DRAFT.pdf
 
 
 .. include:: changelog.rst

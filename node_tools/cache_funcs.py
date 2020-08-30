@@ -182,6 +182,9 @@ def get_state(cache):
                 if data.ztaddress == data.gateway:
                     d['fpn1'] = True
                     d['fpn_id1'] = data.identity
+                    st.fpn1Data['nwid'] = data.identity
+                    st.fpn1Data['iface'] = data.ztdevice
+                    st.fpn1Data['address'] = data.ztaddress
                 else:
                     d['fpn0'] = True
                     d['fpn_id0'] = data.identity
@@ -189,6 +192,7 @@ def get_state(cache):
                 d.update(fpn0=None, fpn1=None, fpn_id0=None, fpn_id1=None)
         st.fpnState.update(d)
         logger.debug('fpnState: {}'.format(st.fpnState))
+        logger.debug('fpn1Data: {}'.format(st.fpn1Data))
 
 
 def handle_node_status(data, cache):

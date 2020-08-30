@@ -7,7 +7,7 @@
 : ${FPND_GROUP:=fpnd}
 : ${FPND_USER:=root}
 
-description="fpnd - FreePN daemon"
+description="fpnd - FreePN network daemon"
 command="/usr/bin/fpnd.py"
 pidfile="/run/${RC_SVCNAME}.pid"
 command_args="start"
@@ -15,11 +15,11 @@ retry="TERM/8/TERM/5"
 
 check_svc() {
 	ebegin "Checking for services to stop"
-	rc_monitor_stop="zerotier stunnel.fpnd"
+	# rc_monitor_stop="zerotier stunnel.fpnd"
 	for svc in $rc_monitor_stop; do
 		if yesno "$do_check" ; then
 			einfo "Scheduling ${svc} to stop in 1 min"
-			echo "rc-service -Ds ${svc} stop" \
+			echo "rc-service -Dis ${svc} stop" \
 				| at -M now +1 minute > /dev/null 2>&1
 			continue 2
 		fi
@@ -28,12 +28,17 @@ check_svc() {
 }
 
 depend() {
-	want atd stunnel.fpnd
-        need zerotier
+	want $rc_svcs_wanted
+        need zerotier stunnel.fpnd
         use logger clock
 }
 
 start_pre() {
+	if [ -e "${FPND_SOCK_DIR}/fpnd.state" ]; then
+		ewarn "Removing stale state file..."
+		rm -f "${FPND_SOCK_DIR}"/fpnd.state
+	fi
+
 	if [ ! -e "/etc/conf.d/${SVCNAME}" ]; then
 		eerror "Config file /etc/conf.d/${SVCNAME} does not exist!"
 		return 1

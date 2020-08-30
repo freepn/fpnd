@@ -42,6 +42,10 @@ fpnState = {'online': False,
             'route': None,
             'wdg_ref': None}
 
+fpn1Data = {'nwid': None,
+            'iface': None,
+            'address': None}
+
 leaf_nodes = []
 
 cfg_msgs = {}

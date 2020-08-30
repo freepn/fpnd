@@ -15,8 +15,8 @@ trap 'failures=$((failures+1))' ERR
 
 DATE=$(date +%Y%m%d)
 # very simple log capture
-exec &> >(tee -ia /tmp/fpn1-setup-${DATE}_output.log)
-exec 2> >(tee -ia /tmp/fpn1-setup-${DATE}_error.log)
+exec &> >(tee -ia /tmp/fpn1-down-${DATE}_output.log)
+exec 2> >(tee -ia /tmp/fpn1-down-${DATE}_error.log)
 
 # uncomment for more output
 #VERBOSE="anything"
@@ -61,12 +61,13 @@ ZT_SRC_NETID=${1:-$ZT_SRC_NETID}
 if [[ -n $ZT_SRC_NETID ]]; then
     [[ -n $VERBOSE ]] && echo "Using FPN1 ID: $ZT_SRC_NETID"
 else
-    echo "Please provide the network ID as argument."
-    exit 1
+    [[ -n $VERBOSE ]] && echo "No network ID found, continuing anyway..."
 fi
 
-ZT_INTERFACE=$(zerotier-cli get "${ZT_SRC_NETID}" portDeviceName)
-ZT_SRC_ADDR=$(zerotier-cli get "${ZT_SRC_NETID}" ip4)
+if [[ -n $ZT_SRC_NETID ]]; then
+    ZT_INTERFACE=$(zerotier-cli get "${ZT_SRC_NETID}" portDeviceName)
+    ZT_SRC_ADDR=$(zerotier-cli get "${ZT_SRC_NETID}" ip4)
+fi
 
 # this should be the active interface with default route
 DEFAULT_IFACE=$(ip route show default | awk '{print $5}')
@@ -111,13 +112,12 @@ else
     sysctl -w net.ipv4.ip_forward=0 > /dev/null 2>&1
 fi
 
-# setup nat/masq to forward outbound/return traffic
 [[ -n $VERBOSE ]] && echo "Deleting nat and forwarding rules..."
-$IPTABLES -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 80 -j ACCEPT
-$IPTABLES -D FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 443 -j ACCEPT
-$IPTABLES -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
-$IPTABLES -D FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 443 -j ACCEPT
-$IPTABLES -t nat -D POSTROUTING -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -j SNAT --to-source "${INET_ADDRESS}"
+# get fpn1 iptables state, remove custom chain rules, restore state
+"$IPTABLES"-save > /tmp/fpn1-up-state.txt
+sed -i '/fpn1-forward/d' /tmp/fpn1-up-state.txt
+sed -i '/fpn1-postnat/d' /tmp/fpn1-up-state.txt
+"$IPTABLES"-restore < /tmp/fpn1-up-state.txt
 
 #echo "Leaving FPN1 network..."
 #zerotier-cli leave "${ZT_SRC_NETID}"

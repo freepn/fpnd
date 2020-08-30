@@ -116,11 +116,19 @@ else
 fi
 
 # setup nat/masq to forward outbound/return traffic
-$IPTABLES -t nat -A POSTROUTING -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -j SNAT --to-source "${INET_ADDRESS}"
-$IPTABLES -A FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 80 -j ACCEPT
-$IPTABLES -A FORWARD -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 443 -j ACCEPT
-$IPTABLES -A FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
-$IPTABLES -A FORWARD -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 443 -j ACCEPT
+# nat/postrouting chain
+$IPTABLES -N fpn1-postnat -t nat
+$IPTABLES -t nat -A POSTROUTING -j fpn1-postnat
+$IPTABLES -t nat -A fpn1-postnat -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -j MASQUERADE
+# forwarding chain
+$IPTABLES -N fpn1-forward
+$IPTABLES -A FORWARD -j fpn1-forward
+$IPTABLES -A fpn1-forward -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 80 -j ACCEPT
+$IPTABLES -A fpn1-forward -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 443 -j ACCEPT
+$IPTABLES -A fpn1-forward -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
+$IPTABLES -A fpn1-forward -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 443 -j ACCEPT
+$IPTABLES -A fpn1-forward -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 53 -j ACCEPT
+$IPTABLES -A fpn1-forward -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 53 -j ACCEPT
 
 [[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then
