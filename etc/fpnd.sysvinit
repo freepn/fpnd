@@ -27,7 +27,9 @@ stop() {
 }
 
 restart() {
-    $DAEMON restart
+    $DAEMON stop
+    sleep 2
+    $DAEMON start
 }
 
 case "$1" in

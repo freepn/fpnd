@@ -95,7 +95,7 @@ else
     zerotier-cli set "${ZT_NETWORK}" allowGlobal=1 > /dev/null 2>&1
 fi
 
-DEFAULT_IFACE=$(ip route show default | awk '{print $5}')
+DEFAULT_IFACE=$(ip route show default | grep src | awk '{print $5}')
 while read -r line; do
     [[ -n $VERBOSE ]] && echo "Checking interfaces..."
     IFACE=$(echo "$line")
@@ -111,7 +111,7 @@ done < <(ip -o link show up  | awk -F': ' '{print $2}' | grep -v lo)
 # set this to your "normal" network interface if needed
 #IPV4_INTERFACE="eth0"
 #IPV4_INTERFACE="wlan0"
-[[ -n $IPV4_INTERFACE ]] || IPV4_INTERFACE="mlan0"
+#[[ -n $IPV4_INTERFACE ]] || IPV4_INTERFACE="mlan0"
 INET_ADDRESS=$(ip address show "${IPV4_INTERFACE}" | awk '/inet / {print $2}' | cut -d/ -f1)
 
 if [[ -n $VERBOSE ]]; then

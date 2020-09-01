@@ -27,9 +27,9 @@
 
 
 The FreePN_ network daemon (fpnd) is a P2P implementation of a distributed virtual
-private network (dVPN) designed to create an anonymous "cloud" of peers where each
+private network (dVPN) that creates an anonymous "cloud" of peers where each
 peer is both a client and an exit.  Peers are randomly connected on startup and
-reconnected as needed.
+reconnected to new (random) peers as needed.
 
 1.1 - System Design
 -------------------
@@ -40,8 +40,8 @@ design supports these goals in the following ways; planned (future) features inc
 more granular user controls.
 
 * each peer VPN link is a private ZeroTier network with its own IPv4 address space
-* each network link allows only 2 hosts, and only the routed traffic (currently http/https)
-* peer links are randomly assigned/reassigned as user nodes come and go
+* each network link allows only 2 hosts, and only the routed traffic (currently http/https/dns)
+* peer links are randomly assigned/reassigned by the network controller as user nodes come and go
 * FreePN infrastructure traffic is restricted to only node and network IDs (the minimum required for this stuff to actually work)
 
 .. _FreePN: https://github.com/freepn
@@ -63,7 +63,10 @@ components:
 
 Required Linux kernel modules and tools
 
-Required network ports
+The required network ports for FreePN user node daemon include:
+
+* allow port 9993/udp outgoing (for zerotier)
+* allow port 8443/tcp outgoing (for fpnd infra messages)
 
 
 .. _FOSS: https://www.gnu.org/philosophy/floss-and-foss.en.html
@@ -257,7 +260,7 @@ resolution is handled by the respective package managers and test tools. The
 run-time requirements also include a recent Linux kernel with ``bash``,
 ``iptables`` (legacy), and ``iproute2`` installed.
 
-* python_ - at least version 3.5
+* python_ - at least version 3.6
 * appdirs_ - standardized app directories
 * datrie_ - python interface to libdatrie
 * libdatrie_ - a Double-Array Trie library

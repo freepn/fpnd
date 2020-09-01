@@ -50,7 +50,7 @@ clog_file="${TEMP_DIR}/curl.log"
     #fi
 #fi
 
-/usr/bin/wget -T 3 -t 2 -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
+/usr/bin/wget -T 3 -t 3 -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
 
 
 IP_ADDR=$(cat $xml_file | sed -n -e 's/.*<Ip>\(.*\)<\/Ip>.*/\1/p')
@@ -65,7 +65,7 @@ LAT=$(printf "%.2f" "$LAT_FULL")
 LON=$(printf "%.2f" "$LON_FULL")
 LOCATION="$CITY, $STATE $ZIPCODE ($COUNTRY)"
 
-if [[ "${CITY}" = "NONE" ]]; then
+if [[ "${CITY}" = "None" ]]; then
     echo "Public IP and geolocation: ${IP_ADDR}, ${LAT} ${LON} ($COUNTRY)"
 else
     echo "Public IP and geolocation: ${IP_ADDR}, ${LOCATION}"
