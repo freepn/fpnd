@@ -118,6 +118,7 @@ fi
 sed -i '/fpn1-forward/d' /tmp/fpn1-up-state.txt
 sed -i '/fpn1-postnat/d' /tmp/fpn1-up-state.txt
 "$IPTABLES"-restore < /tmp/fpn1-up-state.txt
+rm -f /tmp/fpn1-up-state.txt
 
 #echo "Leaving FPN1 network..."
 #zerotier-cli leave "${ZT_SRC_NETID}"

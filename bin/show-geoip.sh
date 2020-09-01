@@ -9,12 +9,23 @@ export LC_ALL=C
 
 # environemt vars
 # use doh for curl if we have a server FQDN
-DOH_HOST=${1:-}
+#DOH_HOST=${1:-}
 #VERBOSE="anything"
 
 TEMP_DIR="/tmp"
 RUN_DIR="/run/fpnd"
 [[ -d "${RUN_DIR}" ]] && TEMP_DIR="${RUN_DIR}"
+
+# Fetch data from Ubuntu's geoip server, requires route to internet
+xml_file="${TEMP_DIR}/geoip-location.xml"
+log_file="${TEMP_DIR}/wget.log"
+clog_file="${TEMP_DIR}/curl.log"
+wget_args="--timeout=1 --waitretry=0 --tries=5 --retry-connrefused"
+
+TMP_FILES="${xml_file} ${log_file} ${clog_file}"
+for tempfile in "${TMP_FILES}"; do
+    [[ -f $tempfile ]] && rm -f $tempfile
+done
 
 # use --doh-url if curl is new enough
 CURL_SEMVER=$(curl --version | head -n1 | awk '{ print $2 }')
@@ -34,23 +45,17 @@ semver_to_int() {
 CURL_INT=$(semver_to_int "${CURL_SEMVER}")
 CURL_BASE=$(semver_to_int "${CURL_BASEVER}")
 
-# Fetch data from Ubuntu's geoip server, requires route to internet
-xml_file="${TEMP_DIR}/geoip-location.xml"
-log_file="${TEMP_DIR}/wget.log"
-clog_file="${TEMP_DIR}/curl.log"
-
 #if [[ $CURL_INT -ge $CURL_BASE ]]; then
     #if [[ -n $DOH_HOST ]]; then
         #doh_arg="--doh-url https://${DOH_HOST}/dns-query"
         #if [[ -n $VERBOSE ]]; then
             #echo "Using curl doh_arg valus: $doh_arg"
         #fi
-    #/usr/bin/curl --stderr $clog_file --silent -m 3 $doh_arg https://geoip.ubuntu.com/lookup > $xml_file
-
     #fi
+    #/usr/bin/curl --stderr $clog_file --silent -m 3 $doh_arg https://geoip.ubuntu.com/lookup > $xml_file
 #fi
 
-/usr/bin/wget -T 3 -t 3 -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
+/usr/bin/wget $wget_args -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
 
 
 IP_ADDR=$(cat $xml_file | sed -n -e 's/.*<Ip>\(.*\)<\/Ip>.*/\1/p')

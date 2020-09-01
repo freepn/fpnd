@@ -65,7 +65,7 @@ else
     [[ -n $VERBOSE ]] && echo "No network ID found, continuing anyway..."
 fi
 
-if [[ -n $ZT_SRC_NETID ]]; then
+if [[ -n $ZT_NETWORK ]]; then
     ZT_INTERFACE=$(zerotier-cli get "${ZT_NETWORK}" portDeviceName)
     ZT_ADDRESS=$(zerotier-cli get "${ZT_NETWORK}" ip4)
     ZT_GATEWAY=$(zerotier-cli -j listnetworks | grep "${ZT_INTERFACE}" -A 14 | grep via | awk '{ print $2 }' | tail -n 1 | cut -d'"' -f2)
@@ -134,6 +134,7 @@ if [[ -n $DROP_DNS_53 ]]; then
     sed -i '/fpn0-dns-dropout/d' /tmp/fpn0-up-state.txt
 fi
 "$IPTABLES"-restore < /tmp/fpn0-up-state.txt
+rm -f /tmp/fpn0-up-state.txt
 
 [[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then
