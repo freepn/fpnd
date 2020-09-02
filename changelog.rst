@@ -1,3 +1,34 @@
+0.8.25 (2020-09-01)
+-------------------
+- Update route check args, add more temp file cleanup, fix yast. [Stephen Arnold]
+
+
+0.8.24 (2020-09-01)
+-------------------
+- Net script updates for multiple interfaces with a default route. [Stephen Arnold]
+
+  * occurs when eth0 and wlan0 are both UP but only one has an address
+    (only on ubuntu so far)
+
+
+0.8.23 (2020-08-30)
+-------------------
+- Bump version and update deploy/test runners. [Stephen Arnold]
+- Merge pull request #61 from freepn/cleanup-dns.
+  Cleanup net scripts, keep "mixed" routing as default, switch route check back to wget.
+- Use custom chains in net scripts, allow missing down zt interface/network. [Stephen Arnold]
+- Update net scripts and route check (tight routing and wget) [Stephen Arnold]
+
+  * remove dnscrypt traffic from routing, go back to snat
+  * switch route check from curl back to wget, update return codes
+  * update moon list with new moon ID
+  * add stunnel.fpnd to needs in openrc init
+
+- Capture current state of dns changes for next testing baseline. [Stephen Arnold]
+- Add settings option for private dns only, propagate to net scripts. [Stephen Arnold]
+- Switch SNAT to MASQ in net scripts, add node id output to test_tools. [Stephen Arnold]
+
+
 0.8.22 (2020-08-16)
 -------------------
 - etc/fpnd.service: fix service deps for stunnel, cleanup docs/test config. [St$

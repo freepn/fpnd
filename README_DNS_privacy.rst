@@ -87,6 +87,15 @@ only the built-in python SSL functions.
 Setup process for private DNS
 =============================
 
+The general setup process for switching to a local stub resolver/proxy
+on your machine is straight-forward:
+
+1. take control of your existing DNS settings
+2. install a DoT/DoH stub resolver/proxy
+3. configure your new resolver to use the DNS servers you want
+4. (re)start your new resolver
+5. check that it works
+
 
 
 More on the security of DNS

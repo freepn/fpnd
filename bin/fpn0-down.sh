@@ -92,7 +92,7 @@ else
     [[ -n $VERBOSE ]] && echo "  FPN routing table not found!!"
 fi
 
-DEFAULT_IFACE=$(ip route show default | grep src | awk '{print $5}')
+DEFAULT_IFACE=$(ip route show default | awk '{print $5}')
 while read -r line; do
     [[ -n $VERBOSE ]] && echo "Checking interfaces..."
     IFACE=$(echo "$line")

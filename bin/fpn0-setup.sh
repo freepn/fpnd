@@ -95,7 +95,7 @@ else
     zerotier-cli set "${ZT_NETWORK}" allowGlobal=1 > /dev/null 2>&1
 fi
 
-DEFAULT_IFACE=$(ip route show default | grep src | awk '{print $5}')
+DEFAULT_IFACE=$(ip route show default | awk '{print $5}')
 while read -r line; do
     [[ -n $VERBOSE ]] && echo "Checking interfaces..."
     IFACE=$(echo "$line")
@@ -131,7 +131,7 @@ ip route add default via ${ZT_GATEWAY} dev ${ZT_INTERFACE} table "${TABLE_NAME}"
 
 # Anything with this fwmark will use the secondary routing table
 ip rule add fwmark 0x1 table "${TABLE_NAME}"
-#sleep 2
+sleep 2
 
 # add mangle chain
 $IPTABLES -N fpn0-mangleout -t mangle
