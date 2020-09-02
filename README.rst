@@ -75,8 +75,8 @@ called a feature!
 What does it do?
 ----------------
 
-Currently all web and dns traffic (ie, ports 80, 443, 53, and 853) is routed
-over virtual network links to an "exit" peer (although other ports may be
+Currently all web and non-encrypted dns traffic (ie, ports 80, 443, 53) is routed
+over fpn virtual network links to an "exit" peer (although other ports may be
 added/dropped in future releases).  In adhoc mode, the default network rules
 allow all traffic, however, only the ports above are automatically routed over FPN
 network links.  In peer mode *no* other TCP/UDP traffic is allowed between
@@ -85,12 +85,18 @@ to check peer connectivity, ie, you are allowed to ping your gateway, but
 the gateway may or may not allow the replies).
 
 The general advice is: **do** use ``https`` for everything (*especially* anything
-sensitive/private) and **don't** use ``http`` for anything.  At all.  Period.
+sensitive/private) and **don't** use ``http`` for anything.  At all.  Period.  Note
+that today this also applies to DNS traffic, ie, if you want to increase your overall
+level of online privacy, then you should 1) use only "trusted" non-logging DNS providers,
+and 2) consider setting up a local DNS stub resolver that uses DNS over TLS and your chosen
+DNS servers.  See our `DNS privacy`_ readme doc for more info and pointers.
 
 * adhoc mode - *you* own the network link and the peers
 * peer mode - *you* only control your own host (peers are random,
   networks are auto-assigned and configured)
 
+
+.. _DNS privacy: README_DNS_privacy.rst
 
 Note about release tags
 -----------------------
