@@ -57,7 +57,7 @@ CURL_BASE=$(semver_to_int "${CURL_BASEVER}")
 
 /usr/bin/wget $wget_args -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
 
-if [[ -s $xml_file ]]; then
+if ! [[ -s $xml_file ]]; then
     /usr/bin/wget $wget_args -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
 fi
 
