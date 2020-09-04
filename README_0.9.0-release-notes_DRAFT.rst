@@ -73,7 +73,6 @@ The required network ports for FreePN user node daemon include:
 .. _github: https://github.com/freepn
 .. _fpnd: https://github.com/freepn/fpnd
 .. _freepn-gtk3-tray: https://github.com/freepn/freepn-gtk3-tray
-.. _PPA on Launchpad: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
 
 
 2.0 - Referenced Documents
@@ -120,6 +119,7 @@ For other distributions:
   + use the latest `fpnd source release on github`_
 
 
+.. _PPA on Launchpad: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
 .. _python-overlay: https://github.com/freepn/python-overlay
 .. _fpnd source release on github: https://github.com/freepn/fpnd/releases
 
@@ -340,9 +340,8 @@ included ``.rst`` documents.
 .. note:: You can build a (complete) PDF version of this document using the
           ``rst2pdf`` tool.  After cloning this repository, cd into the top
           level directory and run the following command::
-          
+
             $ rst2pdf -o README_0.9.0-release-notes_DRAFT.pdf
 
 
 .. include:: changelog.rst
-

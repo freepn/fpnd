@@ -23,6 +23,8 @@ exec 2> >(tee -ia /tmp/fpn1-setup-${DATE}_error.log)
 
 # uncomment for more output
 #VERBOSE="anything"
+# set the preferred network interface if needed
+#SET_IPV4_IFACE="eth0"  <= fpnd.ini
 
 # set allowed ports (still TBD))
 ports_to_fwd="http https domain submission imaps ircs ircs-u"
@@ -73,25 +75,40 @@ fi
 ZT_INTERFACE=$(zerotier-cli get "${ZT_SRC_NETID}" portDeviceName)
 ZT_SRC_ADDR=$(zerotier-cli get "${ZT_SRC_NETID}" ip4)
 
-# this should be the active interface with default route
-DEFAULT_IFACE=$(ip route show default | awk '{print $5}')
-while read -r line; do
-    [[ -n $VERBOSE ]] && echo "Checking interfaces..."
-    IFACE=$(echo "$line")
-    if [[ $DEFAULT_IFACE = $IFACE ]]; then
-        IPV4_INTERFACE="${IFACE}"
-        [[ -n $VERBOSE ]] && echo "  Found interface $IFACE"
-        break
+if [[ -n $SET_IPV4_IFACE ]]; then
+    [[ -n $VERBOSE ]] && echo "Looking for $SET_IPV4_IFACE"
+    TEST_IFACE=$(ip route show default | { grep -o "${SET_IPV4_IFACE}" || test $? = 1; })
+    if [[ -n $TEST_IFACE ]]; then
+        [[ -n $VERBOSE ]] && echo "  $TEST_IFACE looks good..."
+        IPV4_INTERFACE="${TEST_IFACE}"
     else
-        [[ -n $VERBOSE ]] && echo "  Skipping $IFACE"
+        [[ -n $VERBOSE ]] && echo "  $TEST_IFACE not found!"
+        DEFAULT_IFACE=$(ip route show default | awk '{print $5}' | head -n 1)
     fi
-done < <(ip -o link show up  | awk -F': ' '{print $2}' | grep -v lo)
-
-INET_GATEWAY=$(ip route show default | grep src | awk '{print $3}')
-
-if [[ -n $ETH0_NULL ]]; then
-    IPV4_INTERFACE="${ETH0_NULL}"
+else
+    DEFAULT_IFACE=$(ip route show default | awk '{print $5}' | head -n 1)
 fi
+
+if ! [[ -n $IPV4_INTERFACE ]]; then
+    while read -r line; do
+        [[ -n $VERBOSE ]] && echo "Checking interfaces..."
+        IFACE=$(echo "$line")
+        if [[ $DEFAULT_IFACE = $IFACE ]]; then
+            IPV4_INTERFACE="${IFACE}"
+            [[ -n $VERBOSE ]] && echo "  Found interface $IFACE"
+            break
+        else
+            [[ -n $VERBOSE ]] && echo "  Skipping $IFACE"
+        fi
+    done < <(ip -o link show up  | awk -F': ' '{print $2}' | grep -v lo)
+fi
+
+if ! [[ -n $IPV4_INTERFACE ]]; then
+    echo "No usable network interface found! (check settings?)"
+    exit 1
+fi
+
+INET_GATEWAY=$(ip route show default | grep $IPV4_INTERFACE | awk '{print $3}')
 
 INET_ADDRESS=$(ip address show "${IPV4_INTERFACE}" | awk '/inet / {print $2}' | cut -d/ -f1)
 ZT_SRC_NET=$(ip route show | grep ${ZT_INTERFACE} | grep -v '169.254' | awk '{print $1}')

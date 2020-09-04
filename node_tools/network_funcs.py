@@ -25,7 +25,7 @@ def do_host_check(path=None):
 
     if not path:
         path = NODE_SETTINGS['home_dir']
-    cmd = os.path.join(path, 'ping_google.sh')
+    cmd = os.path.join(path, 'ping_github.sh')
 
     result = do_net_cmd([cmd])
     return result

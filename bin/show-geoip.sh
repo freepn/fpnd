@@ -20,7 +20,7 @@ RUN_DIR="/run/fpnd"
 xml_file="${TEMP_DIR}/geoip-location.xml"
 log_file="${TEMP_DIR}/wget.log"
 clog_file="${TEMP_DIR}/curl.log"
-wget_args="--timeout=1 --waitretry=0 --tries=5 --retry-connrefused"
+wget_args="--timeout=2 --waitretry=0 --tries=5 --retry-connrefused"
 
 TMP_FILES="${xml_file} ${log_file} ${clog_file}"
 for tempfile in "${TMP_FILES}"; do
@@ -57,6 +57,9 @@ CURL_BASE=$(semver_to_int "${CURL_BASEVER}")
 
 /usr/bin/wget $wget_args -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
 
+if [[ -s $xml_file ]]; then
+    /usr/bin/wget $wget_args -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
+fi
 
 IP_ADDR=$(cat $xml_file | sed -n -e 's/.*<Ip>\(.*\)<\/Ip>.*/\1/p')
 LAT_FULL=$(cat $xml_file | sed -n -e 's/.*<Latitude>\(.*\)<\/Latitude>.*/\1/p')
