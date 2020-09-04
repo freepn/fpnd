@@ -25,7 +25,7 @@ def do_host_check(path=None):
 
     if not path:
         path = NODE_SETTINGS['home_dir']
-    cmd = os.path.join(path, 'ping_google.sh')
+    cmd = os.path.join(path, 'ping_github.sh')
 
     result = do_net_cmd([cmd])
     return result
@@ -294,10 +294,13 @@ def do_net_cmd(cmd):
         logger.error('Bad cmd or path: {}'.format(cmd[0]))
 
     env_dict = {'VERBOSE': '',
-                'DROP_DNS_53': ''}
+                'DROP_DNS_53': '',
+                'SET_IPV4_IFACE': ''}
 
     if NODE_SETTINGS['private_dns_only']:
         env_dict['DROP_DNS_53'] = 'yes'
+    if NODE_SETTINGS['default_iface'] is not None:
+        env_dict['SET_IPV4_IFACE'] = NODE_SETTINGS['default_iface']
     logger.debug('ENV: net script settings are {}'.format(env_dict.items()))
 
     # with shell=false cmd must be a sequence not a string

@@ -25,6 +25,7 @@ ENODATA = Constant('ENODATA')  # error return for async state data updates
 
 NODE_SETTINGS = {
     u'private_dns_only': False,  # drop routed port 53 traffic
+    u'default_iface': None,  # set default network interface name
     u'doh_host': None,  # use doh_host for show_geoip command
     u'max_cache_age': 60,  # maximum cache age in seconds
     u'use_localhost': False,  # messaging interface to use
@@ -80,6 +81,7 @@ def do_setup():
         debug = my_conf.getboolean('Options', 'debug')
         user_perms = my_conf.getboolean('Options', 'user_perms')
         curl_doh_host = my_conf['Options']['doh_host']
+        default_iface_name = my_conf['Options']['default_iface']
         private_dns = my_conf.getboolean('Options', 'private_dns_only')
         home = my_conf['Paths']['home_dir']
         NODE_SETTINGS['mode'] = mode
@@ -87,6 +89,7 @@ def do_setup():
         NODE_SETTINGS['runas_user'] = user_perms
         NODE_SETTINGS['home_dir'] = home
         NODE_SETTINGS['doh_host'] = curl_doh_host
+        NODE_SETTINGS['default_iface'] = default_iface_name
         NODE_SETTINGS['private_dns_only'] = private_dns
         if 'system' not in msg:
             prefix = my_conf['Options']['prefix']
