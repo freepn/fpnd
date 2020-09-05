@@ -24,6 +24,7 @@ exec &> >(tee -ia /tmp/fpn0-setup-${DATE}_output.log)
 exec 2> >(tee -ia /tmp/fpn0-setup-${DATE}_error.log)
 
 #VERBOSE="anything"
+#ROUTE_DNS_53="anything"  <= fpnd.ini
 #DROP_DNS_53="anything"  <= fpnd.ini
 # set the preferred network interface if needed
 #SET_IPV4_IFACE="eth0"  <= fpnd.ini
@@ -158,7 +159,7 @@ $IPTABLES -t mangle -A OUTPUT -j fpn0-mangleout
 # Mark these packets so that ip can route web traffic through fpn0
 $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
 $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
-if ! [[ -n $DROP_DNS_53 ]]; then
+if [[ -n $ROUTE_DNS_53 ]] && ! [[ -n $DROP_DNS_53 ]]; then
     $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p udp --dport 53 -j MARK --set-mark 1
     $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 53 -j MARK --set-mark 1
 fi
@@ -169,7 +170,7 @@ $IPTABLES -t nat -A POSTROUTING -j fpn0-postnat
 # now rewrite the src-addr using snat/masq
 $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
 $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
-if ! [[ -n $DROP_DNS_53 ]]; then
+if [[ -n $ROUTE_DNS_53 ]] && ! [[ -n $DROP_DNS_53 ]]; then
     $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j MASQUERADE
     $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j MASQUERADE
 fi
