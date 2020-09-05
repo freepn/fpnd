@@ -13,6 +13,7 @@ import pytest
 import schedule
 from schedule import every
 
+from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.helper_funcs import AttrDict
 from node_tools.helper_funcs import send_announce_msg
 from node_tools.network_funcs import echo_client
@@ -122,6 +123,9 @@ class ScheduleTests(unittest.TestCase):
         self.assertEqual(len(schedule.jobs), 0)
 
     def test_run_net_cmd_sdown(self):
+        NODE_SETTINGS['route_dns_53'] = True
+        NODE_SETTINGS['private_dns_only'] = True
+
         cmd_down0 = get_net_cmds(self.bin_dir, 'fpn0', False)
         cmd_down1 = get_net_cmds(self.bin_dir, 'fpn1', False)
 
