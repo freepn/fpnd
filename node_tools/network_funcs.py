@@ -25,7 +25,7 @@ def do_host_check(path=None):
 
     if not path:
         path = NODE_SETTINGS['home_dir']
-    cmd = os.path.join(path, 'ping_github.sh')
+    cmd = os.path.join(path, 'ping_google.sh')
 
     result = do_net_cmd([cmd])
     return result
@@ -295,8 +295,11 @@ def do_net_cmd(cmd):
 
     env_dict = {'VERBOSE': '',
                 'DROP_DNS_53': '',
+                'ROUTE_DNS_53': '',
                 'SET_IPV4_IFACE': ''}
 
+    if NODE_SETTINGS['route_dns_53']:
+        env_dict['ROUTE_DNS_53'] = 'yes'
     if NODE_SETTINGS['private_dns_only']:
         env_dict['DROP_DNS_53'] = 'yes'
     if NODE_SETTINGS['default_iface'] is not None:

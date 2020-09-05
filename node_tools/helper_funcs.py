@@ -25,6 +25,7 @@ ENODATA = Constant('ENODATA')  # error return for async state data updates
 
 NODE_SETTINGS = {
     u'private_dns_only': False,  # drop routed port 53 traffic
+    u'route_dns': False,  # route insecure dns with web traffic
     u'default_iface': None,  # set default network interface name
     u'doh_host': None,  # use doh_host for show_geoip command
     u'max_cache_age': 60,  # maximum cache age in seconds
@@ -76,21 +77,19 @@ def do_setup():
     dirs = AppDirs('fpnd', 'FreePN')
     my_conf, msg = config_from_ini()
     if my_conf:
+        home = my_conf['Paths']['home_dir']
         role = my_conf['Options']['role']
         mode = my_conf['Options']['mode']
         debug = my_conf.getboolean('Options', 'debug')
         user_perms = my_conf.getboolean('Options', 'user_perms')
-        curl_doh_host = my_conf['Options']['doh_host']
-        default_iface_name = my_conf['Options']['default_iface']
-        private_dns = my_conf.getboolean('Options', 'private_dns_only')
-        home = my_conf['Paths']['home_dir']
+        NODE_SETTINGS['doh_host'] = my_conf['Options']['doh_host']
+        NODE_SETTINGS['default_iface'] = my_conf['Options']['default_iface']
+        NODE_SETTINGS['route_dns_53'] = my_conf.getboolean('Options', 'route_dns')
+        NODE_SETTINGS['private_dns_only'] = my_conf.getboolean('Options', 'private_dns_only')
         NODE_SETTINGS['mode'] = mode
         NODE_SETTINGS['debug'] = debug
         NODE_SETTINGS['runas_user'] = user_perms
         NODE_SETTINGS['home_dir'] = home
-        NODE_SETTINGS['doh_host'] = curl_doh_host
-        NODE_SETTINGS['default_iface'] = default_iface_name
-        NODE_SETTINGS['private_dns_only'] = private_dns
         if 'system' not in msg:
             prefix = my_conf['Options']['prefix']
         else:

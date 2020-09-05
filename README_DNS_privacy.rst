@@ -28,6 +28,7 @@ Terms and Acronyms
 :DNSCrypt: This can mean the protocol or an implementation (eg, DNSCrypt-proxy)
 :DNS over TLS: DoT is the primary encrypted DNS implementation (TCP over port 853)
 :DNS over HTTPS: DoH is an alternate method using the standard (secure) web port
+:PII: Personally Identifiable Information (anything that ties data to an individual)
 :stub resolver: a local non-recursive DNS "server" that uses DoT and/or DoH
 
 
@@ -48,9 +49,10 @@ internet.  These not-so-nice entities may include the following:
 DNS handling in FreePN
 =======================
 
-There are two DNS modes for the fpnd network daemon:
+There are three DNS modes for the fpnd network daemon:
 
-* route your "normal" DNS requests with your web traffic (the default)
+* leave your DNS traffic as-is (the default)
+* route your "normal" DNS requests with your web traffic (optional)
 * drop all insecure outgoing DNS draffic if you are using a local
   secure stub resolver (optional)
 
@@ -60,6 +62,20 @@ Reasons why the first option is the default:
 * breaking DNS is a *bad* thing
 * too many other packages you probably have installed already do this
   (mainly systemd and networkmanager)
+
+The first option above involves doing nothing about your current DNS
+setup, ie, it will work just as it always has, but leaves it insecure
+and definitely not private.
+
+The second option involves using a public DNS provider (eg, Google or
+Cloudflare) and setting ``route_dns`` to True in the fpnd settings file
+(fpnd.ini).  If you're on Ubuntu (or Gentoo with a systemd profile) then
+systemd should already be the default "manager" of DNS settings, which
+makes it trivial to add our example config and edit it to suit your needs.
+
+The third option (which we also have an example config fragment for)
+involves installing a secure DNS stub resolver on your device (such as
+stubby; see below) and configuring systemd-resolved to use it.
 
 So, *if* you want to take back a big chunk of your privacy and you're
 using FreePN because you want more privacy, then you really should
