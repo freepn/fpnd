@@ -107,7 +107,7 @@ def do_scheduling():
             baseCheckJob.do(run_net_check).tag('base-tasks', 'route-status')
 
             try:
-                data = wait_for_moon(timeout=30)
+                data = wait_for_moon(timeout=45)
             except Exception as exc:
                 logger.error('ENODATA exception {}'.format(exc))
                 put_state_msg('ERROR')
