@@ -1,3 +1,13 @@
 [Resolve]
 Cache=yes
-DNS=1.1.1.1 8.8.8.8
+DNS=1.1.1.1 1.0.0.1
+
+#uncomment one of the blocks below to use dns features
+# bionic does not have full DoT support, but does support DNSSEC
+#DNSOverTLS=opportunistic
+#DNSSEC=yes
+
+# focal has full support for DoT
+#FallbackDNS=1.0.0.1 1.1.1.1
+#DNSOverTLS=yes
+#DNSSEC=yes
