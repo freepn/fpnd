@@ -61,13 +61,23 @@ components:
 * the FreePN network daemon - fpnd_
 * the FreePN desktop UI (optional) - freepn-gtk3-tray_
 
-Required Linux kernel modules and tools
+The required Linux kernel modules include:
 
-The required network ports for FreePN user node daemon include:
+* xt_MASQUERADE, xt_nat, xt_tcpudp, xt_mark
+* nf_nat, nf_conntrack, nf_defrag_ipv4
+* iptable_filter, iptable_nat, iptable_mangle, bpfilter
 
-* allow port 9993/udp outgoing (for zerotier)
-* allow port 8443/tcp outgoing (for fpnd infra messages)
+The required outgoing network ports for FreePN user node daemon include:
 
+* allow port 9993/udp (for zerotier)
+* allow port 8443/tcp (for fpnd infra messages)
+* allow ports 53/udp and 53/tcp (if *not* using encrypted dns)
+* allow port 853/tcp (if using encrypted dns)
+* allow ports 80/tcp and 443/tcp
+
+.. note:: When using encrypted dns *and* with ``private_dns_only`` set to
+          ``True`` local dns queries are only allowed to localhost (but peer
+          dns traffic is still routed).
 
 .. _FOSS: https://www.gnu.org/philosophy/floss-and-foss.en.html
 .. _github: https://github.com/freepn
@@ -89,7 +99,9 @@ Prerequisites:
 A supported linux distribution, mainly something that uses `.ebuilds`
 (eg, Gentoo or funtoo) or a supported Ubuntu series, currently bionic
 18.0.4 LTS, or focal 20.0.4 LTS (see the above`PPA on Launchpad`_).
-Note you can also use the focal PPA series on the latest kali images.
+Note you can also use the focal PPA series on the latest kali images,
+however, the the fpnd.service is broken agoinst the latest systemd
+upgrade to 264 or higher (and there is no fix yet).
 
 3.1 - Packages and Source Code
 ------------------------------
@@ -292,6 +304,11 @@ run-time requirements also include a recent Linux kernel with ``bash``,
 
 3.6 - Known Issues
 ------------------
+
+* Erratic service file behavior with systemd >= 246
+
+This essentially breaks correct shutdown and associated cleanup functions
+(no fixes yet) on ubuntu groovy and kali.
 
 * avahi-autoipd link-local conflicts with zerotier interfaces
 
