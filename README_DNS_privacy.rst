@@ -67,8 +67,8 @@ The first option above involves doing nothing about your current DNS
 setup, ie, it will work just as it always has, but leaves it insecure
 and definitely not private.
 
-The second option involves using a public DNS provider (eg, Google or
-Cloudflare) and setting ``route_dns`` to True in the fpnd settings file
+The second option involves using a public DNS provider (eg, `Cloudflare`_
+or `OpenNIC`_) and setting ``route_dns`` to True in the fpnd settings file
 (fpnd.ini).  If you're on Ubuntu (or Gentoo with a systemd profile) then
 systemd should already be the default "manager" of DNS settings, which
 makes it trivial to add our example config and edit it to suit your needs.
@@ -95,6 +95,8 @@ clean/pure python implementation of a local `DoT forwarder`_ that uses
 only the built-in python SSL functions.
 
 
+.. _Cloudflare: https://1.1.1.1/
+.. _OpenNIC: https://www.opennic.org/
 .. _getdnsapi: https://getdnsapi.net/
 .. _stubby: https://github.com/getdnsapi/stubby
 .. _DoT forwarder: https://github.com/m3047/tcp_only_forwarder

@@ -28,9 +28,9 @@ for tempfile in "${TMP_FILES}"; do
 done
 
 # use --doh-url if curl is new enough
-CURL_SEMVER=$(curl --version | head -n1 | awk '{ print $2 }')
-CURL_BASEVER="7.62.0"
-doh_arg=""
+#CURL_SEMVER=$(curl --version | head -n1 | awk '{ print $2 }')
+#CURL_BASEVER="7.62.0"
+#doh_arg=""
 
 # FUNC semver_to_int
 # converts a "semantic version" string to integer for sorting and comparison
@@ -42,8 +42,8 @@ semver_to_int() {
     echo $val
 }
 
-CURL_INT=$(semver_to_int "${CURL_SEMVER}")
-CURL_BASE=$(semver_to_int "${CURL_BASEVER}")
+#CURL_INT=$(semver_to_int "${CURL_SEMVER}")
+#CURL_BASE=$(semver_to_int "${CURL_BASEVER}")
 
 #if [[ $CURL_INT -ge $CURL_BASE ]]; then
     #if [[ -n $DOH_HOST ]]; then
@@ -57,9 +57,9 @@ CURL_BASE=$(semver_to_int "${CURL_BASEVER}")
 
 /usr/bin/wget $wget_args -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
 
-if ! [[ -s $xml_file ]]; then
-    /usr/bin/wget $wget_args --retry-connrefused -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
-fi
+#if ! [[ -s $xml_file ]]; then
+    #/usr/bin/wget $wget_args --retry-connrefused -o $log_file -O - -q https://geoip.ubuntu.com/lookup > $xml_file
+#fi
 
 IP_ADDR=$(cat $xml_file | sed -n -e 's/.*<Ip>\(.*\)<\/Ip>.*/\1/p')
 LAT_FULL=$(cat $xml_file | sed -n -e 's/.*<Latitude>\(.*\)<\/Latitude>.*/\1/p')
