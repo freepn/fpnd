@@ -1,3 +1,48 @@
+0.8.30 (2020-09-09)
+-------------------
+- Add latest avahi issues to release doc, update changelog [Steve Arnold]
+- Merge pull request #68 from freepn/docs-and-tweaks. [Steve Arnold]
+- Bump version for setup.py packaging/testing.
+- Fix leftover curl cruft, limit wget calls, add more doc updates.
+
+
+0.8.29 (2020-09-07)
+-------------------
+- Tune some timeouts, use SNAT for postnat dns routing. [Stephen Arnold]
+- Merge pull request #66 from freepn/tuning. [Steve Arnold]
+- Tune some timeouts, use SNAT for forward routing.
+
+
+0.8.28 (2020-09-05)
+-------------------
+- Bump version for packaging/testing. [Stephen Arnold]
+- Merge pull request #65 from freepn/route-options. [Steve Arnold]
+
+  dns routing config options (default off)
+- Update ScheduleTests::test_run_net_cmd_sdown() for new settings.
+- Add dns routing config option (default off) and config, update dns doc.
+
+
+0.8.27 (2020-09-04)
+-------------------
+- Bump version for release tag. [Stephen Arnold]
+- Merge pull request #64 from freepn/distro-fixes. [Steve Arnold]
+
+  Distro fixes for multiple default routes and network interface names
+- Add wiring for default iface, update default/test settings.
+- Update netscripts for distro oddities, add config option (still
+  unwired)
+
+
+0.8.26 (2020-09-02)
+-------------------
+- Merge pull request #63 from freepn/docs-and-fixes. [Steve Arnold]
+
+  Docs and fixes
+- Remove silly ubuntu hack, restore sleep, add draft DNS privacy doc.
+- Flesh out DNS privacy doc, minor readme updates, reset a log level.
+
+
 0.8.25 (2020-09-01)
 -------------------
 - Update route check args, add more temp file cleanup, fix yast. [Stephen Arnold]
@@ -910,5 +955,3 @@
 - New package for fpnd tools (uses module import for now) [Stephen
   Arnold]
 - Initial commit. [Steve Arnold]
-
-

@@ -312,10 +312,14 @@ This essentially breaks correct shutdown and associated cleanup functions
 
 * avahi-autoipd link-local conflicts with zerotier interfaces
 
-This is currently an open "watch item" issue (see `issue 39`_) for Linux hosts
-running the avahi autoipd daemon.  Using autoipd is incompatible with both fpnd
-and ZeroTier (see the github issue for details) so you must disable the autoipd
-daemon before running fpnd.
+  - avahi-daemon.conf requires interface whitelisting to ignore vpn interfaces
+
+These are both open "watch items" (see `issue 39`_ and `issue 67`_) for Linux hosts
+running the avahi daemon.  Using autoipd is incompatible with both fpnd and
+ZeroTier (see the first github issue for details) so you must disable the autoipd
+daemon before running fpnd. The second issue addresses the default avahi config
+listening on *all* the interfaces it finds and recommends options to address
+both issues.
 
 * missing kernel module(s) cause net script failures
 
@@ -326,6 +330,7 @@ by checking for the required modules when building the package and issuing a
 warning to the user if necessary).
 
 .. _issue 39: https://github.com/freepn/fpnd/issues/39
+.. _issue 67: https://github.com/freepn/fpnd/issues/67
 .. _issue 30: https://github.com/freepn/fpnd/issues/30
 
 
