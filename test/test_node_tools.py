@@ -47,10 +47,10 @@ from node_tools.helper_funcs import xform_state_diff
 from node_tools.logger_config import setup_logging
 from node_tools.msg_queues import handle_wedged_nodes
 from node_tools.network_funcs import do_host_check
-from node_tools.network_funcs import do_net_check
 from node_tools.network_funcs import do_peer_check
 from node_tools.network_funcs import get_net_cmds
 from node_tools.network_funcs import run_host_check
+from node_tools.network_funcs import run_net_check
 from node_tools.node_funcs import check_daemon
 from node_tools.node_funcs import control_daemon
 from node_tools.node_funcs import handle_moon_data
@@ -357,10 +357,10 @@ class NetPeerCheckTest(unittest.TestCase):
         NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'bin')
 
     @pytest.mark.xfail(strict=False)
-    def test_do_net_check_geoip(self):
+    def test_run_net_check_geoip(self):
         """Requires live internet in test env"""
-        state, res, retcode = do_net_check()
-        # print(state, res, retcode)
+        res = run_net_check()
+        # print(res)
 
     def test_do_peer_check_bad_addr(self):
         """Raise IPv4 address error"""
