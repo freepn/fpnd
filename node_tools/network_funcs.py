@@ -260,7 +260,7 @@ def run_host_check():
     return result
 
 
-@catch_exceptions()
+@run_until_success(unschedule=False)
 def run_net_check():
     """
     Command wrapper for decorated net_check (fpn health) command.
