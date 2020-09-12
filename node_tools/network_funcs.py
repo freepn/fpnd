@@ -59,7 +59,7 @@ def do_net_check(path=None):
         if fpn_data['fpn0'] and fpn_data['fpn1'] and retcode == 4:
             if fpn_data['route'] is True:
                 fpn_data['route'] = None
-                net_wait.set('failed_once', True, 45)
+                net_wait.set('failed_once', True, 65)
             else:
                 if host_state:
                     fpn_data['route'] = False
