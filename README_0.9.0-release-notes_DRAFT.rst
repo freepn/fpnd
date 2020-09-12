@@ -46,6 +46,7 @@ more granular user controls.
 
 .. _FreePN: https://github.com/freepn
 
+
 1.2 - Required / Optional Software
 ----------------------------------
 
@@ -88,6 +89,7 @@ The required outgoing network ports for FreePN user node daemon include:
 2.0 - Referenced Documents
 ==========================
 
+* ZeroTier Manual - https://www.zerotier.com/manual/
 * DI-IPSC-81442 - Software Version Description (SVD) Data Item Description (DID)
 
 
@@ -100,8 +102,8 @@ A supported linux distribution, mainly something that uses `.ebuilds`
 (eg, Gentoo or funtoo) or a supported Ubuntu series, currently bionic
 18.0.4 LTS, or focal 20.0.4 LTS (see the above`PPA on Launchpad`_).
 Note you can also use the focal PPA series on the latest kali images,
-however, the the fpnd.service is broken agoinst the latest systemd
-upgrade to 264 or higher (and there is no fix yet).
+however, the fpnd.service is broken against the latest systemd upgrade
+to 264 or higher (and there is no fix yet).
 
 3.1 - Packages and Source Code
 ------------------------------
