@@ -28,6 +28,7 @@ NODE_SETTINGS = {
     u'route_dns': False,  # route insecure dns with web traffic
     u'default_iface': None,  # set default network interface name
     u'doh_host': None,  # use doh_host for show_geoip command
+    u'max_timeout': 75,  # max wait timeout for network changes in seconds
     u'max_cache_age': 60,  # maximum cache age in seconds
     u'use_localhost': False,  # messaging interface to use
     u'runas_user': False,  # user to run as
@@ -83,6 +84,7 @@ def do_setup():
         debug = my_conf.getboolean('Options', 'debug')
         user_perms = my_conf.getboolean('Options', 'user_perms')
         NODE_SETTINGS['doh_host'] = my_conf['Options']['doh_host']
+        NODE_SETTINGS['max_timeout'] = my_conf['Options']['net_timeout']
         NODE_SETTINGS['default_iface'] = my_conf['Options']['default_iface']
         NODE_SETTINGS['route_dns_53'] = my_conf.getboolean('Options', 'route_dns')
         NODE_SETTINGS['private_dns_only'] = my_conf.getboolean('Options', 'private_dns_only')
