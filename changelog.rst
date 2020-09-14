@@ -1,3 +1,39 @@
+0.8.34 (2020-09-14)
+-------------------
+- bump version for packaging/testing cleanup handlers [Steve Arnold]
+- Merge pull request #72 from freepn/cleanup_node_list. [Steve Arnold]
+
+  * Add some new cleanup and cfg helpers to the root and ctlr nodes.
+
+
+0.8.33 (2020-09-13)
+-------------------
+- Version bump for packaging/testing user configurable timeout. [Stephen Arnold]
+- Merge pull request #71 from freepn/cfg_timeout. [Steve Arnold]
+
+  * travis.yml: remove extraneous codecov from post-processing.
+  * Cleanup local test output, move codecov processing to .travis.
+  * Make net_change timeout value a config option, set default to 75 sec.
+
+
+0.8.32 (2020-09-12)
+-------------------
+- Bump version for packaging/testing. [Stephen Arnold]
+- Merge pull request #70 from freepn/timeouts. [Steve Arnold]
+
+  * extend net change timeout for high latency/bad connections
+
+
+0.8.31 (2020-09-11)
+-------------------
+- Version bump for packaging/testing, minor test update. [Stephen Arnold]
+- Merge pull request #69 from freepn/net-chk-retry. [Steve Arnold]
+
+  * update run_until_success decorator with unschedule arg
+  * add decorator to net_check command with unschedule=false
+  * limit wget args so it can only block up to 3 sec
+
+
 0.8.30 (2020-09-09)
 -------------------
 - Add latest avahi issues to release doc, update changelog [Steve Arnold]
