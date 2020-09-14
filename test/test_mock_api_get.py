@@ -49,6 +49,7 @@ from node_tools.helper_funcs import validate_role
 from node_tools.msg_queues import avoid_and_update
 from node_tools.msg_queues import lookup_node_id
 from node_tools.msg_queues import populate_leaf_list
+from node_tools.network_funcs import run_cleanup_check
 from node_tools.node_funcs import cycle_adhoc_net
 from node_tools.node_funcs import do_cleanup
 from node_tools.node_funcs import get_ztnwid
@@ -171,7 +172,7 @@ def test_load_rules():
 
     # print(rule_data)
     assert isinstance(rule_data, dict)
-    assert rule_size == 17
+    assert rule_size == 16
     # print(json.dumps(rule_data))
 
 
@@ -395,6 +396,23 @@ def test_populate_leaf_list():
     wait_q.clear()
     tmp_q.clear()
     st.leaf_nodes = []
+
+
+def test_run_cleanup_check():
+    import diskcache as dc
+    from node_tools import state_data as st
+
+    clean_q = dc.Deque(directory='/tmp/test-clq')
+    pub_q = dc.Deque(directory='/tmp/test-pbq')
+    clean_q.clear()
+    pub_q.clear()
+    clean_q.append('beef9f73c6')
+    pub_q.append('beef9f73c6')
+    run_cleanup_check(clean_q, pub_q)
+    assert len(clean_q) == 0
+    clean_q.append('beefea68e6')
+    run_cleanup_check(clean_q, pub_q)
+    assert len(clean_q) == 0
 
 
 def test_load_node_state():

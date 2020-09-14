@@ -134,7 +134,7 @@ def drain_msg_queue(reg_q, pub_q=None, tmp_q=None, addr=None, method='handle_nod
     id_list = list(reg_q)
 
     # Need to wait a bit on connect to prevent lost messages
-    time.sleep(0.001)
+    time.sleep(0.002)
 
     for _ in id_list:
         with reg_q.transact():
@@ -252,6 +252,22 @@ def publish_cfg_msg(trie, node_id, addr=None):
 
 
 @catch_exceptions()
+def run_cleanup_check(cln_q, pub_q):
+    """
+    Command wrapper for decorated cleanup_check (offline data) command.
+    """
+    clean_list = list(cln_q)
+    if len(clean_list) != 0:
+        for node_id in clean_list:
+            if node_id not in list(pub_q):
+                try:
+                    send_pub_msg('127.0.0.1', 'offline', node_id)
+                except Exception as exc:
+                    logger.error('Send error is {}'.format(exc))
+        cln_q.clear()
+
+
+@catch_exceptions()
 def run_host_check():
     """
     Command wrapper for decorated host_check (net health) command.
@@ -339,6 +355,24 @@ def do_net_cmd(cmd):
         retcode = exc
 
     return state, res, retcode
+
+
+def send_pub_msg(addr, method, data):
+    """
+    """
+    import time
+    from nanoservice import Publisher
+
+    if NODE_SETTINGS['use_localhost'] or not addr:
+        addr = '127.0.0.1'
+
+    pub = Publisher('tcp://{}:9442'.format(addr))
+
+    # Need to wait a bit on connect to prevent lost messages
+    time.sleep(0.002)
+
+    pub.publish(method, data)
+    logger.debug('PUB: sent {} msg with paylod {} to {}'.format(method, data, addr))
 
 
 def send_req_msg(addr, method, data):
