@@ -27,6 +27,7 @@ from node_tools.helper_funcs import set_initial_role
 from node_tools.helper_funcs import startup_handlers
 from node_tools.helper_funcs import validate_role
 from node_tools.logger_config import setup_logging
+from node_tools.network_funcs import run_cleanup_check
 from node_tools.network_funcs import run_net_check
 from node_tools.node_funcs import do_cleanup
 from node_tools.node_funcs import do_startup
@@ -132,6 +133,9 @@ def do_scheduling():
                     delete_cache_entry(cache, key_str)
 
             elif node_role == 'moon':
+                cln_q = dc.Deque(directory=get_cachedir('clean_queue'))
+                pub_q = dc.Deque(directory=get_cachedir('pub_queue'))
+                schedule.every(37).seconds.do(run_cleanup_check, cln_q, pub_q).tag('chk-tasks', 'cleanup')
                 schedule.every(15).minutes.do(check_daemon_status).tag('chk-tasks', 'responder')
 
             schedule.every(15).minutes.do(check_daemon_status, script='msg_subscriber.py').tag('chk-tasks', 'subscriber')

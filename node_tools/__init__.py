@@ -35,6 +35,7 @@ from node_tools.msg_queues import valid_cfg_msg as valid_cfg_msg
 from node_tools.msg_queues import wait_for_cfg_msg as wait_for_cfg_msg
 from node_tools.network_funcs import drain_msg_queue as drain_msg_queue
 from node_tools.network_funcs import get_net_cmds as get_net_cmds
+from node_tools.network_funcs import run_cleanup_check as run_cleanup_check
 from node_tools.network_funcs import run_net_cmd as run_net_cmd
 from node_tools.node_funcs import handle_moon_data as handle_moon_data
 from node_tools.node_funcs import run_ztcli_cmd as run_ztcli_cmd
@@ -74,6 +75,7 @@ __all__ = [
     'manage_incoming_nodes',
     'populate_leaf_list',
     'put_state_msg',
+    'run_cleanup_check',
     'run_event_handlers',
     'run_net_cmd',
     'run_ztcli_cmd',

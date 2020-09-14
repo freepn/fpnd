@@ -52,6 +52,7 @@ reg_q = dc.Deque(directory=get_cachedir('reg_queue'))
 wait_q = dc.Deque(directory=get_cachedir('wait_queue'))
 
 tmp_q = dc.Deque(directory=get_cachedir('tmp_queue'))
+cln_q = dc.Deque(directory=get_cachedir('clean_queue'))
 
 
 def clean_stale_cfgs(key_str, deque):
@@ -146,6 +147,8 @@ def offline(msg):
             logger.info('Got valid offline msg from host {} (node {})'.format(node_data[msg], msg))
         with off_q.transact():
             add_one_only(msg, off_q)
+        with cln_q.transact():
+            add_one_only(msg, cln_q) # track offline node id for cleanup
         with pub_q.transact():
             clean_from_queue(msg, pub_q)
         logger.debug('Node ID {} cleaned from pub_q'.format(msg))
