@@ -50,7 +50,7 @@ more granular user controls.
 1.2 - Required / Optional Software
 ----------------------------------
 
-FreePN packages are available for Ubuntu and Gentoo using the ebuilds in the
+FreePN packages are available for Gentoo and Ubuntu using the ebuilds in the
 `python-overlay`_ or the ``.deb`` packages hosted on the Embedded device
 `PPA on Launchpad`_. The PPA sources can also be used to build Debian packages,
 however, we don't (yet) support any "official" Debian releases.
@@ -68,7 +68,7 @@ The required Linux kernel modules include:
 * nf_nat, nf_conntrack, nf_defrag_ipv4
 * iptable_filter, iptable_nat, iptable_mangle, bpfilter
 
-The required outgoing network ports for FreePN user node daemon include:
+The required outgoing network ports for the FreePN user node daemon include:
 
 * allow port 9993/udp (for zerotier)
 * allow port 8443/tcp (for fpnd infra messages)
@@ -286,6 +286,7 @@ run-time requirements also include a recent Linux kernel with ``bash``,
 * nanomsg_ - library for messaging protocols
 * ztcli-async_ - python async client for zerotier API
 * ZeroTier_ - network virtualization engine
+* stunnel_ - TLS encrypted proxy (uses openssl)
 * tox_ and pytest_- optional; needed for local testing
 
 .. _python: https://docs.python.org/3.5/index.html
@@ -300,6 +301,7 @@ run-time requirements also include a recent Linux kernel with ``bash``,
 .. _nanomsg: https://github.com/nanomsg/nanomsg
 .. _ztcli-async: https://github.com/freepn/ztcli-async
 .. _ZeroTier: https://www.zerotier.com/
+.. _stunnel: https://www.stunnel.org/
 .. _tox: https://github.com/tox-dev/tox
 .. _pytest: https://github.com/pytest-dev/pytest
 

@@ -60,12 +60,13 @@ Reasons why the first option is the default:
 
 * we don't know (and will not assume) how your system is setup
 * breaking DNS is a *bad* thing
-* too many other packages you probably have installed already do this
-  (mainly systemd and networkmanager)
+* too many other packages you may have installed already do this
+  (connman, systemd, and networkmanager)
 
-The first option above involves doing nothing about your current DNS
+The default option above involves doing nothing about your current DNS
 setup, ie, it will work just as it always has, but leaves it insecure
-and definitely not private.
+and definitely not private (unless you've already set up your own
+dnscrypt resolver).
 
 The second option involves using a public DNS provider (eg, `Cloudflare`_
 or `OpenNIC`_) and setting ``route_dns`` to True in the fpnd settings file
