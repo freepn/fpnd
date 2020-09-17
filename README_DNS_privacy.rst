@@ -115,6 +115,10 @@ on your machine is straight-forward:
 4. (re)start your new resolver
 5. check that it works
 
+See the `DNS Setup`_ doc to secure your local DNS lookups.
+
+
+.. _DNS Setup: README_DNS_setup.rst
 
 
 More on the security of DNS
@@ -161,4 +165,4 @@ Resources
 .. _DNS Privacy Project: https://dnsprivacy.org/
 .. _DNS and logging: https://www.how-to-hide-ip.net/no-logs-dns-server-free-public/
 .. _this stackexchange answer: https://security.stackexchange.com/questions/9470/listing-of-dns-vulnerabilities
-.. _DNSCrypt-proxy wiki: https://github.com/DNSCrypt/dnscrypt-proxy/wiki
+.. _DNSCrypt-proxy wiki: https://github.com/DNSCrypt/dnscrypt-proxy/wiki/DNS-server-sources

@@ -36,8 +36,8 @@ The FreePN desktop user interface (`freepn-gtk3-tray`_) currently supports
 GTK3-based `XDG-compliant desktop`_ environments, eg, Gnome, Unity, XFCE, and
 derivatives.
 
-Freepn is *not* a full VPN solution (eg, openvpn or vpnc) and does not
-require setup of any pre-shared keys or certs.  Traffic over Freepn
+FreePN is *not* a full VPN solution (eg, openvpn or vpnc) and does not
+require setup of any pre-shared keys or certs.  Traffic over FreePN
 network links is always encrypted, however, since each network link is
 independent, the traffic must be decrypted as it passes out of each
 peer host.  When running in "peer" mode, each peer is assumed to be an
@@ -62,7 +62,7 @@ Docs for FreePN tools
 * `Old README`_ - previous (template-based) FOSS readme
 
 
-.. _Release Notes: README_release-notes.rst
+.. _Release Notes: README_0.9.0-release-notes_DRAFT.rst
 .. _Change Log: changelog.rst
 .. _DNS Privacy: README_DNS_privacy.rst
 .. _DNS Setup: README_DNS_setup.rst
@@ -98,7 +98,7 @@ a fix released).
 Pre-install
 -----------
 
-Before you can install any Freepn packages, you'll need to add the required
+Before you can install any FreePN packages, you'll need to add the required
 package repository or overlay.
 
 For all ubuntu series, make sure you have the ``gpg`` and ``add-apt-repository``
@@ -173,7 +173,7 @@ Usage
 -----
 
 Select FreePN Tray Control from the Applications View or the Internet menu
-in your desktop of choice, eg, Gnome, Unity, Xfce, etc.  You can also run
+in your desktop of choice, eg, Gnome, Unity, XFCE, etc.  You can also run
 it from an X terminal to get some debug output.
 
 ::
