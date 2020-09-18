@@ -115,7 +115,7 @@ on your machine is straight-forward:
 4. (re)start your new resolver
 5. check that it works
 
-See the `DNS Setup`_ doc to secure your local DNS lookups.
+See the `DNS Setup`_ doc for the steps to secure your local DNS lookups.
 
 
 .. _DNS Setup: README_DNS_setup.rst
@@ -155,13 +155,15 @@ protocol specifications can be found in `this DNSCrypt team github repo`_.
 Resources
 =========
 
+* `Intro to DNS privacy`_ (Internet Society)
 * the `DNS Privacy Project`_
 * short article on `DNS and logging`_
 * part of the above comes from `this stackexchange answer`_
 * the `DNSCrypt-proxy wiki`_ has lists of DNS providers and other useful
-  info (besides the software bits)
+  info (in addition to the software bits)
 
 
+.. _Intro to DNS privacy: https://www.internetsociety.org/resources/deploy360/dns-privacy/intro/
 .. _DNS Privacy Project: https://dnsprivacy.org/
 .. _DNS and logging: https://www.how-to-hide-ip.net/no-logs-dns-server-free-public/
 .. _this stackexchange answer: https://security.stackexchange.com/questions/9470/listing-of-dns-vulnerabilities

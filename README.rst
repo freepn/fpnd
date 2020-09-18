@@ -2,22 +2,6 @@
  fpnd - FreePN Network Daemon and Tools
 ========================================
 
-.. image:: https://img.shields.io/github/license/freepn/fpnd
-    :target: https://github.com/freepn/fpnd/blob/master/LICENSE
-
-.. image:: https://img.shields.io/github/v/tag/freepn/fpnd?color=green&include_prereleases&label=latest%20release
-    :target: https://github.com/freepn/fpnd/releases
-    :alt: GitHub tag (latest SemVer, including pre-release)
-
-.. image:: https://travis-ci.org/freepn/fpnd.svg?branch=master
-    :target: https://travis-ci.org/freepn/fpnd
-
-.. image:: https://img.shields.io/codecov/c/github/freepn/fpnd
-    :target: https://codecov.io/gh/freepn/fpnd
-    :alt: Codecov
-
-.. image:: https://img.shields.io/codeclimate/maintainability/freepn/fpnd
-    :target: https://codeclimate.com/github/freepn/fpnd
 
 
 What FreePN is (and is not)
@@ -162,11 +146,40 @@ Check your group memberships with the ``id`` command::
   $ id
   uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm),20(dialout),24(cdrom),25(floppy),27(sudo),29(audio),30(dip),44(video),46(plugdev),115(netdev),118(lxd),995(fpnd)
 
-If you really don't wnat/need a desktop, you can still install the network
+If you really don't want/need a desktop, you can still install the network
 component::
 
 * Gentoo - ``sudo emerge net-misc/fpnd``
 * Ubuntu - ``sudo apt-get install python3-fpnd``
+
+
+Config Settings
+---------------
+
+Although there is currently no user config file for the GUI component,
+the ``fpnd`` package installs the system settings file ``/etc/fpnd.ini``.
+Most of the entries there to provide a consistent set of defaults for
+different runtime environments, but some are intended for the end-user
+to adjust when appropriate.
+
+DNS settings:
+
+* **route_dns**: Default is ``False``; only set to ``True`` if you've configured
+  your global (plain-text) DNS settings to use an external/public DNS server, eg
+  Cloudflare_
+* **private_dns_only**: Default is ``False``; only set to ``True`` when you're
+  alreafy running a `secure local DNS resolver`_, eg stubby_
+
+Misc settings:
+
+* **default_iface**: Default is ``None``;
+  set this to the interface name you want FreePN to use
+* **debug**: Default is ``True``
+
+
+.. _Cloudflare: https://www.bleepingcomputer.com/news/security/cloudflares-1111-dns-passes-privacy-audit-some-issues-found/
+.. _secure local DNS resolver: https://www.privacytools.io/providers/dns/
+.. _stubby: https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Daemon+-+Stubby
 
 
 Usage

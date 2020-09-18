@@ -154,9 +154,68 @@ cat the file::
   search local.domain
 
 The above shows systemd is indeed "managing" the contents and will wipe
-any changes if edited directly, so...
+any changes if edited directly, and we also need to make sure NetworkManager
+isn't going to do the same thing.
+
+If your netplan config file above shows ``renderer: NetworkManager`` then
+you'll need to change it, OTOH if it says ``dhcp4: true`` instead, then
+you can skip the next step.
+
+Reconfigure your ethernet device
+--------------------------------
+
+The following netplan config will make NetworkManager stop managing your
+(wired) ethernet config::
+
+  network:
+    ethernets:
+      eth0:
+        dhcp4: true
+        optional: true
+    version: 2
+
+Be careful not to change the indenting in ``yaml`` config files (any file
+ending in ``.yml`` or ``.yaml``).
+
+If your ethernet interface has a different name, substitute that name in
+the config above.  Check your network interfaces using the ``ifconfig`` or
+``ip addr show`` commands.
 
 Since we'd like to use only the secure DNS servers *you* choose, we need
 to tell systemd-resolved it no longer owns (or manages) ``resolv.conf``,
 and the way we do that is by removing the symlink and creating a file
-in its place.
+in its place.  But first we need to install a dnscrpyt-enabled resolver;
+for this example we use the getdnsapi stub resolver (aka stubby).
+
+
+Tell NetworkManager not to change global nameservers
+----------------------------------------------------
+
+By default NetworkManager will avoid making DNS server changes if-and-only-if
+it detects ``/etc/resolv.conf`` is a symlink to one of the systemd-resolved
+files.  If it sees ``/etc/resolv.conf`` is an actual file it will start
+"managing" it (ie, overwrite any changes you make to it).  In order to stop
+that behavior, you'll need to change the ``NetworkManager.conf`` by adding
+``dns=none`` to the ``[main]`` section of the config file.  Run::
+
+  $ sudo nano /etc/NetworkManager/NetworkManager.conf
+
+and change the following::
+
+  [main]
+  plugins=ifupdown,keyfile
+  dns=none                  <==  add or edit this line
+
+  [ifupdown]
+  managed=false
+
+  [device]
+  wifi.scan-rand-mac-address=no
+
+Then save and exit the file and restart NetworkManager::
+
+  $ sudo systemctl restart NetworkManager.service
+
+
+Install a secure DNS resolver
+-----------------------------
