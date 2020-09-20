@@ -227,3 +227,11 @@ it from an X terminal to get some debug output.
     :align: left
 
     Ubuntu Bionic Desktop (Pinebook OG)
+
+.. figure:: images/freepn-mate-bionic.png
+    :alt: Ubuntu Mate Desktop
+    :width: 45%
+    :figwidth: 50%
+    :align: left
+
+    Mate Bionic Desktop (pi-top[1] Rpi 3B Rev 1.2)
