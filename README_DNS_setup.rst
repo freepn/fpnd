@@ -21,8 +21,8 @@ method.
 
 In order to rectify the problem you'll need to collect some system info:
 
-* who owns/manages your network configs?
-* who owns/manages your DNS config?
+* what tools own/manage your network config?
+* what tools own/manage your DNS config?
 
 For Ubuntu bionic and focal, the answer is most likely one or more of
 the following.
