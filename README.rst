@@ -214,16 +214,16 @@ it from an X terminal to get some debug output.
 
 .. figure:: images/freepn-gui-menu.png
     :alt: Gentoo Gnome Desktop
-    :width: 35%
-    :figwidth: 40%
+    :width: 45%
+    :figwidth: 50%
     :align: left
 
     Gentoo Gnome profile (X1 Carbon)
 
 .. figure:: images/freepn-unity-bionic.png
     :alt: Ubuntu Unity Desktop
-    :width: 35%
-    :figwidth: 40%
+    :width: 45%
+    :figwidth: 50%
     :align: left
 
     Ubuntu Bionic Desktop (Pinebook OG)
