@@ -2,6 +2,22 @@
  fpnd - FreePN Network Daemon and Tools
 ========================================
 
+.. image:: https://img.shields.io/github/license/freepn/fpnd
+    :target: https://github.com/freepn/fpnd/blob/master/LICENSE
+
+.. image:: https://img.shields.io/github/v/tag/freepn/fpnd?color=green&include_prereleases&label=latest%20release
+    :target: https://github.com/freepn/fpnd/releases
+    :alt: GitHub tag (latest SemVer, including pre-release)
+
+.. image:: https://travis-ci.org/freepn/fpnd.svg?branch=master
+    :target: https://travis-ci.org/freepn/fpnd
+
+.. image:: https://img.shields.io/codecov/c/github/freepn/fpnd
+    :target: https://codecov.io/gh/freepn/fpnd
+    :alt: Codecov
+
+.. image:: https://img.shields.io/codeclimate/maintainability/freepn/fpnd
+    :target: https://codeclimate.com/github/freepn/fpnd
 
 
 What FreePN is (and is not)
@@ -172,9 +188,11 @@ DNS settings:
 
 Misc settings:
 
-* **default_iface**: Default is ``None``;
+* **default_iface**: Default is ``None``; you should only need this *if* you
+  have multiple network interfaces with active routes, then you should
   set this to the interface name you want FreePN to use
-* **debug**: Default is ``True``
+* **debug**: Default is ``True``; set this to ``False`` for slightly smaller
+  log files
 
 
 .. _Cloudflare: https://www.bleepingcomputer.com/news/security/cloudflares-1111-dns-passes-privacy-audit-some-issues-found/
@@ -194,6 +212,18 @@ it from an X terminal to get some debug output.
   $ freepn-gtk3-indicator
 
 
-.. image:: images/freepn-gui-menu.png
-    :alt: In Gnome Desktop
+.. figure:: images/freepn-gui-menu.png
+    :alt: Gentoo Gnome Desktop
+    :width: 55%
+    :figwidth: 60%
     :align: left
+
+    Gentoo Gnome profile (X1 Carbon)
+
+.. figure:: images/freepn-unity-bionic.png
+    :alt: Ubuntu Unity Desktop
+    :width: 55%
+    :figwidth: 60%
+    :align: left
+
+    Ubuntu Bionic Desktop (Pinebook OG)

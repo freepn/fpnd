@@ -157,12 +157,11 @@ The above shows systemd is indeed "managing" the contents and will wipe
 any changes if edited directly, and we also need to make sure NetworkManager
 isn't going to do the same thing.
 
-If your netplan config file above shows ``renderer: NetworkManager`` then
-you'll need to change it, OTOH if it says ``dhcp4: true`` instead, then
-you can skip the next step.
+Reconfigure your ethernet device (optional)
+-------------------------------------------
 
-Reconfigure your ethernet device
---------------------------------
+If your netplan config file above shows ``renderer: NetworkManager`` and
+you want to change it, you can make it "unmanaged" by NetworkManager.
 
 The following netplan config will make NetworkManager stop managing your
 (wired) ethernet config::
@@ -219,3 +218,30 @@ Then save and exit the file and restart NetworkManager::
 
 Install a secure DNS resolver
 -----------------------------
+
+One available/working example is the getdns resolver, stubby; use the
+appropriate package manager to install the package for your distro:
+
+* Gentoo - ``sudo USE="stubby" emerge net-dns/getdns``
+* Ubuntu - ``sudo apt-get install stubby``
+
+Then view the config file::
+
+  $ less /etc/stubby/stubby.yml
+
+The default settings should work fine out-of-the-box, however, you should
+review the default DNS providers in the un-commented portions under the
+``upstream_recursive_servers`` section of the file.  The ``fpnd`` package
+also installs some example config files, including an example ``stubby.yml``
+with some alternate dns providers (note this is only the provider section
+and not a complete config file).
+
+By default subby will only listen for DNS requests on the loopback interface
+on port ``53``, ie, ``127.0.0.1:53`` so you'll need to set this in your new
+``resolv.conf`` file.
+
+To verify your changes, you will need the ``dig`` command, so if you
+don't have it already, then you should install it with the following::
+
+* Gentoo - ``sudo emerge net-dns/bind-tools``
+* Ubuntu - ``sudo apt-get install bind9utils``
