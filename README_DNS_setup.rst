@@ -236,7 +236,7 @@ also installs some example config files, including an example ``stubby.yml``
 with some alternate dns providers (note this is only the provider section
 and not a complete config file).
 
-By default subby will only listen for DNS requests on the loopback interface
+By default stubby will only listen for DNS requests on the loopback interface
 on port ``53``, ie, ``127.0.0.1:53`` so you'll need to set this in your new
 ``resolv.conf`` file.
 
@@ -245,3 +245,84 @@ don't have it already, then you should install it with the following::
 
 * Gentoo - ``sudo emerge net-dns/bind-tools``
 * Ubuntu - ``sudo apt-get install bind9utils``
+
+
+Set resolv.conf for stubby
+--------------------------
+
+Now you can remove the symlink and set your new resolver address in the
+(new) ``resolv.conf`` file::
+
+  $ sudo rm /etc/resolv.conf
+
+then run::
+
+  $ sudo nano /etc/resolv.conf
+
+and add the following content to the new file::
+
+  # use stubby as secure local resolver
+  nameserver 127.0.0.1
+
+and finally, restart the relevant services::
+
+  $ sudo systemctl restart systemd-resolved.service
+  $ sudo systemctl restart stubby.service
+
+then check your new config::
+
+  $ systemd-resolve --status
+
+  Global
+         LLMNR setting: no
+  MulticastDNS setting: no
+    DNSOverTLS setting: no
+        DNSSEC setting: no
+      DNSSEC supported: no
+    Current DNS Server: 127.0.0.1
+           DNS Servers: 127.0.0.1
+            DNSSEC NTA: 10.in-addr.arpa
+                        16.172.in-addr.arpa
+  (more output suppressed)
+
+and try to resolve something::
+
+  $ dig www.gentoo.org
+
+  ; <<>> DiG 9.16.1-Ubuntu <<>> www.gentoo.org
+  ;; global options: +cmd
+  ;; Got answer:
+  ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 20166
+  ;; flags: qr rd ra ad; QUERY: 1, ANSWER: 2, AUTHORITY: 2, ADDITIONAL: 5
+
+  ;; OPT PSEUDOSECTION:
+  ; EDNS: version: 0, flags:; udp: 4096
+  ;; QUESTION SECTION:
+  ;www.gentoo.org.                        IN      A
+
+  ;; ANSWER SECTION:
+  www.gentoo.org.         43199   IN      CNAME   www-bytemark-v4v6.gentoo.org.
+  www-bytemark-v4v6.gentoo.org. 43200 IN  A       89.16.167.134
+
+  ;; AUTHORITY SECTION:
+  gentoo.org.             86399   IN      NS      ns3.gentoo.org.
+  gentoo.org.             86399   IN      NS      ns1.gentoo.org.
+
+  ;; ADDITIONAL SECTION:
+  ns1.gentoo.org.         43199   IN      AAAA    2001:470:ea4a:1:225:90ff:fe02:16e5
+  ns3.gentoo.org.         43199   IN      AAAA    2001:470:1f06:a91::2
+  ns1.gentoo.org.         43199   IN      A       140.211.166.189
+  ns3.gentoo.org.         43199   IN      A       208.116.51.2
+
+  ;; Query time: 935 msec
+  ;; SERVER: 127.0.0.1#53(127.0.0.1)
+  ;; WHEN: Mon Sep 21 00:01:19 UTC 2020
+  ;; MSG SIZE  rcvd: 363
+
+
+Two interesting things to note about the above:
+
+* the ``flags`` line near the top should include ``ad`` when the server
+  supports DNSSEC
+* the ``SERVER`` line near the bottom should show the default address
+  for your shiny new secure DNS resolver

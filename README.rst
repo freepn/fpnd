@@ -212,6 +212,9 @@ it from an X terminal to get some debug output.
   $ freepn-gtk3-indicator
 
 
+Some screenshots
+----------------
+
 .. figure:: images/freepn-gui-menu.png
     :alt: Gentoo Gnome Desktop
     :width: 45%
