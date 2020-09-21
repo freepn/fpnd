@@ -1,3 +1,20 @@
+0.9.0 (2020-09-22)
+------------------
+- Bump version for alpha release and update changelog. [Stephen Arnold]
+- Merge pull request #73 from freepn/doc-updates. [Steve Arnold]
+
+  * Add more-or-less complete draft of DNS setup doc.
+  * Add Mate desktop graphic (uses default icons instead of installed icons)
+  * Shrink screenshots (since github apparently ignores rst scaling)
+  * Shrink images and check github rendering.
+  * More README/DNS doc updates, one more screenshot.
+  * More DNS doc and screenshot updates.
+  * Stretch route_check timeout just a little bit and update DNS setup doc
+  * README_DNS_setup.rst: add draft-in-progress.
+  * Add some fixes and get rid of symlink.
+  * Start docs refactor, add first screenshot, update some comments.
+
+
 0.8.34 (2020-09-14)
 -------------------
 - bump version for packaging/testing cleanup handlers [Steve Arnold]
