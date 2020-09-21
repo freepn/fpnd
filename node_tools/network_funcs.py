@@ -255,6 +255,7 @@ def publish_cfg_msg(trie, node_id, addr=None):
 def run_cleanup_check(cln_q, pub_q):
     """
     Command wrapper for decorated cleanup_check (offline data) command.
+    :notes: this needs provisioning of the proper tgt IP address
     """
     clean_list = list(cln_q)
     if len(clean_list) != 0:

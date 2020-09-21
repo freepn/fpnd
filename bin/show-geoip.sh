@@ -20,7 +20,7 @@ RUN_DIR="/run/fpnd"
 xml_file="${TEMP_DIR}/geoip-location.xml"
 log_file="${TEMP_DIR}/wget.log"
 clog_file="${TEMP_DIR}/curl.log"
-wget_args="--timeout=1 --waitretry=0 --tries=3"
+wget_args="--timeout=2 --waitretry=0 --tries=3"
 
 TMP_FILES="${xml_file} ${log_file} ${clog_file}"
 for tempfile in "${TMP_FILES}"; do
