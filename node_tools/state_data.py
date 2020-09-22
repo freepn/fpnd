@@ -42,9 +42,15 @@ fpnState = {'online': False,
             'route': None,
             'wdg_ref': None}
 
+fpn0Data = {'nwid': None,
+            'iface': None,
+            'address': None,
+            'state': None}
+
 fpn1Data = {'nwid': None,
             'iface': None,
-            'address': None}
+            'address': None,
+            'state': None}
 
 leaf_nodes = []
 

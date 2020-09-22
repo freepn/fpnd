@@ -13,6 +13,17 @@ upstream_recursive_servers:
   - address_data: 185.213.26.187
     tls_auth_name: "dot.eastus.pi-dns.com"
 
+# NixNet DNS no logging, no filtering, optional adblock
+# https://nixnet.xyz/dns/
+  - address_data: 2605:6400:20:e6d::1
+    tls_auth_name: "uncensored.lv1.dns.nixnet.xyz"
+  - address_data: 209.141.34.95
+    tls_auth_name: "uncensored.lv1.dns.nixnet.xyz"
+  - address_data: 2605:6400:10:80e::1
+    tls_auth_name: "uncensored.ny1.dns.nixnet.xyz"
+  - address_data: 199.195.251.84
+    tls_auth_name: "uncensored.ny1.dns.nixnet.xyz"
+
 # backup TLS servers that also listen on 443
 # https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Test+Servers#
 # various - no logging
@@ -34,4 +45,3 @@ upstream_recursive_servers:
   - address_data: 2a00:5884:8209::2
     tls_auth_name: "dns.neutopia.org"
     tls_port: 443
-

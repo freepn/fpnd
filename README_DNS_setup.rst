@@ -8,6 +8,11 @@ by your local router (or other DHCP server) which is a private IP address,
 however, the router simply forwards the requests to another DNS server
 configured in the router (typically your ISP provides these addresses).
 
+Before making any changes, you can test your current settings with the
+following URLs:
+
+* https://dnsleaktest.com/
+
 The upshot of the above is your implicit trust in the humans who operate
 those DNS servers, yet you have no idea how much data they log or where
 it goes.  But it gets worse, since (legacy) DNS is plain-text and easily

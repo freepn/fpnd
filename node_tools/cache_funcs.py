@@ -188,10 +188,14 @@ def get_state(cache):
                 else:
                     d['fpn0'] = True
                     d['fpn_id0'] = data.identity
+                    st.fpn0Data['nwid'] = data.identity
+                    st.fpn0Data['iface'] = data.ztdevice
+                    st.fpn0Data['address'] = data.ztaddress
             else:
                 d.update(fpn0=None, fpn1=None, fpn_id0=None, fpn_id1=None)
         st.fpnState.update(d)
         logger.debug('fpnState: {}'.format(st.fpnState))
+        logger.debug('fpn0Data: {}'.format(st.fpn0Data))
         logger.debug('fpn1Data: {}'.format(st.fpn1Data))
 
 
