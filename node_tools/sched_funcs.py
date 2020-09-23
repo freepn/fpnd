@@ -59,10 +59,10 @@ def catch_exceptions(cancel_on_failure=False):
     return catch_exceptions_decorator
 
 
-def run_until_success(max_retry=2, unschedule=True):
+def run_until_success(max_retry=2):
     """
     decorator for running a single job until success with retry limit
-    * will unschedule itself on success (unless unschedule is False)
+    * will unschedule itself on success
     * will reschedule on failure until max retry is exceeded
     :requirements:
     * the job function must return something to indicate success/failure
@@ -95,14 +95,10 @@ def run_until_success(max_retry=2, unschedule=True):
             finally:
                 if check_return_status(result):
                     logger.debug('JOB: {} claims success: {}'.format(current, result))
-                    if unschedule:
-                        return schedule.CancelJob
-                    return result
+                    return schedule.CancelJob
                 elif tries_left == 0:
                     logger.debug('JOB: {} failed with result: {}'.format(current, result))
-                    if unschedule:
-                        return schedule.CancelJob
-                    return result
+                    return schedule.CancelJob
                 else:
                     logger.debug('JOB: {} failed with {} try(s) left, trying again'.format(current, tries_left))
                     current.tags.update(str(next_try))
