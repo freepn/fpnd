@@ -22,7 +22,7 @@ of alternative DNS providers *using the newer encrypted protocols* that
 respect and support online privacy needs.
 
 
-Terms and Acronyms
+Terms and acronyms
 ==================
 
 :DNSCrypt: This can mean the protocol or an implementation (eg, DNSCrypt-proxy)
@@ -52,7 +52,7 @@ DNS handling in FreePN
 There are three DNS modes for the fpnd network daemon:
 
 * leave your DNS traffic as-is (the default)
-* route your "normal" DNS requests with your web traffic (optional)
+* route your DNS requests with your web traffic (optional)
 * drop all insecure outgoing DNS draffic if you are using a local
   secure stub resolver (optional)
 

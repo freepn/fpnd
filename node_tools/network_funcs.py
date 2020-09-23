@@ -278,14 +278,18 @@ def run_host_check():
     return result
 
 
-@run_until_success(unschedule=False)
+@catch_exceptions()
 def run_net_check():
     """
     Command wrapper for decorated net_check (fpn health) command.
     """
-    result = do_net_check()
-    logger.debug('run_net_check returned tuple: {}'.format(result))
-    return result
+    fpn_data = st.fpnState
+    fpn0_state =st.fpn0Data['state']
+
+    if fpn_data['fpn0'] and fpn0_state == 'UP':
+        result = do_net_check()
+        logger.debug('run_net_check returned tuple: {}'.format(result))
+        return result
 
 
 @run_until_success()
@@ -348,6 +352,16 @@ def do_net_cmd(cmd):
             else:
                 msg = err
             logger.error('net cmd {} msg: {}'.format(tail, msg.decode().strip()))
+        if 'setup' in tail:
+            if 'fpn0' in tail:
+                st.fpn0Data['state'] = 'UP'
+            else:
+                st.fpn1Data['state'] = 'UP'
+        if 'down' in tail:
+            if 'fpn0' in tail:
+                st.fpn0Data['state'] = 'DOWN'
+            else:
+                st.fpn1Data['state'] = 'DOWN'
         if retcode in [4, 6, 28]:
             logger.error('health check shows network failure!')
 

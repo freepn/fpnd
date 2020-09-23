@@ -8,6 +8,11 @@ by your local router (or other DHCP server) which is a private IP address,
 however, the router simply forwards the requests to another DNS server
 configured in the router (typically your ISP provides these addresses).
 
+Before making any changes, you can test your current settings with the
+following URLs:
+
+* https://dnsleaktest.com/
+
 The upshot of the above is your implicit trust in the humans who operate
 those DNS servers, yet you have no idea how much data they log or where
 it goes.  But it gets worse, since (legacy) DNS is plain-text and easily
@@ -148,7 +153,7 @@ cat the file::
   $ cat /etc/resolv.conf
   # This file is managed by man:systemd-resolved(8). Do not edit.
   #
-  (more comments)
+  (more comments suppressed)
   nameserver 127.0.0.53
   options edns0
   search local.domain
@@ -187,8 +192,8 @@ in its place.  But first we need to install a dnscrpyt-enabled resolver;
 for this example we use the getdnsapi stub resolver (aka stubby).
 
 
-Tell NetworkManager not to change global nameservers
-----------------------------------------------------
+Tell NetworkManager not to change resolv.conf
+---------------------------------------------
 
 By default NetworkManager will avoid making DNS server changes if-and-only-if
 it detects ``/etc/resolv.conf`` is a symlink to one of the systemd-resolved
@@ -232,13 +237,13 @@ Then view the config file::
 The default settings should work fine out-of-the-box, however, you should
 review the default DNS providers in the un-commented portions under the
 ``upstream_recursive_servers`` section of the file.  The ``fpnd`` package
-also installs some example config files, including an example ``stubby.yml``
+also installs `some example config files`_, including an example ``stubby.yml``
 with some alternate dns providers (note this is only the provider section
 and not a complete config file).
 
 By default stubby will only listen for DNS requests on the loopback interface
 on port ``53``, ie, ``127.0.0.1:53`` so you'll need to set this in your new
-``resolv.conf`` file.
+``resolv.conf`` file (see below).
 
 To verify your changes, you will need the ``dig`` command, so if you
 don't have it already, then you should install it with the following::
@@ -246,9 +251,15 @@ don't have it already, then you should install it with the following::
 * Gentoo - ``sudo emerge net-dns/bind-tools``
 * Ubuntu - ``sudo apt-get install bind9utils``
 
+.. note:: Depending on the Ubuntu release/version, you may need to install
+          the ``dnsutils`` package instead of the above.
 
-Set resolv.conf for stubby
---------------------------
+
+.. _some example config files: README_examples.rst
+
+
+Set resolv.conf for stubby (systemd only)
+-----------------------------------------
 
 Now you can remove the symlink and set your new resolver address in the
 (new) ``resolv.conf`` file::
@@ -326,3 +337,17 @@ Two interesting things to note about the above:
   supports DNSSEC
 * the ``SERVER`` line near the bottom should show the default address
   for your shiny new secure DNS resolver
+
+
+Using stubby with openrc
+------------------------
+
+Although the ``stubby`` resolver works fine as a primary resolver (ie,
+you have stubby running on localhost port 53 and all you need is external
+name resolution), if you need access to private LAN resources then you
+most likely need a more flexible solution than just a ``hosts`` file.
+
+If so, take a look at Scenario 3 in the `example scenarios`_.
+
+
+.. _example scenarios: https://github.com/freepn/fpnd/blob/master/README_examples.rst#example-scenarios
