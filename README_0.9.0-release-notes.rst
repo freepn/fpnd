@@ -367,7 +367,7 @@ included ``.rst`` documents.
           ``rst2pdf`` tool.  After cloning this repository, cd into the top
           level directory and run the following command::
 
-            $ rst2pdf -o README_0.9.0-release-notes_DRAFT.pdf
+            $ rst2pdf README_0.9.0-release-notes.rst -o README_0.9.0-release-notes.pdf
 
 
 .. include:: changelog.rst

@@ -56,6 +56,7 @@ Docs for FreePN tools
 
 * `DNS Privacy`_ - DNS and your online privacy
 * `DNS Setup`_ - Local DNS setup
+* `DNS Examples`_ - Example configs for systemd, stubby, dnsmasq
 * `Quick Start`_ - Quick install and setup instructions
 * `Release Notes`_ - fpnd Software Version Description (latest release)
 * `Change Log`_ - detailed change history
@@ -66,6 +67,7 @@ Docs for FreePN tools
 .. _Change Log: changelog.rst
 .. _DNS Privacy: README_DNS_privacy.rst
 .. _DNS Setup: README_DNS_setup.rst
+.. _DNS Examples: README_examples.rst
 .. _Old README: README_old.rst
 
 
@@ -200,8 +202,8 @@ Misc settings:
 .. _stubby: https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Daemon+-+Stubby
 
 
-Usage
------
+GUI Usage
+---------
 
 Select FreePN Tray Control from the Applications View or the Internet menu
 in your desktop of choice, eg, Gnome, Unity, XFCE, etc.  You can also run
