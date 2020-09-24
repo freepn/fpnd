@@ -1,6 +1,10 @@
 0.9.1 (2020-09-24)
 -----------------
-- Add domain-s port to optional routing, fix dnsmasq.conf, doc updates. [Stephen Arnold]
+- Merge pull request #75 from freepn/still-more-docs. [Steve Arnold]
+
+  * Update release doc version/links, prep changelog, fix stubby example cfg.
+  * Add domain-s port to optional routing, fix dnsmasq.conf, doc updates.
+
 - Merge pull request #74 from freepn/leak-patch. [Steve Arnold]
 
   * Remove deprecated parameter from run_until_success decorator.
