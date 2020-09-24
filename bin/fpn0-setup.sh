@@ -160,8 +160,9 @@ $IPTABLES -t mangle -A OUTPUT -j fpn0-mangleout
 $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
 $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
 if [[ -n $ROUTE_DNS_53 ]] && ! [[ -n $DROP_DNS_53 ]]; then
-    $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p udp --dport 53 -j MARK --set-mark 1
     $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 53 -j MARK --set-mark 1
+    $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p udp --dport 53 -j MARK --set-mark 1
+    $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 853 -j MARK --set-mark 1
 fi
 
 # nat/postrouting chain
@@ -173,6 +174,7 @@ $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --
 if [[ -n $ROUTE_DNS_53 ]] && ! [[ -n $DROP_DNS_53 ]]; then
     $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j SNAT --to ${ZT_ADDRESS}
     $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j SNAT --to ${ZT_ADDRESS}
+    $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 853 -j SNAT --to ${ZT_ADDRESS}
 fi
 
 if [[ -n $DROP_DNS_53 ]]; then

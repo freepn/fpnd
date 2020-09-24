@@ -29,11 +29,11 @@ feature implementations.
 
 
 Current config examples
------------------------
+=======================
 
 * ``00-ext-dns.conf`` - drop-in external DNS config file for ``systemd-resolved``
 * ``stubby.yml`` - list of tested upstream DNS providers, includes some experimental
-  servers running DNS over TLS on port 443 (note this not DoH)
+  servers running DNS over TLS on port 443 (note this is not DoH)
 * ``dnsmasq.conf`` - drop-in dnsmasq config file for resolving local LAN DNS and
   forwarding external requests to stubby (tested using ``openrc`` with nfs mounts)
 * ``fpnd.sudoers`` - the Ubuntu packages install this to the ``examples``
@@ -41,9 +41,16 @@ Current config examples
 
 
 Example scenarios
------------------
+=================
 
-Scenario 1: configure ``systemd-resolved`` to use external DNS servers.
+These example scenarios go hand-in-hand with the information provided
+in the `DNS Setup`_ doc.
+
+
+Scenario 1
+----------
+
+Configure ``systemd-resolved`` to use external DNS servers.
 
 * This is the minimmum required configuration to enable ``route_dns`` in
   the ``fpnd.ini`` config file if all you have is your local router's
@@ -83,12 +90,15 @@ following output under Global::
   (more output suppressed)
 
 
-Scenario 2: adding specific/chosen upstream secure DNS resolvers to the
-default ``stubby`` configuration.
+Scenario 2
+----------
+
+Adding specific/chosen upstream secure DNS resolvers to the default
+``stubby`` configuration.
 
 * This implements your chosen DNS providers based on your privacy needs,
   eg, logging, ad-blocking, etc
-* This also assumes you have already installed and setup ``stubby`` as
+* This assumes you have already installed and setup ``stubby`` as
   documented in the `DNS Setup`_ doc
 
 To use the example config snippet, you'll need to edit the default stubby
@@ -108,9 +118,9 @@ Open the stubby configuration file in your favorite editor::
   $ nano ~/stubby.yml
 
 Search (Ctl-W in nano) for the section named ``upstream_recursive_servers``
-and comment (or delete) each of the default server entries until only the
-ones you want are left un-commented.  You can also back-up the original
-file before you apply your changes::
+and comment (or delete) each of the uncommented default server entries until
+only the ones you want are left uncommented.  You should also back-up the
+original file before you apply your changes::
 
   $ cp /etc/stubby/stubby.yml ~/stubby.yml.orig
   $ sudo cp ~/stubby.yml /etc/stubby/
@@ -145,14 +155,15 @@ and verify the changes.  First try to resolve something and check the
   ;; WHEN: Tue Sep 22 19:41:50 PDT 2020
   ;; MSG SIZE  rcvd: 151
 
-For an external test, open a browser test your connection with `ipleak.net`_.
-
-.. _ipleak.net: https://ipleak.net/
+For an external test, open a browser and test your connection with `ipleak.net`_.
 
 
-Scenario 3: configure stubby and dnsmasq for both secure DNS and local name
-resolution (for local services *you* control, eg, shared network storage)
-when not using ``systemd-resolved``.
+Scenario 3
+----------
+
+Configure both stubby and dnsmasq for secure DNS and local name resolution
+(using local services *you* control, eg, shared network storage) when not
+using ``systemd-resolved``.
 
 * If you're using ``systemd-resolved`` then you should not need this,
   otherwise this is one way to handle it if you don't use systemd
@@ -160,7 +171,106 @@ when not using ``systemd-resolved``.
   resources, then make sure the ``/etc/resolv.conf`` symlink points
   to ``../run/systemd/resolve/stub-resolv.conf`` and not one of the
   other systemd targets
+* This scenario implements a dnsmasq instance to forward only your
+  local domain(s) and local hostnames *to your existing local DNS*
+  and forward everything else to stubby
+
+.. note:: By "local DNS" we mean something *you* control and configure
+          specifcally for your own local resources; this is typically
+          a local device running something like ``dnsmasq`` or ``bind9``.
+
+Prerequisites for this scenario:
+
+* You already have a local LAN setup with your own DNS server for resolving
+  local hostnames and associated services, eg, network drives, etc
+* You want to use FreePN from a local machine and access your local LAN
+  resources at the same time, and you still want to use only secure DNS
+  for external name resolution
+* In Theory (tm) ``systemd-resolved`` can handle this scenario, but you
+  don't have ``systemd`` (or you don't want to use it)
+* This assumes you have already installed and setup ``stubby`` as
+  documented in the `DNS Setup`_ doc, and (optionally) Scenario 2 above
+
+To use the example ``dnsmasq.conf`` you will need to change the default
+port that stubby is listening on, since in this configuration you'll be
+using dnsmasq as a frontend.
+
+For this config, you'll be making the following changes:
+
+* install dnsmasq and backup the default config file
+* change stubby's' default listen port from 53 to 5453
+* change the example dnsmasq config to use your local domain name and
+  DNS server
+* apply your new (modified) config and restart dnsmasq and stubby
+
+Using your usual package tool, install the dnsmasq package for your distro:
+
+* for Gentoo install ``net-dns/dnsmasq``
+* for Ubuntu install ``dnsmasq``
+
+Save a copy of the original config file::
+
+  $ sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
+
+Stop the stubby service/init script, open ``/etc/stubby/stubby.yml`` in
+your favorite editor, follow the comments and add the new port number as
+shown below, then save and close the file::
+
+  # Set the listen addresses for the stubby DAEMON. This specifies localhost IPv4
+  # and IPv6. It will listen on port 53 by default. Use <IP_address>@<port> to
+  # specify a different port
+  listen_addresses:
+    - 127.0.0.1@5453
+    -  0::1@5453
+
+This allows dnsmasq to listen on (default) port 53 and stubby can listen
+on the above port. Now you can copy the example dnsmasq config into place::
+
+  $ cp /usr/share/doc/python3-fpnd/examples/dnsmasq.conf /etc/
+
+and open the new ``/etc/dnsmasq.conf`` in your editor (don't forget ``sudo`` ;)
+
+The only things you *need* to change are in the lines starting with ``local``::
+
+  # add your local domain and dns server here (replace domain and IP addr)
+  local=/<your_domain.local>/<local_DNS_IP>
+  # this will forward short hostnames to the same local DNS server
+  local=//<local_DNS_IP>
+
+* replace ``<local_DNS_IP>`` with the (private) IP address of your server
+* replace ``<your_domain.local>`` with your local domain name
+
+Save and close the file, and restart both services with your favorite
+service manager, then check both services.
+
+Test external via stubby::
+
+  $ dig @127.0.0.1 -p 5453 www.agu.org
+
+Test external via dnsmasq::
+
+  $ dig @127.0.0.1 -p 53 www.ametsoc.org
+
+Test internal FQDN and short name with one of your local hostnames::
+
+  $ dig myhost.myhouse.lan
+  $ dig myhost
+
+If any of the above commands *do not* work and you're sure the hostname
+is correct, then check the following::
+
+* make sure both services restart correctly
+* make sure config modifications are what you expect
+* make sure your existing DNS resolves correctly
+* check the log files (stubby has its own log file, while dnsmasq
+  normally logs to one of the system log files, eg, ``messages``
+  or ``daemon.log`` depending on the system logger)
+
+If it still doesn't work the way you think it should, please file a
+github issue in this repository.
 
 
 .. _Cloudflare: https://www.bleepingcomputer.com/news/security/cloudflares-1111-dns-passes-privacy-audit-some-issues-found/
 .. _yaml: https://en.wikipedia.org/wiki/YAML
+.. _ipleak.net: https://ipleak.net/
+.. _fpnd: https://github.com/freepn/fpnd
