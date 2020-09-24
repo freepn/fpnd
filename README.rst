@@ -73,7 +73,7 @@ Docs for FreePN tools
 * `Old README`_ - previous (template-based) FOSS readme
 
 
-.. _Release Notes: README_0.9.0-release-notes.rst
+.. _Release Notes: README_0.9.1-release-notes.rst
 .. _Change Log: changelog.rst
 .. _DNS Privacy: README_DNS_privacy.rst
 .. _DNS Setup: README_DNS_setup.rst

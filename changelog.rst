@@ -1,3 +1,16 @@
+0.9.1 (2020-09-24)
+-----------------
+- Add domain-s port to optional routing, fix dnsmasq.conf, doc updates. [Stephen Arnold]
+- Merge pull request #74 from freepn/leak-patch. [Steve Arnold]
+
+  * Remove deprecated parameter from run_until_success decorator.
+  * Add a new README_examples.rst doc, plus more doc updates.
+  * Test/test_mock_api_get.py: fix silly N rules test.
+  * Fix route check so it doesn't leak before the routes are configured.
+  * examples: add dnsmasq cfg, update stubby resolver list
+  * fix rules (allow encrypted DNS), update doc
+
+
 0.9.0 (2020-09-22)
 ------------------
 - Bump version for alpha release and update changelog. [Stephen Arnold]
