@@ -1,7 +1,7 @@
-# note this is only the pi-dns US upstream server list for now (this is only
+# note this is only an alternate upstream server list for now (this is only
 # a fragment, not a complete config)
 
-upstream_recursive_servers:
+# also note this goes under the section named upstream_recursive_servers:
 # see https://github.com/DNSCrypt/dnscrypt-resolvers/blob/master/v3/public-resolvers.md
 # https://pi-dns.com/
   - address_data: 2a04:bdc7:100:70::abcd

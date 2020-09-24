@@ -1,12 +1,13 @@
 What is DNS anyway?
 ===================
 
-A DNS (Domain Name Server) is a computer/device used to translate between
-(human-readable) hostnames and their corresponding IP addresses (thus,
-without one you would have to know *in advance* the IP address of every
-machine you connect to).  Each time you type a name into your browser or
-click a link, that action triggers a DNS lookup using your local settings
-for DNS nameservers.
+DNS (Domain Name System) is a framework for translating between names and
+IP addresses, and a ``nameserver`` is a computer/device that uses DNS to
+translate between (human-readable) hostnames and their corresponding IP
+addresses (thus, without one you would have to know *in advance* the IP
+address of every machine you connect to).  Each time you type a name into
+your browser or click a link, that action triggers a DNS lookup using your
+local settings for DNS nameservers.
 
 Inherent problems with the legacy DNS infrastructure include:
 
@@ -14,7 +15,6 @@ Inherent problems with the legacy DNS infrastructure include:
   hijacking, etc
 * even though it supports TCP, it relies largely on UDP, which leaves
   it open to even more attack methods
-
 
 DNS in its legacy form has been around as long as the Internet, but now
 we have both Internet RFCs for encrypted DNS, and a growing population

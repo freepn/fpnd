@@ -51,6 +51,16 @@ to be trusted hosts (as they belong to the user).
 .. _XDG-compliant desktop: https://freedesktop.org/wiki/
 
 
+Prototype design limitations
+----------------------------
+
+* we only route www (http and https) and dns (optional) traffic
+* traffic routing supports IPv4 only (no IPv6)
+* DNS privacy depends entirely on *your* DNS config
+* the most common local-only DNS config *is not* routable out-of-the-box
+* it takes *you* to make the changes to stop DNS privacy leaks
+
+
 Docs for FreePN tools
 =====================
 
@@ -63,7 +73,7 @@ Docs for FreePN tools
 * `Old README`_ - previous (template-based) FOSS readme
 
 
-.. _Release Notes: README_0.9.0-release-notes.rst
+.. _Release Notes: README_0.9.1-release-notes.rst
 .. _Change Log: changelog.rst
 .. _DNS Privacy: README_DNS_privacy.rst
 .. _DNS Setup: README_DNS_setup.rst
@@ -184,9 +194,9 @@ DNS settings:
 
 * **route_dns**: Default is ``False``; only set to ``True`` if you've configured
   your global (plain-text) DNS settings to use an external/public DNS server, eg
-  Cloudflare_
+  Cloudflare_ (or you already have secure DNS in place)
 * **private_dns_only**: Default is ``False``; only set to ``True`` when you're
-  alreafy running a `secure local DNS resolver`_, eg stubby_
+  already running a `secure local DNS resolver`_, eg stubby_
 
 Misc settings:
 

@@ -296,7 +296,10 @@ then check your new config::
                         16.172.in-addr.arpa
   (more output suppressed)
 
-and try to resolve something::
+and make sure your new nameserver address appears in the Global section
+as shown above (note your output may look slightly different).
+
+Finally, try to resolve something::
 
   $ dig www.gentoo.org
 
