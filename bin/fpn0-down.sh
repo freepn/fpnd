@@ -21,6 +21,7 @@ exec 2> >(tee -ia /tmp/fpn0-down-${DATE}_error.log)
 #DROP_DNS_53="anything"  <= fpnd.ini
 # set the preferred network interface if needed
 #SET_IPV4_IFACE="eth0"  <= fpnd.ini
+#DROP_IPV6="anything"
 
 # set allowed ports (still TBD))
 ports_to_fwd="http https domain submission imaps ircs ircs-u"
@@ -153,6 +154,13 @@ if [[ -n $DROP_DNS_53 ]]; then
 fi
 "$IPTABLES"-restore < /tmp/fpn0-up-state.txt
 rm -f /tmp/fpn0-up-state.txt
+
+[[ -n $VERBOSE ]] && echo "Restoring IPv6 traffic"
+if [[ -n $DROP_IPV6 ]]; then
+    $IP6TABLES -P INPUT ACCEPT
+    $IP6TABLES -P OUTPUT ACCEPT
+    $IP6TABLES -P FORWARD ACCEPT
+fi
 
 [[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then

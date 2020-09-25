@@ -318,8 +318,11 @@ def do_net_cmd(cmd):
     env_dict = {'VERBOSE': '',
                 'DROP_DNS_53': '',
                 'ROUTE_DNS_53': '',
-                'SET_IPV4_IFACE': ''}
+                'SET_IPV4_IFACE': '',
+                'DROP_IPV6': ''}
 
+    if NODE_SETTINGS['drop_ipv6']:
+        env_dict['DROP_IPV6'] = 'yes'
     if NODE_SETTINGS['route_dns_53']:
         env_dict['ROUTE_DNS_53'] = 'yes'
     if NODE_SETTINGS['private_dns_only']:

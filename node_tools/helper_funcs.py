@@ -28,6 +28,7 @@ NODE_SETTINGS = {
     u'route_dns': False,  # route insecure dns with web traffic
     u'default_iface': None,  # set default network interface name
     u'doh_host': None,  # use doh_host for show_geoip command
+    u'drop_ip6': False,  # set IPv6 in/out/fwd policies to drop while running
     u'max_timeout': 75,  # max wait timeout for network changes in seconds
     u'max_cache_age': 60,  # maximum cache age in seconds
     u'use_localhost': False,  # messaging interface to use
@@ -88,6 +89,7 @@ def do_setup():
         NODE_SETTINGS['default_iface'] = my_conf['Options']['default_iface']
         NODE_SETTINGS['route_dns_53'] = my_conf.getboolean('Options', 'route_dns')
         NODE_SETTINGS['private_dns_only'] = my_conf.getboolean('Options', 'private_dns_only')
+        NODE_SETTINGS['drop_ipv6'] = my_conf.getboolean('Options', 'drop_ip6')
         NODE_SETTINGS['mode'] = mode
         NODE_SETTINGS['debug'] = debug
         NODE_SETTINGS['runas_user'] = user_perms
