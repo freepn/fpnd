@@ -2,7 +2,7 @@
  Software Version Description for fpnd |Version|
 =================================================
 
-.. |Version| replace:: 0.9.1
+.. |Version| replace:: 0.9.2
 
 :date: |date|, |time| PST8PDT
 :author: Stephen L Arnold
@@ -70,7 +70,7 @@ The required Linux kernel modules include:
 
 The required outgoing network ports for the FreePN user node daemon include:
 
-* allow port 9993/udp (for zerotier)
+* allow port 9993/udp (both IPv4 and IPv6 for zerotier)
 * allow port 8443/tcp (for fpnd infra messages)
 * allow ports 53/udp and 53/tcp (if *not* using encrypted dns)
 * allow port 853/tcp (if using encrypted dns)

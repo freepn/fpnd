@@ -55,7 +55,7 @@ Prototype design limitations
 ----------------------------
 
 * we only route www (http and https) and dns (optional) traffic
-* traffic routing supports IPv4 only (no IPv6)
+* traffic routing supports IPv4 only (IPv6 is dropped unless configured not to)
 * DNS privacy depends entirely on *your* DNS config
 * the most common local-only DNS config *is not* routable out-of-the-box
 * it takes *you* to make the changes to stop DNS privacy leaks
@@ -73,7 +73,7 @@ Docs for FreePN tools
 * `Old README`_ - previous (template-based) FOSS readme
 
 
-.. _Release Notes: README_0.9.1-release-notes.rst
+.. _Release Notes: README_0.9.2-release-notes.rst
 .. _Change Log: changelog.rst
 .. _DNS Privacy: README_DNS_privacy.rst
 .. _DNS Setup: README_DNS_setup.rst

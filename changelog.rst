@@ -1,3 +1,13 @@
+0.9.2 (2020-09-25)
+------------------
+- Merge pull request #76 from freepn/drop-ip6-cfg. [Steve Arnold]
+- Finish drop IPv6 config, allow only localhost and zerotier ports.
+
+  * fix default_iface test in do_net_cmd
+
+- Add cfg option to set all IPv6 policies to DROP (default is true)
+
+
 0.9.1 (2020-09-24)
 -----------------
 - Merge pull request #75 from freepn/still-more-docs. [Steve Arnold]
