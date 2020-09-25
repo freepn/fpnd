@@ -28,6 +28,7 @@ exec 2> >(tee -ia /tmp/fpn0-setup-${DATE}_error.log)
 #DROP_DNS_53="anything"  <= fpnd.ini
 # set the preferred network interface if needed
 #SET_IPV4_IFACE="eth0"  <= fpnd.ini
+#DROP_IPV6="anything"
 
 # set allowed ports (still TBD))
 ports_to_fwd="80 443 53"
@@ -37,6 +38,13 @@ IPTABLES=$(find /sbin /usr/sbin -name iptables)
 HAS_LEGACY=$(find /sbin /usr/sbin -name iptables-legacy)
 if [[ -n $HAS_LEGACY ]]; then
     IPTABLES="${HAS_LEGACY}"
+fi
+
+[[ -n $VERBOSE ]] && echo "Checking ip6tables binary..."
+IP6TABLES=$(find /sbin /usr/sbin -name ip6tables)
+HAS_6LEGACY=$(find /sbin /usr/sbin -name ip6tables-legacy)
+if [[ -n $HAS_6LEGACY ]]; then
+    IP6TABLES="${HAS_6LEGACY}"
 fi
 
 [[ -n $VERBOSE ]] && echo "Checking kernel rp_filter setting..."
@@ -190,6 +198,18 @@ if [[ -n $DROP_DNS_53 ]]; then
     $IPTABLES -A fpn0-dns-dropout -t filter -p udp --dport 53 -j DROP
     $IPTABLES -A fpn0-dns-dropout -t filter -p tcp --dport 53 -m limit --limit 5/min -j LOG --log-prefix "DROP PORT 53: " --log-level 7
     $IPTABLES -A fpn0-dns-dropout -t filter -p tcp --dport 53 -j DROP
+fi
+
+[[ -n $VERBOSE ]] && echo "Dropping IPv6 traffic"
+if [[ -n $DROP_IPV6 ]]; then
+    $IP6TABLES -P INPUT DROP
+    $IP6TABLES -P OUTPUT DROP
+    $IP6TABLES -P FORWARD DROP
+    $IP6TABLES -A INPUT -i lo -j ACCEPT
+    $IP6TABLES -A OUTPUT -o lo -j ACCEPT
+    $IP6TABLES -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+    $IP6TABLES -A INPUT -i ${IPV4_INTERFACE} -p udp --dport 9993 -j ACCEPT
+    $IP6TABLES -A OUTPUT -o ${IPV4_INTERFACE} -p udp --dport 9993 -j ACCEPT
 fi
 
 [[ -n $VERBOSE ]] && echo ""

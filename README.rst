@@ -200,6 +200,8 @@ DNS settings:
 
 Misc settings:
 
+* **drop_ip6**: Default is ``True``; you can disable this if you need local
+  IPv6 working, but you should have your own ipv6 firewall rules in place
 * **default_iface**: Default is ``None``; you should only need this *if* you
   have multiple network interfaces with active routes, then you should
   set this to the interface name you want FreePN to use
