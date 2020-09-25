@@ -33,6 +33,13 @@ if [[ -n $HAS_LEGACY ]]; then
     IPTABLES="${HAS_LEGACY}"
 fi
 
+[[ -n $VERBOSE ]] && echo "Checking ip6tables binary..."
+IP6TABLES=$(find /sbin /usr/sbin -name ip6tables)
+HAS_6LEGACY=$(find /sbin /usr/sbin -name ip6tables-legacy)
+if [[ -n $HAS_6LEGACY ]]; then
+    IP6TABLES="${HAS_6LEGACY}"
+fi
+
 [[ -n $VERBOSE ]] && echo "Checking kernel rp_filter setting..."
 RP_NEED="1"
 RP_ORIG="$(sysctl net.ipv4.conf.all.rp_filter | cut -f3 -d' ')"
@@ -157,6 +164,11 @@ rm -f /tmp/fpn0-up-state.txt
 
 [[ -n $VERBOSE ]] && echo "Restoring IPv6 traffic"
 if [[ -n $DROP_IPV6 ]]; then
+    $IP6TABLES -D OUTPUT -o ${IPV4_INTERFACE} -p udp --dport 9993 --jump ACCEPT
+    $IP6TABLES -D INPUT -i ${IPV4_INTERFACE} -p udp --dport 9993 -j ACCEPT
+    $IP6TABLES -D INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+    $IP6TABLES -D OUTPUT -o lo -j ACCEPT
+    $IP6TABLES -D INPUT -i lo -j ACCEPT
     $IP6TABLES -P INPUT ACCEPT
     $IP6TABLES -P OUTPUT ACCEPT
     $IP6TABLES -P FORWARD ACCEPT
