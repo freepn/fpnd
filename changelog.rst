@@ -1,3 +1,13 @@
+0.9.3 (2020-10-02)
+------------------
+- Merge pull request #77 from freepn/tighter-rules. [Steve Arnold]
+- Tighten/fix network route rules, update release notes. [Stephen Arnold]
+
+  * fix missing (plain-text) dns routing rules
+  * add src-net input allow/drop for udp traffic
+  * add icmp limiting between peers
+
+
 0.9.2 (2020-09-25)
 ------------------
 - Merge pull request #76 from freepn/drop-ip6-cfg. [Steve Arnold]
