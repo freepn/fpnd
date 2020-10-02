@@ -207,9 +207,8 @@ if [[ -n $DROP_IPV6 ]]; then
     $IP6TABLES -P FORWARD DROP
     $IP6TABLES -A INPUT -i lo -j ACCEPT
     $IP6TABLES -A OUTPUT -o lo -j ACCEPT
-    $IP6TABLES -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-    $IP6TABLES -A INPUT -i ${IPV4_INTERFACE} -p udp --dport 9993 -j ACCEPT
     $IP6TABLES -A OUTPUT -o ${IPV4_INTERFACE} -p udp --dport 9993 -j ACCEPT
+    $IP6TABLES -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 fi
 
 [[ -n $VERBOSE ]] && echo ""

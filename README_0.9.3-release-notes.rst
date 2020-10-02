@@ -2,7 +2,7 @@
  Software Version Description for fpnd |Version|
 =================================================
 
-.. |Version| replace:: 0.9.2
+.. |Version| replace:: 0.9.3
 
 :date: |date|, |time| PST8PDT
 :author: Stephen L Arnold
@@ -67,6 +67,7 @@ The required Linux kernel modules include:
 * xt_MASQUERADE, xt_nat, xt_tcpudp, xt_mark
 * nf_nat, nf_conntrack, nf_defrag_ipv4
 * iptable_filter, iptable_nat, iptable_mangle, bpfilter
+* ip6_tables, ip6table_mangle, ip6table_filter, ip6table_nat
 
 The required outgoing network ports for the FreePN user node daemon include:
 
