@@ -133,6 +133,12 @@ else
 fi
 
 # setup nat/masq to forward outbound/return traffic
+# drop/accept chain
+$IPTABLES -N fpn1-allowin
+$IPTABLES -A INPUT -j fpn1-allowin
+$IPTABLES -A fpn1-allowin -i "${ZT_INTERFACE}" -s "${ZT_SRC_NET}" -m state --state ESTABLISHED,RELATED -j ACCEPT
+$IPTABLES -A fpn1-allowin -i "${ZT_INTERFACE}" -s "${ZT_SRC_NET}" -p udp --dport 53 -j ACCEPT
+$IPTABLES -A fpn1-allowin -i "${ZT_INTERFACE}" -s "${ZT_SRC_NET}" -p udp -j DROP
 # nat/postrouting chain
 $IPTABLES -N fpn1-postnat -t nat
 $IPTABLES -t nat -A POSTROUTING -j fpn1-postnat
@@ -144,10 +150,19 @@ $IPTABLES -A fpn1-forward -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_S
 $IPTABLES -A fpn1-forward -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 443 -j ACCEPT
 $IPTABLES -A fpn1-forward -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 80 -j ACCEPT
 $IPTABLES -A fpn1-forward -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 443 -j ACCEPT
+$IPTABLES -A fpn1-forward -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p udp --dport 53 -j ACCEPT
+$IPTABLES -A fpn1-forward -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p udp --sport 53 -j ACCEPT
 $IPTABLES -A fpn1-forward -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 53 -j ACCEPT
 $IPTABLES -A fpn1-forward -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 53 -j ACCEPT
 $IPTABLES -A fpn1-forward -i "${ZT_INTERFACE}" -o "${IPV4_INTERFACE}" -s "${ZT_SRC_NET}" -p tcp --dport 853 -j ACCEPT
 $IPTABLES -A fpn1-forward -i "${IPV4_INTERFACE}" -o "${ZT_INTERFACE}" -d "${ZT_SRC_NET}" -p tcp --sport 853 -j ACCEPT
+# icmp limit chain
+$IPTABLES -N fpn1-limit
+$IPTABLES -A INPUT -j fpn1-limit
+$IPTABLES -A fpn1-limit -p icmp -m icmp --icmp-type address-mask-request -j DROP
+$IPTABLES -A fpn1-limit -p icmp -m icmp --icmp-type timestamp-request -j DROP
+$IPTABLES -A fpn1-limit -p icmp -m icmp --icmp-type 8 -m limit --limit 1/second -j ACCEPT
+
 
 [[ -n $VERBOSE ]] && echo ""
 if ((failures < 1)); then

@@ -129,11 +129,13 @@ else
     sysctl -w net.ipv4.ip_forward=0 > /dev/null 2>&1
 fi
 
-[[ -n $VERBOSE ]] && echo "Deleting nat and forwarding rules..."
+[[ -n $VERBOSE ]] && echo "Deleting nat and forwarding chains..."
 # get fpn1 iptables state, remove custom chain rules, restore state
 "$IPTABLES"-save > /tmp/fpn1-up-state.txt
 sed -i '/fpn1-forward/d' /tmp/fpn1-up-state.txt
 sed -i '/fpn1-postnat/d' /tmp/fpn1-up-state.txt
+sed -i '/fpn1-allowin/d' /tmp/fpn1-up-state.txt
+sed -i '/fpn1-limit/d' /tmp/fpn1-up-state.txt
 "$IPTABLES"-restore < /tmp/fpn1-up-state.txt
 rm -f /tmp/fpn1-up-state.txt
 

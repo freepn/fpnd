@@ -164,9 +164,8 @@ rm -f /tmp/fpn0-up-state.txt
 
 [[ -n $VERBOSE ]] && echo "Restoring IPv6 traffic"
 if [[ -n $DROP_IPV6 ]]; then
-    $IP6TABLES -D OUTPUT -o ${IPV4_INTERFACE} -p udp --dport 9993 --jump ACCEPT
-    $IP6TABLES -D INPUT -i ${IPV4_INTERFACE} -p udp --dport 9993 -j ACCEPT
     $IP6TABLES -D INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+    $IP6TABLES -D OUTPUT -o ${IPV4_INTERFACE} -p udp --dport 9993 --jump ACCEPT
     $IP6TABLES -D OUTPUT -o lo -j ACCEPT
     $IP6TABLES -D INPUT -i lo -j ACCEPT
     $IP6TABLES -P INPUT ACCEPT
