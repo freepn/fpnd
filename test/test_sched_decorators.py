@@ -175,10 +175,10 @@ class SendMsgTest(unittest.TestCase):
         send_announce_msg(fpn_id, None)
         schedule.run_all()
 
-        with self.assertWarns(RuntimeWarning) as err:
-            result = echo_client(fpn_id, self.addr)
-        # print(err.warning)
-        self.assertEqual('Connection timed out', '{}'.format(err.warning))
+        # with self.assertWarns(RuntimeWarning) as err:
+        result = echo_client(fpn_id, self.addr)
+        # print(result)
+        self.assertIs(result, schedule.CancelJob)
 
     def test_send_cfg_no_responder(self):
 
@@ -191,10 +191,10 @@ class SendMsgTest(unittest.TestCase):
         send_announce_msg(fpn_id, None, send_cfg=True)
         schedule.run_all()
 
-        with self.assertWarns(RuntimeWarning) as err:
-            result = echo_client(fpn_id, self.addr, send_cfg=True)
-        # print(err.warning)
-        self.assertEqual('Connection timed out', '{}'.format(err.warning))
+        # with self.assertWarns(RuntimeWarning) as err:
+        result = echo_client(fpn_id, self.addr, send_cfg=True)
+        # print(result)
+        self.assertIs(result, schedule.CancelJob)
 
     def test_send_wedged_no_responder(self):
 
@@ -208,7 +208,8 @@ class SendMsgTest(unittest.TestCase):
         schedule.run_all()
 
         result = send_wedged_msg(self.addr)
-        self.assertEqual([], result)
+        # print(result)
+        self.assertIn('error', str(result))
 
 
 class NetCmdTests(unittest.TestCase):

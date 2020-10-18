@@ -705,7 +705,7 @@ def test_daemon_can_stop():
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = control_daemon('stop')
     assert res.returncode == 0
-    assert 'Stopped' in res.stdout
+    assert 'Stopping' in res.stdout
 
 
 def test_daemon_has_status():
@@ -1001,8 +1001,8 @@ def test_get_wedged_node_id():
 
     st.wait_cache.set(exit_id, True, 0.1)
     res = get_wedged_node_id(ct.net_trie, node_id)
-    assert res is None
     time.sleep(0.1)
+    assert res is None
 
 
 def test_handle_wedged_nodes():

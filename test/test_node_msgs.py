@@ -186,12 +186,15 @@ class TestPubSub(BaseTestCase):
         self.node_q.append(self.node1)
 
         # Client side
-        drain_msg_queue(self.node_q, tmp_q=self.tmp_q, addr=self.addr, method='offline')
+        drain_msg_queue(self.node_q, addr=self.addr, method='offline')
 
         # server side
         res = self.service.process()
         res = self.service.process()
         res = self.service.process()
+        print(res)
+        print(list(self.node_q))
+        print(self.off_list)
         self.assertEqual(list(self.node_q), [])
         self.assertEqual(self.off_list, ['deadbeef01', '20beefdead'])
         self.assertEqual(res, [self.node1, self.node2])

@@ -15,7 +15,6 @@ StateDirectory=fpnd
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_DAC_OVERRIDE
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_DAC_OVERRIDE
 
-ExecStartPre=+/usr/sbin/modprobe ip6_tables
 ExecStart=/usr/lib/fpnd/fpnd.py start
 ExecStop=/bin/kill -TERM $MAINPID
 KillMode=none
