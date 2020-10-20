@@ -22,7 +22,7 @@ class Cache:
     "Simple time-based expiring cache"
 
     def __init__(self, defaultTimeout=300):  # 5 min default TTL
-        self.defaultTimeout = defaultTimeout
+        self.defaultTimeout = int(defaultTimeout)
         self._cache = {}
 
     def get(self, key):
@@ -37,5 +37,5 @@ class Cache:
             return None
 
     def set(self, key, value, customTTL=None):
-        ttl = customTTL if customTTL is not None else self.defaultTimeout
+        ttl = self.defaultTimeout if customTTL is None else int(customTTL)
         self._cache[key] = (value, monoclock(), ttl)

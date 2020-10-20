@@ -705,7 +705,7 @@ def test_daemon_can_stop():
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = control_daemon('stop')
     assert res.returncode == 0
-    assert 'Stopped' in res.stdout
+    assert 'Stopping' in res.stdout
 
 
 def test_daemon_has_status():
@@ -985,6 +985,7 @@ def test_get_target_node_id():
     NODE_SETTINGS['use_exitnode'].clear()
 
 
+# @pytest.mark.xfail(strict=False)
 def test_get_wedged_node_id():
     from node_tools import ctlr_data as ct
     from node_tools import state_data as st
@@ -999,10 +1000,12 @@ def test_get_wedged_node_id():
     res = get_wedged_node_id(ct.net_trie, tail_id)
     assert res == node_id
 
-    st.wait_cache.set(exit_id, True, 0.1)
+    st.wait_cache.set(exit_id, True, 1)
     res = get_wedged_node_id(ct.net_trie, node_id)
     assert res is None
-    time.sleep(0.1)
+    time.sleep(2)
+    res = get_wedged_node_id(ct.net_trie, node_id)
+    assert res == exit_id
 
 
 def test_handle_wedged_nodes():

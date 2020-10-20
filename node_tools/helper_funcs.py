@@ -153,23 +153,23 @@ def get_cachedir(dir_name='fpn_cache', user_dirs=False):
     * override the dir_name arg for non-cache data
     """
     import os
+    import tempfile
+
+    from pathlib import Path
     from appdirs import AppDirs
 
+    temp_dir = tempfile.gettempdir()
     dirs = AppDirs('fpnd', 'FreePN')
-    temp_dir = dirs.user_cache_dir
-    if not user_dirs and not NODE_SETTINGS['runas_user']:
-        temp_dir = '/var/lib/fpnd'
-
-    if not os.access(temp_dir, os.X_OK | os.W_OK):
-        logger.error('Cannot use path {}!'.format(temp_dir))
-        import tempfile
-        temp_dir = tempfile.gettempdir()
-        logger.info('Falling back to system temp dir: {}'.format(temp_dir))
-
-    cache_dir = os.path.join(temp_dir, dir_name)
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    return cache_dir
+    if user_dirs or NODE_SETTINGS['runas_user']:
+        cache_dir = dirs.user_cache_dir
+    else:
+        cache_dir = '/var/lib/fpnd'
+        path_chk = Path(cache_dir)
+        if 0 not in os.getresuid() or path_chk.exists() and not path_chk.group() == 'fpnd':
+            cache_dir = temp_dir
+    if cache_dir == temp_dir:
+        logger.warning('Falling back to temp dir: {}'.format(temp_dir))
+    return os.path.join(cache_dir, dir_name)
 
 
 def get_filepath():

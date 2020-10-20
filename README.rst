@@ -175,7 +175,7 @@ Check your group memberships with the ``id`` command::
   uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm),20(dialout),24(cdrom),25(floppy),27(sudo),29(audio),30(dip),44(video),46(plugdev),115(netdev),118(lxd),995(fpnd)
 
 If you really don't want/need a desktop, you can still install the network
-component::
+component:
 
 * Gentoo - ``sudo emerge net-misc/fpnd``
 * Ubuntu - ``sudo apt-get install python3-fpnd``

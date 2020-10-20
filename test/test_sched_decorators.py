@@ -177,8 +177,8 @@ class SendMsgTest(unittest.TestCase):
 
         with self.assertWarns(RuntimeWarning) as err:
             result = echo_client(fpn_id, self.addr)
-        # print(err.warning)
-        self.assertEqual('Connection timed out', '{}'.format(err.warning))
+            # print(result)
+            self.assertIs(result, None)
 
     def test_send_cfg_no_responder(self):
 
@@ -193,21 +193,21 @@ class SendMsgTest(unittest.TestCase):
 
         with self.assertWarns(RuntimeWarning) as err:
             result = echo_client(fpn_id, self.addr, send_cfg=True)
-        # print(err.warning)
-        self.assertEqual('Connection timed out', '{}'.format(err.warning))
+            # print(result)
+            self.assertIs(result, None)
 
     def test_send_wedged_no_responder(self):
 
         nodeState = AttrDict.from_nested_dict(self.state)
         fpn_id = nodeState.fpn_id
-        # expected command result is a list so the return
-        # result for echo_client() is actually None
         mock_job = make_mock_job()
         tj = every().second.do(mock_job)
         send_wedged_msg()
         schedule.run_all()
 
+        # expected command result is a list
         result = send_wedged_msg(self.addr)
+        # print(result)
         self.assertEqual([], result)
 
 
