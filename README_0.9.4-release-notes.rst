@@ -2,7 +2,7 @@
  Software Version Description for fpnd |Version|
 =================================================
 
-.. |Version| replace:: 0.9.3
+.. |Version| replace:: 0.9.4
 
 :date: |date|, |time| PST8PDT
 :author: Stephen L Arnold
@@ -368,7 +368,7 @@ included ``.rst`` documents.
           ``rst2pdf`` tool.  After cloning this repository, cd into the top
           level directory and run the following command::
 
-            $ rst2pdf README_0.9.0-release-notes.rst -o README_0.9.0-release-notes.pdf
+            $ rst2pdf README_0.9.4-release-notes.rst -o README_0.9.4-release-notes.pdf
 
 
 .. include:: changelog.rst

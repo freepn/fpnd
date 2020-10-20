@@ -1,3 +1,15 @@
+0.9.4 (2020-10-20)
+------------------
+- Merge pull request #82 from freepn/retests. [Steve Arnold]
+- Fixes for github issues #78 # 79 and #80
+- re-integrate/refactor get_cachdir/wait_cache and related tests
+
+  * fix pytest.raises context for different OS/python envs
+  * update tests for newer python/pytest
+  * make sure ttl value is always an int
+  * add modules.conf to load ip6tables core module before startup
+
+
 0.9.3 (2020-10-02)
 ------------------
 - Merge pull request #77 from freepn/tighter-rules. [Steve Arnold]
