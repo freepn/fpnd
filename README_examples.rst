@@ -257,7 +257,7 @@ Test internal FQDN and short name with one of your local hostnames::
   $ dig myhost
 
 If any of the above commands *do not* work and you're sure the hostname
-is correct, then check the following::
+is correct, then check the following:
 
 * make sure both services restart correctly
 * make sure config modifications are what you expect

@@ -511,6 +511,7 @@ def test_do_cleanup():
 
 def test_get_state_values():
     from node_tools import state_data as stest
+    from node_tools.data_funcs import get_state_values
 
     assert isinstance(stest.changes, list)
     assert not stest.changes
@@ -573,6 +574,7 @@ def test_run_event_handler():
     This stuff really needs better tests.
     """
     from node_tools import state_data as st
+    from node_tools.data_funcs import get_state_values
 
     home, pid_file, log_file, debug, msg, mode, role = do_setup()
 

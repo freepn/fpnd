@@ -165,11 +165,11 @@ def get_cachedir(dir_name='fpn_cache', user_dirs=False):
     else:
         cache_dir = '/var/lib/fpnd'
         path_chk = Path(cache_dir)
-        if path_chk.exists() and not path_chk.group() == 'fpnd':
+        if 0 not in os.getresuid() or path_chk.exists() and not path_chk.group() == 'fpnd':
             cache_dir = temp_dir
     if cache_dir == temp_dir:
         logger.warning('Falling back to temp dir: {}'.format(temp_dir))
-    return cache_dir
+    return os.path.join(cache_dir, dir_name)
 
 
 def get_filepath():
