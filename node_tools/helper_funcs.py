@@ -85,7 +85,7 @@ def do_setup():
         debug = my_conf.getboolean('Options', 'debug')
         user_perms = my_conf.getboolean('Options', 'user_perms')
         NODE_SETTINGS['doh_host'] = my_conf['Options']['doh_host']
-        NODE_SETTINGS['max_timeout'] = my_conf['Options']['net_timeout']
+        NODE_SETTINGS['max_timeout'] = int(my_conf['Options']['net_timeout'])
         NODE_SETTINGS['default_iface'] = my_conf['Options']['default_iface']
         NODE_SETTINGS['route_dns_53'] = my_conf.getboolean('Options', 'route_dns')
         NODE_SETTINGS['private_dns_only'] = my_conf.getboolean('Options', 'private_dns_only')
@@ -153,9 +153,9 @@ def get_cachedir(dir_name='fpn_cache', user_dirs=False):
     * override the dir_name arg for non-cache data
     """
     import os
+    import pwd
     import tempfile
 
-    from pathlib import Path
     from appdirs import AppDirs
 
     temp_dir = tempfile.gettempdir()
@@ -164,9 +164,12 @@ def get_cachedir(dir_name='fpn_cache', user_dirs=False):
         cache_dir = dirs.user_cache_dir
     else:
         cache_dir = '/var/lib/fpnd'
-        path_chk = Path(cache_dir)
-        if 0 not in os.getresuid() or path_chk.exists() and not path_chk.group() == 'fpnd':
+        sys_usr = pwd.getpwuid(os.geteuid()).pw_name
+        sys_uids = os.getresuid()
+        if not sys_usr == 'fpnd' and 0 not in sys_uids:
             cache_dir = temp_dir
+        # logger.debug('UIDs for cachedir: {}'.format(sys_uids))
+        # logger.debug('effective user for cachedir: {}'.format(sys_usr))
     if cache_dir == temp_dir:
         logger.warning('Falling back to temp dir: {}'.format(temp_dir))
     return os.path.join(cache_dir, dir_name)
