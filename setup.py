@@ -22,14 +22,13 @@ for line in read_file('node_tools/__init__.py').splitlines():
         version = ast.literal_eval(line.split('=', 1)[1].strip())
         break
 
-FPND_VERSION = version
-
 # make setuptools happy with PEP 440-compliant post version
 # (enable this for patch releases using n.n.n-n)
-#REL_TAG = FPND_VERSION.replace('-', 'p')
+FPND_VERSION = version + '-1'
+REL_TAG = FPND_VERSION.replace('-', 'p')
 
 FPND_DOWNLOAD_URL = (
-    'https://github.com/sarnold/fpnd/tarball/' + FPND_VERSION
+    'https://github.com/sarnold/fpnd/tarball/' + REL_TAG
 )
 
 setup(

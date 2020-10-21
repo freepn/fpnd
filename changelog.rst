@@ -1,3 +1,10 @@
+0.9.4p1 (2020-10-20)
+--------------------
+- Merge pull request #84 from freepn/recache
+    
+  * helper_funcs.py: slight refactor in get_cachedir for Ubuntu/systemd
+
+
 0.9.4 (2020-10-20)
 ------------------
 - Merge pull request #82 from freepn/retests. [Steve Arnold]
