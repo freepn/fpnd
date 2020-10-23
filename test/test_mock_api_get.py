@@ -337,6 +337,8 @@ def test_get_peer_status():
         assert 'role' in Peer
         assert 'address' in Peer
         assert Peer['active'] is True
+        addr_obj = ipaddress.ip_address(Peer['address'])
+        assert addr_obj.version == 4
 
 
 def test_get_net_status():
@@ -368,6 +370,7 @@ def test_populate_leaf_list():
     node_q.append('beef9f73c6')
 
     peers = get_peer_status(cache)
+    # print(peers)
     for peer in peers:
         if peer['role'] == 'LEAF':
             populate_leaf_list(node_q, wait_q, tmp_q, peer)

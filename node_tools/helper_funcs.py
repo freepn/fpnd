@@ -371,8 +371,9 @@ def run_event_handlers(diff=None):
     Run state change event handlers (currently just the net handlers)
     :param diff: <st.changes> (a shared state change diff)
     """
+    from node_tools import state_data as st
+
     if diff is None:
-        from node_tools import state_data as st
         diff = st.changes
 
     if diff:

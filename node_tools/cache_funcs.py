@@ -2,6 +2,8 @@
 
 """cache-specific helper functions."""
 import logging
+import ipaddress
+
 from collections import namedtuple
 
 from node_tools.helper_funcs import AttrDict
@@ -146,13 +148,20 @@ def get_peer_status(cache):
         for key, data in zip(key_list, values):
             # fix for bad LEAF nodes with empty paths (see fpnd issue #27)
             if data.paths != []:
-                addr = data.paths[0]['address'].split('/', maxsplit=1)
-                peerStatus = {'identity': data.address,
-                              'role': data.role,
-                              'active': data.paths[0]['active'],
-                              'address': addr[0],
-                              'port': addr[1]}
-                peers.append(peerStatus)
+                for path in data.paths:
+                    addr = path['address'].split('/', maxsplit=1)
+                    try:
+                        addr_obj = ipaddress.ip_address(addr[0])
+                    except ValueError as exc:
+                        logger.error('ipaddress exception: {}'.format(exc))
+                    # filter out IPv6 addresses for now
+                    if addr_obj.version == 4:
+                        peerStatus = {'identity': data.address,
+                                      'role': data.role,
+                                      'active': path['active'],
+                                      'address': addr[0],
+                                      'port': addr[1]}
+                        peers.append(peerStatus)
         logger.debug('peerStatus list: {}'.format(peers))
     return peers
 
