@@ -1,6 +1,7 @@
 0.9.5 (2020-10-23)
 ------------------
-- Merge pull request #85 from freepn/addr-filter. [Steve Arnold]
+- Merge pull request #86 from freepn/addr-filter. [Steve Arnold]
+- Add handler to reset wedge state variables on fpn0 UP event. [Steve Arnold]
 - Fix: extend nanoservice msg timeout and filter IPv6 from peer cache. [Steve Arnold]
 
   * Increase node message handler timeout from 1 second to 3 seconds
