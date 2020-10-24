@@ -1,6 +1,17 @@
+0.9.5 (2020-10-23)
+------------------
+- Merge pull request #85 from freepn/addr-filter. [Steve Arnold]
+- Fix: extend nanoservice msg timeout and filter IPv6 from peer cache. [Steve Arnold]
+
+  * Increase node message handler timeout from 1 second to 3 seconds
+    (allow for more crufty internet latency).
+  * Add proper filter for IPv6 addresses in (ZT) peer list
+    (only cache IPv4 addresses).
+
+
 0.9.4p1 (2020-10-20)
 --------------------
-- Merge pull request #84 from freepn/recache
+- Merge pull request #84 from freepn/recache. [Steve Arnold]
     
   * helper_funcs.py: slight refactor in get_cachedir for Ubuntu/systemd
 

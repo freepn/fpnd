@@ -2,7 +2,7 @@
  Software Version Description for fpnd |Version|
 =================================================
 
-.. |Version| replace:: 0.9.4
+.. |Version| replace:: 0.9.5
 
 :date: |date|, |time| PST8PDT
 :author: Stephen L Arnold
@@ -309,6 +309,17 @@ run-time requirements also include a recent Linux kernel with ``bash``,
 
 3.6 - Known Issues
 ------------------
+
+* ip6tables modules not loading automatically on ubuntu
+
+The new setting to filter leaky IPv6 traffic depends on some additional
+kernel modules for the basic (ip6) iptables setup.  On at least some Ubuntu
+installs, the ip6tables module is not loaded automatically, so it needs to
+be added to a modules.conf file and placed in the ``/etc/modules-load.d/``
+directory (this is now installed by the latest ``fpnd`` packages for both
+Ubuntu series).  If you have any issues related to IPv6 you can optionally
+disable IPv6 filtering by setting ``drop_ip6`` to ``False`` in the settings
+file (``/etc/fpnd.ini`` on Ubuntu).
 
 * Erratic service file behavior with systemd >= 246
 

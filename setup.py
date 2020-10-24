@@ -24,7 +24,7 @@ for line in read_file('node_tools/__init__.py').splitlines():
 
 # make setuptools happy with PEP 440-compliant post version
 # (enable this for patch releases using n.n.n-n)
-FPND_VERSION = version + '-1'
+FPND_VERSION = version
 REL_TAG = FPND_VERSION.replace('-', 'p')
 
 FPND_DOWNLOAD_URL = (

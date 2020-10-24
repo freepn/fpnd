@@ -401,7 +401,7 @@ def send_req_msg(addr, method, data):
     if NODE_SETTINGS['use_localhost'] or not addr:
         addr = '127.0.0.1'
 
-    c = Requester('tcp://{}:9443'.format(addr), timeouts=(1000, 1000))
+    c = Requester('tcp://{}:9443'.format(addr), timeouts=(3000, 3000))  # timeout is msec
     reply = []
 
     try:

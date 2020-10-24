@@ -366,13 +366,25 @@ def put_state_msg(msg, state_file=None, clean=True):
         f.write(fmt.format(str(msg)))
 
 
+def reset_wedge_state():
+    """
+    Reset route and wdg_ref to defaults whenever 'fpn0' state changes
+    to UP.
+    """
+    from node_tools import state_data as st
+
+    st.fpnState['wdg_ref'] = None
+    st.fpnState['route'] = None
+
+
 def run_event_handlers(diff=None):
     """
     Run state change event handlers (currently just the net handlers)
     :param diff: <st.changes> (a shared state change diff)
     """
+    from node_tools import state_data as st
+
     if diff is None:
-        from node_tools import state_data as st
         diff = st.changes
 
     if diff:
@@ -380,6 +392,9 @@ def run_event_handlers(diff=None):
             if iface in ['fpn0', 'fpn1']:
                 logger.debug('running net_change_handler for iface {} and state {}'.format(iface, state))
                 net_change_handler(iface, state)
+                if state and iface == 'fpn0':
+                    logger.debug('running reset_wedge_state for iface {}'.format(iface))
+                    reset_wedge_state()
             if iface in ['fpn_id0', 'fpn_id1']:
                 logger.debug('running net_id_handler for iface {} and net id {}'.format(iface, state))
                 net_id_handler(iface, state)

@@ -119,7 +119,7 @@ def get_node_cfg(msg):
         if node_data:
             logger.info('Got valid cfg request msg from host {} (node {})'.format(node_data[msg], msg))
         res = wait_for_cfg_msg(cfg_q, hold_q, reg_q, msg)
-        logger.debug('hold_q contents: {}'.format(list(hold_q)))
+        logger.debug('hold_q size: {}'.format(len(list(hold_q))))
         if res:
             logger.debug('Got cfg result: {}'.format(res))
             return res
