@@ -49,7 +49,7 @@ semver_to_int() {
     #if [[ -n $DOH_HOST ]]; then
         #doh_arg="--doh-url https://${DOH_HOST}/dns-query"
         #if [[ -n $VERBOSE ]]; then
-            #echo "Using curl doh_arg valus: $doh_arg"
+            #echo "Using curl doh_arg values: $doh_arg"
         #fi
     #fi
     #/usr/bin/curl --stderr $clog_file --silent -m 3 $doh_arg https://geoip.ubuntu.com/lookup > $xml_file

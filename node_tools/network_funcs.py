@@ -57,7 +57,9 @@ def do_net_check(path=None):
 
     if not state:
         host_state, _, _ = do_host_check()
-        if fpn_data['fpn0'] and fpn_data['fpn1'] and retcode == 4:
+        if net_wait.get('fpn0_UP'):
+            fpn_data['route'] = None
+        elif fpn_data['fpn0'] and fpn_data['fpn1'] and retcode == 4:
             if fpn_data['route'] is True:
                 fpn_data['route'] = None
                 net_wait.set('failed_once', True, max_wait)
@@ -78,8 +80,8 @@ def do_net_check(path=None):
                 fpn_data['wdg_ref'] = None
                 put_state_msg('CONNECTED')
             logger.info('HEALTH: network route state is {}'.format(fpn_data['route']))
-        elif fpn_data['route'] is None:
-            logger.info('HEALTH: no state yet (state is {})'.format(fpn_data['route']))
+    if fpn_data['route'] is None:
+        logger.info('HEALTH: no state yet (state is {})'.format(fpn_data['route']))
 
     return result
 
