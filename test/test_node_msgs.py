@@ -122,11 +122,11 @@ class BaseTestCase(unittest.TestCase):
         self.service.subscribe('offline', offline)
 
     def tearDown(self):
+        self.service.socket.close()
         self.node_q.clear()
         self.off_q.clear()
         self.pub_q.clear()
         self.tmp_q.clear()
-        self.service.socket.close()
 
 
 class TestPubCfg(BaseTestCase):
