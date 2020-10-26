@@ -1,3 +1,17 @@
+0.9.6 (2020-10-25)
+------------------
+- Merge pull request #90 from freepn/wait-states. [Steve Arnold]
+- Fix: use max_timeout to wait before setting route to False. [Steve Arnold]
+    
+  * add wait_cache using max_timeout to fpn0 UP handler
+  * make route check wait for max_timeout before setting route false
+    
+Fixes de-wedging nodes who never route and makes us a little more tolerant
+of transient lookup errors (since route check relies on dns/https lookups
+over fpn0 tunnel).
+
+
+
 0.9.5 (2020-10-23)
 ------------------
 - Merge pull request #86 from freepn/addr-filter. [Steve Arnold]
