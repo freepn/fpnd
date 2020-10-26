@@ -2,7 +2,7 @@
  Software Version Description for fpnd |Version|
 =================================================
 
-.. |Version| replace:: 0.9.5
+.. |Version| replace:: 0.9.6
 
 :date: |date|, |time| PST8PDT
 :author: Stephen L Arnold
