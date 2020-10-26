@@ -353,7 +353,10 @@ class NetPeerCheckTest(unittest.TestCase):
     problematic...
     """
     def setUp(self):
+        from node_tools import state_data as st
+
         super(NetPeerCheckTest, self).setUp()
+        st.wait_cache.set('fpn0_UP', True, 1)
         NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'bin')
 
     @pytest.mark.xfail(strict=False)

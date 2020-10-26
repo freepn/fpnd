@@ -369,12 +369,14 @@ def put_state_msg(msg, state_file=None, clean=True):
 def reset_wedge_state():
     """
     Reset route and wdg_ref to defaults whenever 'fpn0' state changes
-    to UP.
+    to UP and set a post-up wait_cache so we don't send a wedge msg
+    too soon.
     """
     from node_tools import state_data as st
 
     st.fpnState['wdg_ref'] = None
     st.fpnState['route'] = None
+    st.wait_cache.set('fpn0_UP', True, NODE_SETTINGS['max_timeout'])
 
 
 def run_event_handlers(diff=None):
