@@ -73,12 +73,20 @@ Docs for FreePN tools
 * `Old README`_ - previous (template-based) FOSS readme
 
 
-.. _Release Notes: README_0.9.2-release-notes.rst
+.. _Release Notes: README_release-notes_latest.rst
 .. _Change Log: changelog.rst
 .. _DNS Privacy: README_DNS_privacy.rst
 .. _DNS Setup: README_DNS_setup.rst
 .. _DNS Examples: README_examples.rst
 .. _Old README: README_old.rst
+
+
+.. important:: If you already installed one of the early 0.9.x or older
+               releases, please upgrade to the latest release (as a bonus
+               you will get an stunnel upgrade plus several lemony-fresh
+               bug fixes).  See `issue #88`_ for more details.
+
+.. _issue #88: https://github.com/freepn/fpnd/issues/88
 
 
 Quick Start
@@ -181,12 +189,49 @@ component:
 * Ubuntu - ``sudo apt-get install python3-fpnd``
 
 
+Post-Install Updates
+--------------------
+
+Once installed, the above packages *should* update normally along with
+any other updated system packages (both ``@world`` and dependencies).
+It's *very* important to keep all your system packages up to date, and
+especially important when running an alpha release (eg, ``fpnd-0.9.x``)
+since (software) interfaces may (and probably will) break between
+releases.  Both Gentoo and Ubuntu have ways to notify you when you have
+updates waiting (or at least when your package tree is getting stale).
+
+* Gentoo
+
+  - Use your proffered tools to keep the overlay synced and check for
+    updates frequently; using the "live" ebuild is left as an exercise
+    for the reader...
+
+* Ubuntu
+
+  - Use the Software Updater GUI -- or --
+  - Use ``apt|apt-get`` from a terminal window.
+
+
+When packages update on Ubuntu, you might see something like "The following
+packages have been kept back:" followed by one or more package names. This
+might happen with FreePN packages if new dependencies are added between
+releases.  If you see ``python3-fpnd`` in the list of packages kept back,
+you can try one of the following commands (instead of the typical
+``sudo apt-get upgrade``) to resolve dependencies.  Start with the first
+one:
+
+* ``sudo apt-get --with-new-pkgs upgrade``
+* ``sudo apt upgrade``
+* ``sudo apt-get install python3-fpnd``
+
+
+
 Config Settings
 ---------------
 
 Although there is currently no user config file for the GUI component,
 the ``fpnd`` package installs the system settings file ``/etc/fpnd.ini``.
-Most of the entries there to provide a consistent set of defaults for
+Most of the entries are there to provide a consistent set of defaults for
 different runtime environments, but some are intended for the end-user
 to adjust when appropriate.
 
