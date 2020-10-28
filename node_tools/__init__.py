@@ -28,6 +28,7 @@ from node_tools.helper_funcs import ENODATA as ENODATA
 from node_tools.helper_funcs import NODE_SETTINGS as NODE_SETTINGS
 from node_tools.msg_queues import handle_announce_msg as handle_announce_msg
 from node_tools.msg_queues import handle_node_queues as handle_node_queues
+from node_tools.msg_queues import make_version_msg as make_version_msg
 from node_tools.msg_queues import manage_incoming_nodes as manage_incoming_nodes
 from node_tools.msg_queues import populate_leaf_list as populate_leaf_list
 from node_tools.msg_queues import valid_announce_msg as valid_announce_msg
@@ -72,6 +73,7 @@ __all__ = [
     'json_dump_file',
     'json_load_file',
     'load_cache_by_type',
+    'make_version_msg',
     'manage_incoming_nodes',
     'populate_leaf_list',
     'put_state_msg',
@@ -87,5 +89,5 @@ __all__ = [
     'wait_for_moon',
 ]
 
-__version__ = '0.9.6'
+__version__ = '0.9.7'
 __version_info__ = tuple(int(segment) for segment in __version__.split('.'))

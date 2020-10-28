@@ -152,6 +152,7 @@ def drain_msg_queue(reg_q, pub_q=None, tmp_q=None, addr=None, method='handle_nod
 def echo_client(fpn_id, addr, send_cfg=False):
     import json
     from node_tools import state_data as st
+    from node_tools.msg_queues import make_version_msg
     from node_tools.node_funcs import node_state_check
     from node_tools.node_funcs import run_ztcli_cmd
 
@@ -177,8 +178,13 @@ def echo_client(fpn_id, addr, send_cfg=False):
                     res = run_ztcli_cmd(action='join', extra=net)
                     logger.debug('run_ztcli_cmd join result: {}'.format(res))
         else:
-            reply_list = send_req_msg(addr, 'echo', fpn_id)
+            ver_msg = make_version_msg(fpn_id)
+            reply_list = send_req_msg(addr, 'echo', ver_msg)
             node_data['msg_ref'] = reply_list[0]['ref']
+            msg = json.loads(reply_list[0]['result'])
+            logger.debug('ECHO: got msg reply {}'.format(msg))
+            if 'UPGRADE' in msg['version']:
+                put_state_msg('UPGRADE')
         reciept = True
         logger.debug('Send result is {}'.format(reply_list))
         if not send_cfg and not node_data['cfg_ref']:
