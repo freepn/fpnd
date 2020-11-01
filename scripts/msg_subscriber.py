@@ -14,6 +14,7 @@ from daemon import Daemon
 from nanoservice import Subscriber
 
 from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import get_runtimedir
 from node_tools.msg_queues import add_one_only
 from node_tools.msg_queues import avoid_and_update
 from node_tools.msg_queues import valid_announce_msg
@@ -31,9 +32,10 @@ formatter = logging.Formatter('%(module)s: %(funcName)s+%(lineno)s: %(message)s'
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-pid_file = '/tmp/subscriber.pid'
-std_out = '/tmp/subscriber.log'
-std_err = '/tmp/subscriber_err.log'
+# pid_file = '/tmp/subscriber.pid'
+pid_file = os.path.join(get_runtimedir(), '{}.pid'.format('msg_subscriber'))
+# std_out = '/tmp/subscriber.log'
+# std_err = '/tmp/subscriber_err.log'
 
 cfg_q = dc.Deque(directory=get_cachedir('cfg_queue'))
 node_q = dc.Deque(directory=get_cachedir('node_queue'))
@@ -115,7 +117,7 @@ class subDaemon(Daemon):
 
 if __name__ == "__main__":
 
-    daemon = subDaemon(pid_file, stdout=std_out, stderr=std_err, verbose=1)
+    daemon = subDaemon(pid_file, verbose=0)
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
             logger.info('Starting')

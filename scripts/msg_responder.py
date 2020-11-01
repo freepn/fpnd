@@ -18,6 +18,7 @@ from nanoservice.error import ServiceError
 from node_tools import state_data as st
 
 from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import get_runtimedir
 from node_tools.msg_queues import add_one_only
 from node_tools.msg_queues import clean_from_queue
 from node_tools.msg_queues import handle_announce_msg
@@ -40,9 +41,10 @@ formatter = logging.Formatter('%(module)s: %(funcName)s+%(lineno)s: %(message)s'
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-pid_file = '/tmp/responder.pid'
-stdout = '/tmp/responder.log'
-stderr = '/tmp/responder_err.log'
+# pid_file = '/tmp/responder.pid'
+pid_file = os.path.join(get_runtimedir(), '{}.pid'.format('msg_responder'))
+# stdout = '/tmp/responder.log'
+# stderr = '/tmp/responder_err.log'
 
 cfg_q = dc.Deque(directory=get_cachedir('cfg_queue'))
 hold_q = dc.Deque(directory=get_cachedir('hold_queue'))
@@ -103,11 +105,11 @@ def echo(ver_msg):
         if valid_announce_msg(msg[0]):
             logger.debug('Got valid announce msg: {}'.format(msg))
             clean_stale_cfgs(msg[0], cfg_q)
-            handle_announce_msg(node_q, reg_q, wait_q, msg[0])
             node_data = lookup_node_id(msg[0], tmp_q)
             if node_data:
                 logger.info('Got valid announce msg from host {} (node {})'.format(node_data[msg[0]], msg))
             if valid_version(min_ver, msg[1]):
+                handle_announce_msg(node_q, reg_q, wait_q, msg[0])
                 reply = make_version_msg(msg[0])
                 logger.info('Got valid node version: {}'.format(msg))
             else:
@@ -220,7 +222,7 @@ class rspDaemon(Daemon):
 
 if __name__ == "__main__":
 
-    daemon = rspDaemon(pid_file, stdout=stdout, stderr=stderr, verbose=1)
+    daemon = rspDaemon(pid_file, verbose=0)
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
             logger.info('Starting')

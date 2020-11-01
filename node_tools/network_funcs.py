@@ -153,6 +153,7 @@ def echo_client(fpn_id, addr, send_cfg=False):
     import json
     from node_tools import state_data as st
     from node_tools.msg_queues import make_version_msg
+    from node_tools.node_funcs import do_shutdown
     from node_tools.node_funcs import node_state_check
     from node_tools.node_funcs import run_ztcli_cmd
 
@@ -160,6 +161,7 @@ def echo_client(fpn_id, addr, send_cfg=False):
         addr = '127.0.0.1'
 
     cfg = st.cfg_msgs
+    compatible = True
     node_data = st.fpnState
     reply_list = []
     reciept = False
@@ -180,13 +182,21 @@ def echo_client(fpn_id, addr, send_cfg=False):
         else:
             ver_msg = make_version_msg(fpn_id)
             reply_list = send_req_msg(addr, 'echo', ver_msg)
-            node_data['msg_ref'] = reply_list[0]['ref']
-            msg = json.loads(reply_list[0]['result'])
-            logger.debug('ECHO: got msg reply {}'.format(msg))
-            if 'UPGRADE' in msg['version']:
-                put_state_msg('UPGRADE')
+            logger.debug('ECHO: ver_msg reply is {}'.format(reply_list))
+            if 'result' not in reply_list[0]:
+                logger.warning('ECHO: malformed reply {}'.format(reply_list))
+            else:
+                node_data['msg_ref'] = reply_list[0]['ref']
+                msg = json.loads(reply_list[0]['result'])
+                logger.debug('ECHO: got msg reply {}'.format(msg))
+                if 'UPGRADE' in msg['version']:
+                    put_state_msg('UPGRADE')
+                    compatible = False
         reciept = True
         logger.debug('Send result is {}'.format(reply_list))
+        if not compatible:
+            logger.error('Shutting down due to incompatible version: {}'.format(ver_msg))
+            do_shutdown()
         if not send_cfg and not node_data['cfg_ref']:
             res = node_state_check(deorbit=True)
             logger.debug('node_state_check returned {}'.format(res))

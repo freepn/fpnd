@@ -47,17 +47,6 @@ if [[ -n $HAS_6LEGACY ]]; then
     IP6TABLES="${HAS_6LEGACY}"
 fi
 
-[[ -n $VERBOSE ]] && echo "Checking kernel rp_filter setting..."
-RP_NEED="2"
-RP_ORIG="$(sysctl net.ipv4.conf.all.rp_filter | cut -f3 -d' ')"
-
-if [[ ${RP_NEED} = "${RP_ORIG}" ]]; then
-    [[ -n $VERBOSE ]] && echo "  RP good..."
-else
-    [[ -n $VERBOSE ]] && echo "  RP needs garlic filter..."
-    sysctl -w net.ipv4.conf.all.rp_filter=$RP_NEED > /dev/null 2>&1
-fi
-
 while read -r line; do
     [[ -n $VERBOSE ]] && echo "Checking network..."
     LAST_OCTET=$(echo "$line" | cut -d" " -f9 | cut -d"/" -f1 | cut -d"." -f4)
@@ -86,6 +75,18 @@ fi
 ZT_INTERFACE=$(zerotier-cli get "${ZT_NETWORK}" portDeviceName)
 ZT_ADDRESS=$(zerotier-cli get "${ZT_NETWORK}" ip4)
 ZT_GATEWAY=$(zerotier-cli -j listnetworks | grep "${ZT_INTERFACE}" -A 14 | grep via | awk '{ print $2 }' | tail -n 1 | cut -d'"' -f2)
+
+[[ -n $VERBOSE ]] && echo "Checking kernel rp_filter setting..."
+RP_NEED="2"
+RP_ORIG=$(sysctl net.ipv4.conf."${ZT_INTERFACE}".rp_filter | cut -f3 -d' ')
+echo "filter=${RP_ORIG}" > /tmp/fpn0-rp_filter
+
+if [[ ${RP_NEED} = "${RP_ORIG}" ]]; then
+    [[ -n $VERBOSE ]] && echo "  RP good..."
+else
+    [[ -n $VERBOSE ]] && echo "  RP needs garlic filter..."
+    sysctl -w net.ipv4.conf."${ZT_INTERFACE}".rp_filter=$RP_NEED > /dev/null 2>&1
+fi
 
 TABLE_NAME="fpn0-route"
 TABLE_PATH="/etc/iproute2/rt_tables"
@@ -165,20 +166,20 @@ $IPTABLES -N fpn0-mangleout -t mangle
 $IPTABLES -t mangle -A OUTPUT -j fpn0-mangleout
 
 # Mark these packets so that ip can route web traffic through fpn0
-$IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark 1
-$IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 1
+$IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 80 -j MARK --set-mark 0x1
+$IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 443 -j MARK --set-mark  0x1
 if [[ -n $ROUTE_DNS_53 ]] && ! [[ -n $DROP_DNS_53 ]]; then
-    $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 53 -j MARK --set-mark 1
-    $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p udp --dport 53 -j MARK --set-mark 1
-    $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 853 -j MARK --set-mark 1
+    $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 53 -j MARK --set-mark  0x1
+    $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p udp --dport 53 -j MARK --set-mark  0x1
+    $IPTABLES -t mangle -A fpn0-mangleout -o ${IPV4_INTERFACE} -p tcp --dport 853 -j MARK --set-mark  0x1
 fi
 
 # nat/postrouting chain
 $IPTABLES -N fpn0-postnat -t nat
 $IPTABLES -t nat -A POSTROUTING -j fpn0-postnat
 # now rewrite the src-addr using snat/masq
-$IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
 $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
+$IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
 if [[ -n $ROUTE_DNS_53 ]] && ! [[ -n $DROP_DNS_53 ]]; then
     $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j SNAT --to ${ZT_ADDRESS}
     $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j SNAT --to ${ZT_ADDRESS}
@@ -186,6 +187,7 @@ if [[ -n $ROUTE_DNS_53 ]] && ! [[ -n $DROP_DNS_53 ]]; then
 fi
 
 if [[ -n $DROP_DNS_53 ]]; then
+    [[ -n $VERBOSE ]] && echo "Dropping plain-text DNS traffic"
     $IPTABLES -N fpn0-dns-dropin
     $IPTABLES -A INPUT -j fpn0-dns-dropin
     $IPTABLES -A fpn0-dns-dropin -i lo -j ACCEPT
@@ -200,8 +202,8 @@ if [[ -n $DROP_DNS_53 ]]; then
     $IPTABLES -A fpn0-dns-dropout -t filter -p tcp --dport 53 -j DROP
 fi
 
-[[ -n $VERBOSE ]] && echo "Dropping IPv6 traffic"
 if [[ -n $DROP_IPV6 ]]; then
+    [[ -n $VERBOSE ]] && echo "Dropping IPv6 traffic"
     $IP6TABLES -P INPUT DROP
     $IP6TABLES -P OUTPUT DROP
     $IP6TABLES -P FORWARD DROP

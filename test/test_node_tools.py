@@ -53,6 +53,7 @@ from node_tools.network_funcs import run_host_check
 from node_tools.network_funcs import run_net_check
 from node_tools.node_funcs import check_daemon
 from node_tools.node_funcs import control_daemon
+from node_tools.node_funcs import do_shutdown
 from node_tools.node_funcs import handle_moon_data
 from node_tools.node_funcs import parse_moon_data
 from node_tools.sched_funcs import catch_exceptions
@@ -656,6 +657,7 @@ def get_state_icon(state):
         'CONFIG': 'network-vpn-no-route-symbolic',
         'ERROR': 'network-error-symbolic',
         'STARTING': 'network-idle-symbolic',
+        'UPGRADE': 'network-offline-symbolic',
         'NONE': 'network-offline-symbolic'
     }
     return state_dict.get(state, state_dict['NONE'])
@@ -678,19 +680,37 @@ def test_file_is_found():
     assert res is False
 
 
+# silly check_daemon test fails sporadically due to env
+# @pytest.mark.xfail(strict=False)
 def test_check_daemon():
     """
     Test status return from check_daemon().
     """
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = check_daemon()
-    assert type(res) is bool
+    # print(res)
+    assert res is None
     res = check_daemon('msg_subscriber.py')
-    assert type(res) is bool
+    assert res is None
 
 
-# silly check_daemon test fails sporadically due to env
-# @pytest.mark.xfail(strict=False)
+def test_daemon_can_die():
+    """
+    Test if we can kill the msg_responder daemon.
+    """
+    NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
+    res = control_daemon('start')
+    assert res.returncode == 0
+    assert res.stdout == ''
+    # print(res)
+    time.sleep(1)
+    pid_file = '/tmp/msg_responder.pid'
+    with open(pid_file, 'r') as pf:
+        resp_pid = int(pf.read().strip())
+    with pytest.raises(SystemExit):
+        do_shutdown(pid=resp_pid)
+
+
 def test_daemon_can_start():
     """
     Test if we can start the msg_responder daemon.
@@ -698,7 +718,7 @@ def test_daemon_can_start():
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = control_daemon('start')
     assert res.returncode == 0
-    assert 'Starting' in res.stdout
+    assert res.stdout == ''
 
 
 def test_daemon_can_stop():
@@ -708,7 +728,7 @@ def test_daemon_can_stop():
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = control_daemon('stop')
     assert res.returncode == 0
-    assert 'Stopping' in res.stdout
+    assert res.stdout == ''
 
 
 def test_daemon_has_status():
@@ -718,7 +738,7 @@ def test_daemon_has_status():
     NODE_SETTINGS['home_dir'] = os.path.join(os.getcwd(), 'scripts')
     res = control_daemon('status')
     assert res.returncode == 0
-    assert 'False' in res.stdout
+    assert 'pidfile' in res.stdout
 
 
 # @pytest.mark.xfail(raises=PermissionError)
@@ -738,9 +758,9 @@ def test_get_runtimedir():
     temp_dir = tempfile.gettempdir()
     NODE_SETTINGS['runas_user'] = False
     res = get_runtimedir()
-    # print(res)
     assert res == '/run/fpnd' or res == temp_dir
     res = get_runtimedir(user_dirs=True)
+    # print(res)
     assert '/run/user/' in res or 'tmp/portage' in res or res == temp_dir
     NODE_SETTINGS['runas_user'] = True
 
@@ -749,7 +769,7 @@ def test_get_icon_from_state():
     """
     This is really in the gtk indicator source, test it here fr now
     """
-    msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'WAITING', 'NONE', 'FOO']
+    msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'UPGRADE', 'WAITING', 'NONE', 'FOO']
     for state in msgs:
         res = get_state_icon(state)
         assert 'symbolic' in res
@@ -761,7 +781,7 @@ def test_put_state_msg():
     """
     state_path = Path(get_runtimedir(user_dirs=True)).joinpath('fpnd.state')
 
-    msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'WAITING', 'NONE']
+    msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'UPGRADE', 'WAITING', 'NONE']
     for msg in msgs:
         put_state_msg(msg)
         status_queue = get_status(str(state_path))
@@ -772,7 +792,7 @@ def test_put_state_msg():
 
     for msg in msgs:
         put_state_msg(msg)
-    status_queue = get_status(str(state_path), 6)
+    status_queue = get_status(str(state_path), 7)
     assert len(list(status_queue)) == 1
     data = status_queue.pop().strip()
     assert data == 'NONE'
@@ -787,7 +807,7 @@ def test_put_state_msg_save():
     """
     state_path = Path(get_runtimedir(user_dirs=True)).joinpath('fpnd.state')
 
-    msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'WAITING', 'NONE']
+    msgs = ['STARTING', 'CONNECTED', 'CONFIG', 'ERROR', 'UPGRADE', 'WAITING', 'NONE']
     for msg in msgs:
         put_state_msg(msg, clean=False)
         status_queue = get_status(str(state_path))
@@ -798,11 +818,11 @@ def test_put_state_msg_save():
 
     for msg in msgs:
         put_state_msg(msg, clean=False)
-    status_queue = get_status(str(state_path), 6)
-    assert len(list(status_queue)) == 6
+    status_queue = get_status(str(state_path), 7)
+    assert len(list(status_queue)) == 7
     data = status_queue.pop().strip()
     assert data == 'NONE'
-    assert len(list(status_queue)) == 5
+    assert len(list(status_queue)) == 6
 
     state_path.unlink()
 
