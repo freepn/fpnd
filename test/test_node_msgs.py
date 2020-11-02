@@ -11,10 +11,13 @@ from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import handle_node_queues
 from node_tools.msg_queues import lookup_node_id
 from node_tools.msg_queues import make_cfg_msg
+from node_tools.msg_queues import make_version_msg
 from node_tools.msg_queues import manage_incoming_nodes
+from node_tools.msg_queues import parse_version_msg
 from node_tools.msg_queues import process_hold_queue
 from node_tools.msg_queues import valid_announce_msg
 from node_tools.msg_queues import valid_cfg_msg
+from node_tools.msg_queues import valid_version
 from node_tools.msg_queues import wait_for_cfg_msg
 from node_tools.network_funcs import drain_msg_queue
 from node_tools.network_funcs import publish_cfg_msg
@@ -56,6 +59,26 @@ def test_valid_cfg_msg():
     assert res is True
 
 
+def test_invalid_version():
+    base_ver = '0.9.5'
+    res = valid_version(base_ver, None)
+    assert res is False
+    res = valid_version(base_ver, '1.0')
+    assert res is False
+    res = valid_version(base_ver, '1.1.b')
+    assert res is False
+
+
+def test_valid_version():
+    base_ver = '0.9.5'
+    res = valid_version(base_ver, '0.9.6')
+    assert res is True
+    res = valid_version(base_ver, '0.9.4')
+    assert res is False
+    res = valid_version(base_ver, base_ver)
+    assert res is True
+
+
 def test_make_cfg_msg():
     # the char set used for trie keys is string.hexdigits
     import json
@@ -74,6 +97,48 @@ def test_make_cfg_msg():
     assert valid_cfg_msg(res)
     ct.id_trie.clear()
     assert trie_is_empty(ct.id_trie) is True
+
+
+def test_make_version_msg():
+    import json
+    from node_tools import __version__
+
+    node_id = '02beefdead'
+    d = {
+        "node_id": "{}".format(node_id),
+        "version": __version__
+    }
+    ver_msg = json.dumps(d)
+
+    res = make_version_msg(node_id)
+    assert type(res) is str
+    assert json.loads(res) == json.loads(ver_msg)
+
+    res = make_version_msg(node_id, '0.9.4')
+    assert '0.9.4' in res
+    res = make_version_msg(node_id, 'UPGRADE_REQUIRED')
+    assert 'UPGRADE' in res
+
+
+def test_parse_version_msg():
+    import json
+    from node_tools import __version__
+
+    node_id = '02beefdead'
+    d = {
+        "node_id": "{}".format(node_id),
+        "version": __version__
+    }
+    ver_msg = json.dumps(d)
+    # print(ver_msg)
+
+    res = parse_version_msg(ver_msg)
+    assert type(res) is list
+    assert res == [node_id , __version__]
+
+    res = parse_version_msg(node_id)
+    assert type(res) is list
+    assert res == [node_id , None]
 
 
 class BaseTestCase(unittest.TestCase):

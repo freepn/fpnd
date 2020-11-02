@@ -32,7 +32,7 @@ def check_daemon(script=None):
         result = True
     else:
         result = None
-        logger.error('ERROR: bad cmd result is {}'.format(res.stdout))
+        logger.error('ERROR: bad cmd result is {}'.format(res))
     return result
 
 
@@ -118,8 +118,6 @@ def do_cleanup(path=None, addr=None):
         if not NODE_SETTINGS['use_localhost'] and not addr:
             addr = moon_addr
 
-        put_state_msg('NONE')
-
         if not path:
             path = NODE_SETTINGS['home_dir']
         nets = ['fpn_id0', 'fpn_id1']
@@ -127,6 +125,7 @@ def do_cleanup(path=None, addr=None):
 
         for iface, net in zip(ifaces, nets):
             if state[iface]:
+                put_state_msg('NONE')
                 logger.info('CLEANUP: shutting down {}'.format(iface))
                 cmd = get_net_cmds(path, iface)
                 res = do_net_cmd(cmd)
@@ -139,6 +138,32 @@ def do_cleanup(path=None, addr=None):
             run_moon_cmd(moon_id, action='deorbit')
             reply = send_req_msg(addr, 'offline', node_id)
             logger.debug('CLEANUP: offline reply: {}'.format(reply))
+
+
+def do_shutdown(pid=None):
+    """
+    Internal shutdown command in case version is incompaitble with infra.
+    """
+    import os
+    import sys
+    import signal
+    import time
+
+    if not pid:
+        pid = os.getpid()
+
+    # Try killing the daemon process
+    try:
+        i = 0
+        while 1:
+            os.kill(int(pid), signal.SIGTERM)
+            time.sleep(0.1)
+            i = i + 1
+            if i % 10 == 0:
+                os.kill(int(pid), signal.SIGHUP)
+    except (OSError, ProcessLookupError) as exc:
+        logger.error('kill signal exception: {}'.format(exc))
+        sys.exit(0)
 
 
 def do_startup(nwid):

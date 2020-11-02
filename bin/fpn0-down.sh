@@ -40,17 +40,6 @@ if [[ -n $HAS_6LEGACY ]]; then
     IP6TABLES="${HAS_6LEGACY}"
 fi
 
-[[ -n $VERBOSE ]] && echo "Checking kernel rp_filter setting..."
-RP_NEED="1"
-RP_ORIG="$(sysctl net.ipv4.conf.all.rp_filter | cut -f3 -d' ')"
-
-if [[ ${RP_NEED} = "${RP_ORIG}" ]]; then
-    [[ -n $VERBOSE ]] && echo "  RP good..."
-else
-    [[ -n $VERBOSE ]] && echo "  RP remove garlic filter..."
-    sysctl -w net.ipv4.conf.all.rp_filter=$RP_NEED > /dev/null 2>&1
-fi
-
 while read -r line; do
     [[ -n $VERBOSE ]] && echo "Checking network..."
     LAST_OCTET=$(echo "$line" | cut -d" " -f9 | cut -d"/" -f1 | cut -d"." -f4)
@@ -81,6 +70,15 @@ if [[ -n $ZT_NETWORK ]]; then
     ZT_GATEWAY=$(zerotier-cli -j listnetworks | grep "${ZT_INTERFACE}" -A 14 | grep via | awk '{ print $2 }' | tail -n 1 | cut -d'"' -f2)
 fi
 
+[[ -n $VERBOSE ]] && echo "  RP remove garlic filter..."
+RP_ORIG=$(grep ^filter /tmp/fpn0-rp_filter | cut -f2 -d'=')
+
+if [[ -n $VERBOSE ]]; then
+    sysctl -w net.ipv4.conf."${ZT_INTERFACE}".rp_filter=$RP_ORIG
+else
+    sysctl -w net.ipv4.conf."${ZT_INTERFACE}".rp_filter=$RP_ORIG > /dev/null 2>&1
+fi
+
 TABLE_NAME="fpn0-route"
 TABLE_PATH="/etc/iproute2/rt_tables"
 FPN_RT_TABLE=$(cat "${TABLE_PATH}" | { grep -o "${TABLE_NAME}" || test $? = 1; })
@@ -89,13 +87,11 @@ FPN_RT_PRIO=$(ip rule show | grep "${TABLE_NAME}" | cut -d':' -f1)
 [[ -n $VERBOSE ]] && echo "Checking for FPN routing table..."
 if [[ ${FPN_RT_TABLE} = "${TABLE_NAME}" ]]; then
     [[ -n $VERBOSE ]] && echo "  Flushing route cache..."
-    ip route flush cache
+    ip route flush table "${TABLE_NAME}"
     while read -r line; do
         [[ -n $VERBOSE ]] && echo "  Removing route rule..."
         ip rule del prio "${line}"
     done < <(ip rule show | grep "${TABLE_NAME}" | cut -d':' -f1)
-    [[ -n $VERBOSE ]] && echo "  Deleting route..."
-    ip route del default via ${ZT_GATEWAY} dev ${ZT_INTERFACE} table "${TABLE_NAME}"
     [[ -n $VERBOSE ]] && echo "  Cleaning up..."
     sed -i "/${FPN_RT_TABLE}/d" /etc/iproute2/rt_tables
 else
@@ -153,6 +149,7 @@ fi
 [[ -n $VERBOSE ]] && echo "Deleting nat and mangle rules..."
 # get fpn1 iptables state, remove custom chain rules, restore state
 "$IPTABLES"-save > /tmp/fpn0-up-state.txt
+sed -i '/fpn0-manglein/d' /tmp/fpn0-up-state.txt
 sed -i '/fpn0-mangleout/d' /tmp/fpn0-up-state.txt
 sed -i '/fpn0-postnat/d' /tmp/fpn0-up-state.txt
 if [[ -n $DROP_DNS_53 ]]; then
@@ -160,7 +157,7 @@ if [[ -n $DROP_DNS_53 ]]; then
     sed -i '/fpn0-dns-dropout/d' /tmp/fpn0-up-state.txt
 fi
 "$IPTABLES"-restore < /tmp/fpn0-up-state.txt
-rm -f /tmp/fpn0-up-state.txt
+rm -f /tmp/fpn0-up-state.txt /tmp/fpn0-rp_filter
 
 [[ -n $VERBOSE ]] && echo "Restoring IPv6 traffic"
 if [[ -n $DROP_IPV6 ]]; then

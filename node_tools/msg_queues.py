@@ -119,6 +119,26 @@ def make_cfg_msg(trie, key_str):
     return json.dumps(d)
 
 
+def make_version_msg(node_id, version=None):
+    """
+    Create the version msg for a node and return msg string.
+    :param node_id: node ID str
+    :return: JSON str (node_id version msg)
+    """
+    import json
+    from node_tools import __version__ as fpnd_version
+
+    if version is None:
+        version = fpnd_version
+
+    d = {
+        "node_id": "{}".format(node_id),
+        "version": "{}".format(version)
+    }
+
+    return json.dumps(d)
+
+
 def manage_incoming_nodes(node_q, reg_q, wait_q):
     with node_q.transact():
         for node in list(reg_q):
@@ -132,6 +152,25 @@ def manage_incoming_nodes(node_q, reg_q, wait_q):
             wait_q.append(node)
     with node_q.transact():
         node_q.clear()
+
+
+def parse_version_msg(msg):
+    """
+    Parse announce msg and return list output needed for old or new
+    format announce message {'node_id': <str>, 'version': <ver_str>}.
+    :param msg: annouce msg (possible str or json str)
+    :return: [node_id, version] <list> if valid, else []
+    """
+    import json
+    import string
+
+    result = []
+    if len(msg) == 10 and set(msg).issubset(string.hexdigits):
+        result = [msg, None]
+    elif isinstance(msg, str) and 'node_id' in msg:
+        ver_dict = json.loads(msg)
+        result = [ver_dict['node_id'], ver_dict['version']]
+    return result
 
 
 def populate_leaf_list(node_q, wait_q, tmp_q, data):
@@ -188,6 +227,26 @@ def valid_cfg_msg(msg):
             raise AssertionError('Config msg {} is invalid!'.format(msg))
     else:
         raise AssertionError('Config msg {} is invalid!'.format(msg))
+
+
+def valid_version(base_version, test_version):
+    """
+    Test version string from announce msg against baseline version,
+    checking for None.
+    :param base_version <str>: baseline version string
+    :param test_version <str>: version string (or None) from node announce msg
+    :return: True if version is valid and >= baseline, else False
+    """
+    import semver as sv
+
+    if test_version is None:
+        return False
+    try:
+        result = sv.VersionInfo.parse(test_version) >= sv.VersionInfo.parse(base_version)
+        return result
+    except Exception as exc:
+        logger.error('semver exception was: {}'.format(exc))
+        return False
 
 
 def wait_for_cfg_msg(cfg_q, hold_q, reg_q, msg):

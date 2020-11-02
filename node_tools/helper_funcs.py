@@ -171,7 +171,7 @@ def get_cachedir(dir_name='fpn_cache', user_dirs=False):
         # logger.debug('UIDs for cachedir: {}'.format(sys_uids))
         # logger.debug('effective user for cachedir: {}'.format(sys_usr))
     if cache_dir == temp_dir:
-        logger.warning('Falling back to temp dir: {}'.format(temp_dir))
+        logger.debug('Falling back to temp dir: {}'.format(temp_dir))
     return os.path.join(cache_dir, dir_name)
 
 
@@ -207,8 +207,10 @@ def get_runtimedir(user_dirs=False):
         path_chk = Path(run_path)
         if path_chk.exists() and not path_chk.group() == 'fpnd':
             run_path = temp_dir
+        elif not path_chk.exists() and 0 not in os.getresuid():
+            run_path = temp_dir
     if run_path == temp_dir:
-        logger.warning('Falling back to temp dir: {}'.format(temp_dir))
+        logger.debug('Falling back to temp dir: {}'.format(temp_dir))
     return run_path
 
 

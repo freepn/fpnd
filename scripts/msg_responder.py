@@ -18,11 +18,15 @@ from nanoservice.error import ServiceError
 from node_tools import state_data as st
 
 from node_tools.helper_funcs import get_cachedir
+from node_tools.helper_funcs import get_runtimedir
 from node_tools.msg_queues import add_one_only
 from node_tools.msg_queues import clean_from_queue
 from node_tools.msg_queues import handle_announce_msg
 from node_tools.msg_queues import lookup_node_id
+from node_tools.msg_queues import make_version_msg
+from node_tools.msg_queues import parse_version_msg
 from node_tools.msg_queues import valid_announce_msg
+from node_tools.msg_queues import valid_version
 from node_tools.msg_queues import wait_for_cfg_msg
 
 
@@ -37,9 +41,10 @@ formatter = logging.Formatter('%(module)s: %(funcName)s+%(lineno)s: %(message)s'
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-pid_file = '/tmp/responder.pid'
-stdout = '/tmp/responder.log'
-stderr = '/tmp/responder_err.log'
+# pid_file = '/tmp/responder.pid'
+pid_file = os.path.join(get_runtimedir(), '{}.pid'.format('msg_responder'))
+# stdout = '/tmp/responder.log'
+# stderr = '/tmp/responder_err.log'
 
 cfg_q = dc.Deque(directory=get_cachedir('cfg_queue'))
 hold_q = dc.Deque(directory=get_cachedir('hold_queue'))
@@ -84,26 +89,41 @@ def timerfunc(func):
     return function_timer
 
 
-def echo(msg):
+def echo(ver_msg):
     """
-    Process valid node msg/queues, ie, msg must be a valid node ID.
-    :param str node ID: zerotier node identity
-    :return: str node ID
+    Process valid node msg/queues, ie, msg must contain a valid node ID
+    and version (where "valid" version is >= minimum baseline version).
+    Old format conatins only the node ID string, new format is JSON msg
+    with node ID and `fpnd` version string.
+    :param ver_msg: node ID or json
+    :return: parsed msg if version is valid, else UPGRADE msg
     """
-    if valid_announce_msg(msg):
-        logger.debug('Got valid announce msg: {}'.format(msg))
-        clean_stale_cfgs(msg, cfg_q)
-        handle_announce_msg(node_q, reg_q, wait_q, msg)
-        node_data = lookup_node_id(msg, tmp_q)
-        if node_data:
-            logger.info('Got valid announce msg from host {} (node {})'.format(node_data[msg], msg))
-        return msg
-    else:
-        node_data = lookup_node_id(msg, tmp_q)
-        if node_data:
-            logger.info('Bad announce msg from host {} (node {})'.format(node_data[msg], msg))
+    msg = parse_version_msg(ver_msg)
+    min_ver = '0.9.6'
+
+    if msg != []:
+        if valid_announce_msg(msg[0]):
+            logger.debug('Got valid announce msg: {}'.format(msg))
+            clean_stale_cfgs(msg[0], cfg_q)
+            node_data = lookup_node_id(msg[0], tmp_q)
+            if node_data:
+                logger.info('Got valid announce msg from host {} (node {})'.format(node_data[msg[0]], msg))
+            if valid_version(min_ver, msg[1]):
+                handle_announce_msg(node_q, reg_q, wait_q, msg[0])
+                reply = make_version_msg(msg[0])
+                logger.info('Got valid node version: {}'.format(msg))
+            else:
+                reply = make_version_msg(msg[0], 'UPGRADE_REQUIRED')
+                logger.error('Invalid version from host {} is: {} < {}'.format(node_data[msg[0]], msg, min_ver))
+            return reply
         else:
-            logger.warning('Bad announce msg: {}'.format(msg))
+            node_data = lookup_node_id(msg, tmp_q)
+            if node_data:
+                logger.warning('Bad announce msg from host {} (node {})'.format(node_data[msg[0]], msg))
+            else:
+                logger.warning('Bad announce msg: {}'.format(msg))
+    else:
+        logger.error('Could not parse version msg: {}'.format(msg))
 
 
 def get_node_cfg(msg):
@@ -202,7 +222,7 @@ class rspDaemon(Daemon):
 
 if __name__ == "__main__":
 
-    daemon = rspDaemon(pid_file, stdout=stdout, stderr=stderr, verbose=1)
+    daemon = rspDaemon(pid_file, verbose=0)
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
             logger.info('Starting')
