@@ -84,8 +84,12 @@ echo "filter=${RP_ORIG}" > /tmp/fpn0-rp_filter
 if [[ ${RP_NEED} = "${RP_ORIG}" ]]; then
     [[ -n $VERBOSE ]] && echo "  RP good..."
 else
-    [[ -n $VERBOSE ]] && echo "  RP needs garlic filter..."
-    sysctl -w net.ipv4.conf."${ZT_INTERFACE}".rp_filter=$RP_NEED > /dev/null 2>&1
+    if [[ -n $VERBOSE ]]; then
+        echo "  RP needs garlic filter..."
+        sysctl -w net.ipv4.conf."${ZT_INTERFACE}".rp_filter=$RP_NEED
+    else
+        sysctl -w net.ipv4.conf."${ZT_INTERFACE}".rp_filter=$RP_NEED > /dev/null 2>&1
+    fi
 fi
 
 TABLE_NAME="fpn0-route"
@@ -159,6 +163,7 @@ ip route add default via ${ZT_GATEWAY} dev ${ZT_INTERFACE} table "${TABLE_NAME}"
 
 # Anything with this fwmark will use the secondary routing table
 ip rule add fwmark 0x1 table "${TABLE_NAME}"
+ip route flush cache
 sleep 2
 
 # add mangle chain
@@ -178,12 +183,12 @@ fi
 $IPTABLES -N fpn0-postnat -t nat
 $IPTABLES -t nat -A POSTROUTING -j fpn0-postnat
 # now rewrite the src-addr using snat/masq
-$IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j SNAT --to ${ZT_ADDRESS}
-$IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j SNAT --to ${ZT_ADDRESS}
+$IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 80 -j MASQUERADE
+$IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 443 -j MASQUERADE
 if [[ -n $ROUTE_DNS_53 ]] && ! [[ -n $DROP_DNS_53 ]]; then
-    $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j SNAT --to ${ZT_ADDRESS}
-    $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j SNAT --to ${ZT_ADDRESS}
-    $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 853 -j SNAT --to ${ZT_ADDRESS}
+    $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 53 -j MASQUERADE
+    $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p udp --dport 53 -j MASQUERADE
+    $IPTABLES -t nat -A fpn0-postnat -s ${INET_ADDRESS} -o ${ZT_INTERFACE} -p tcp --dport 853 -j MASQUERADE
 fi
 
 if [[ -n $DROP_DNS_53 ]]; then

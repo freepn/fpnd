@@ -92,8 +92,6 @@ if [[ ${FPN_RT_TABLE} = "${TABLE_NAME}" ]]; then
         [[ -n $VERBOSE ]] && echo "  Removing route rule..."
         ip rule del prio "${line}"
     done < <(ip rule show | grep "${TABLE_NAME}" | cut -d':' -f1)
-    [[ -n $VERBOSE ]] && echo "  Deleting route..."
-    ip route del default via ${ZT_GATEWAY} dev ${ZT_INTERFACE} table "${TABLE_NAME}"
     [[ -n $VERBOSE ]] && echo "  Cleaning up..."
     sed -i "/${FPN_RT_TABLE}/d" /etc/iproute2/rt_tables
 else
