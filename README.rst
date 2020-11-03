@@ -135,18 +135,18 @@ overlay.
 Create a repos.conf file for the overlay and place the file in the
 ``/etc/portage/repos.conf`` directory.  Run::
 
-  $ sudo nano /etc/portage/repos.conf/python-overlay.conf
+  $ sudo nano /etc/portage/repos.conf/freepn-overlay.conf
 
 and add the following content to the new file::
 
-  [python-overlay]
+  [freepn-overlay]
 
   # Various python ebuilds for FreePN
   # Maintainer: nerdboy <nerdboy@gentoo.org>
 
-  location = /var/db/repos/python-overlay
+  location = /var/db/repos/freepn-overlay
   sync-type = git
-  sync-uri = https://github.com/freepn/python-overlay.git
+  sync-uri = https://github.com/freepn/freepn-overlay.git
   priority = 50
   auto-sync = yes
 
@@ -154,7 +154,7 @@ Adjust the path in the ``location`` field as needed, then save and exit nano.
 
 Run the following command to sync the repo::
 
-  $ sudo emaint sync --repo python-overlay
+  $ sudo emaint sync --repo freepn-overlay
 
 
 .. _Portage: https://wiki.gentoo.org/wiki/Portage

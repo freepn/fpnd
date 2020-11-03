@@ -98,7 +98,7 @@ The following steps are for a "personal" network (single "mobile" node).
 
 
 .. _add the PPA: https://github.com/freepn/fpnd/blob/master/README.rst#getting-started
-.. _add the overlay: https://github.com/freepn/python-overlay/blob/master/README.rst
+.. _add the overlay: https://github.com/freepn/freepn-overlay/blob/master/README.rst
 .. _my.zerotier.com: https://my.zerotier.com/
 
 .. note:: The above network Members will continue to show **Never** in the

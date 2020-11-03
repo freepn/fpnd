@@ -118,7 +118,7 @@ don't (yet) support any "official" Debian releases.
 
 
 .. _PPA on Launchpad: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
-.. _python overlay: https://github.com/freepn/python-overlay
+.. _python overlay: https://github.com/freepn/freepn-overlay
 
 
 .. note:: This stack depends on both Python and nanomsg and the Ubuntu
@@ -278,7 +278,7 @@ of fpnd, then just install the package after doing the above:
   $ sudo apt-get install python3-fpnd
 
 
-.. _Install the overlay: https://github.com/freepn/python-overlay/blob/master/README.rst
+.. _Install the overlay: https://github.com/freepn/freepn-overlay/blob/master/README.rst
 
 
 Standards and Coding Style

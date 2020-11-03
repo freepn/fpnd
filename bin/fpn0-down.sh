@@ -149,7 +149,6 @@ fi
 [[ -n $VERBOSE ]] && echo "Deleting nat and mangle rules..."
 # get fpn1 iptables state, remove custom chain rules, restore state
 "$IPTABLES"-save > /tmp/fpn0-up-state.txt
-sed -i '/fpn0-manglein/d' /tmp/fpn0-up-state.txt
 sed -i '/fpn0-mangleout/d' /tmp/fpn0-up-state.txt
 sed -i '/fpn0-postnat/d' /tmp/fpn0-up-state.txt
 if [[ -n $DROP_DNS_53 ]]; then

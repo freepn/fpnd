@@ -2,7 +2,7 @@
  Software Version Description for fpnd |Version|
 =================================================
 
-.. |Version| replace:: 0.9.6
+.. |Version| replace:: 0.9.7
 
 :date: |date|, |time| PST8PDT
 :author: Stephen L Arnold
@@ -51,7 +51,7 @@ more granular user controls.
 ----------------------------------
 
 FreePN packages are available for Gentoo and Ubuntu using the ebuilds in the
-`python-overlay`_ or the ``.deb`` packages hosted on the Embedded device
+`freepn-overlay`_ or the ``.deb`` packages hosted on the Embedded device
 `PPA on Launchpad`_. The PPA sources can also be used to build Debian packages,
 however, we don't (yet) support any "official" Debian releases.
 
@@ -106,6 +106,19 @@ Note you can also use the focal PPA series on the latest kali images,
 however, the fpnd.service is broken against the latest systemd upgrade
 to 264 or higher (and there is no fix yet).
 
+Breaking "feature":
+
+As of the 0.9.7 release, the primary FreePN infrastructure node will
+check the version of ``fpnd`` in the announce message and send an
+``UPGRADE`` message if the user node software is no longer compatible
+with the minimum required version (currently 0.9.5).  This means your
+node will no longer be able to connect until the required packages are
+upgraded.  See the `Post-Install Updates`_ section in the README for
+more information.
+
+.. _Post-Install Updates: https://github.com/freepn/fpnd#post-install-updates
+
+
 3.1 - Packages and Source Code
 ------------------------------
 
@@ -121,7 +134,7 @@ For supported Linux distributions:
 
 * Gentoo (funtoo, Sabayon)
 
-  + use the `python-overlay`_
+  + use the `freepn-overlay`_
 
 For other distributions:
 
@@ -135,7 +148,7 @@ For other distributions:
 
 
 .. _PPA on Launchpad: https://launchpad.net/~nerdboy/+archive/ubuntu/embedded
-.. _python-overlay: https://github.com/freepn/python-overlay
+.. _freepn-overlay: https://github.com/freepn/freepn-overlay
 .. _fpnd source release on github: https://github.com/freepn/fpnd/releases
 
 
@@ -184,18 +197,18 @@ For Gentoo or derivatives based on `Portage`_, first install the portage overlay
 Create a repos.conf file for the overlay and place the file in the
 ``/etc/portage/repos.conf`` directory.  Run::
 
-  $ sudo nano -w /etc/portage/repos.conf/python-overlay.conf
+  $ sudo nano -w /etc/portage/repos.conf/freepn-overlay.conf
 
 and add the following content to the new file::
 
-  [python-overlay]
+  [freepn-overlay]
 
   # Various python ebuilds for FreePN
   # Maintainer: nerdboy (nerdboy@gentoo.org)
 
-  location = /var/db/repos/python-overlay
+  location = /var/db/repos/freepn-overlay
   sync-type = git
-  sync-uri = https://github.com/freepn/python-overlay.git
+  sync-uri = https://github.com/freepn/freepn-overlay.git
   priority = 50
   auto-sync = yes
 
@@ -203,7 +216,7 @@ Adjust the path in the ``location`` field as needed, then save and exit nano.
 
 Run the following command to sync the repo::
 
-  $ sudo emaint sync --repo python-overlay
+  $ sudo emaint sync --repo freepn-overlay
 
 Once the overlay is synced, install the daemon and/or UI package::
 
@@ -258,7 +271,7 @@ Using the Debian developer/packaging tools is beyond the scope of this document.
 The canonical source code repositories are maintained on github_ and verified
 by both github keys (for pull requests) and developer keys; the latter are used
 to sign releases (both tags and ``tar.gz`` archives).  Note this also includes
-the ``.ebuild`` packages in the `python-overlay`_.
+the ``.ebuild`` packages in the `freepn-overlay`_.
 
 For the ``.deb`` package format:
 
@@ -310,6 +323,18 @@ run-time requirements also include a recent Linux kernel with ``bash``,
 3.6 - Known Issues
 ------------------
 
+* Domain resolution issue on Ubuntu 20.04 in Chromium / Firefox browsers
+
+When you type a "naked" domain into the URL bar in the format: xxx.com, it
+doesn't resolve / times out while trying to load, however https://xxx.com
+*does* resolve (clicking a link to https://xxx.com also resolves immediately.
+Modern browsers have a built-in "prediction" mechanism for "guessing"
+what to do; on www-client/firefox-81.0.1 it defaults to http with xxx.com
+but the prediction thing switches to https and adds a trailing slash if
+it recognizes/remembers the domain. From the browser side, the "fix" is
+basically using a plugin, eg, https-everywhere (as we don't have a fix
+yet for the port 80 issue).
+
 * ip6tables modules not loading automatically on ubuntu
 
 The new setting to filter leaky IPv6 traffic depends on some additional
@@ -345,6 +370,7 @@ on Ubuntu and Kali have the required modules enabled (on Gentoo this is handled
 by checking for the required modules when building the package and issuing a
 warning to the user if necessary).
 
+.. _issue 91: https://github.com/freepn/fpnd/issues/91
 .. _issue 39: https://github.com/freepn/fpnd/issues/39
 .. _issue 67: https://github.com/freepn/fpnd/issues/67
 .. _issue 30: https://github.com/freepn/fpnd/issues/30
