@@ -102,6 +102,7 @@ def echo(ver_msg):
     min_ver = '0.9.6'
 
     if msg != []:
+        logger.info('Parsed msg has payload {} and {}'.format(msg[0], msg[1]))
         if valid_announce_msg(msg[0]):
             logger.debug('Got valid announce msg: {}'.format(msg))
             clean_stale_cfgs(msg[0], cfg_q)
@@ -114,7 +115,7 @@ def echo(ver_msg):
                 logger.info('Got valid node version: {}'.format(msg))
             else:
                 reply = make_version_msg(msg[0], 'UPGRADE_REQUIRED')
-                logger.error('Invalid version from host {} is: {} < {}'.format(node_data[msg[0]], msg, min_ver))
+                logger.error('Invalid version from host {} is: {} < {}'.format(node_data[msg[0]], msg[1], min_ver))
             return reply
         else:
             node_data = lookup_node_id(msg, tmp_q)

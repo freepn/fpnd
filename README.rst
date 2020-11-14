@@ -121,7 +121,7 @@ Pre-install
 Before you can install any FreePN packages, you'll need to add the required
 package repository or overlay.
 
-For all ubuntu series, make sure you have the ``gpg`` and ``add-apt-repository``
+For all Ubuntu series, make sure you have the ``gpg`` and ``add-apt-repository``
 commands installed and then add the PPA:
 
 ::
@@ -202,7 +202,7 @@ updates waiting (or at least when your package tree is getting stale).
 
 * Gentoo
 
-  - Use your proffered tools to keep the overlay synced and check for
+  - Use your preferred tools to keep the overlay synced and check for
     updates frequently; using the "live" ebuild is left as an exercise
     for the reader...
 
