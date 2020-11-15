@@ -89,5 +89,5 @@ __all__ = [
     'wait_for_moon',
 ]
 
-__version__ = '0.9.7'
+__version__ = '0.9.8'
 __version_info__ = tuple(int(segment) for segment in __version__.split('.'))
