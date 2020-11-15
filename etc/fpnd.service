@@ -16,12 +16,14 @@ AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_DAC_OVERRIDE
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_DAC_OVERRIDE
 
 ExecStart=/usr/lib/fpnd/fpnd.py start
-ExecStop=/bin/kill -TERM $MAINPID
-KillMode=none
-Type=forking
+
+KillSignal=SIGTERM
+SendSIGKILL=no
+
+
 PIDFile=/run/fpnd/fpnd.pid
-TimeoutStartSec=5
-TimeoutStopSec=7
+TimeoutStartSec=9
+TimeoutStopSec=9
 
 [Install]
 WantedBy=multi-user.target
