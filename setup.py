@@ -28,7 +28,7 @@ FPND_VERSION = version
 REL_TAG = FPND_VERSION.replace('-', 'p')
 
 FPND_DOWNLOAD_URL = (
-    'https://github.com/sarnold/fpnd/tarball/' + REL_TAG
+    'https://github.com/freepn/fpnd/tarball/' + REL_TAG
 )
 
 setup(
@@ -57,14 +57,14 @@ setup(
     download_url=FPND_DOWNLOAD_URL,
     keywords=['freepn', 'vpn', 'p2p'],
     install_requires=[
-        'appdirs @ git+https://github.com/ActiveState/appdirs@1.4.1',
-        'datrie @ git+https://github.com/freepn/datrie@0.8.1',
-        'diskcache @ git+https://github.com/grantjenks/python-diskcache@v4.1.0',
-        'nanoservice @ git+https://github.com/freepn/nanoservice@0.7.2p1',
-        'python-daemon @ git+https://github.com/freepn/python-daemon@0.2.3',
-        'schedule @ git+https://github.com/freepn/schedule@0.6.0p2',
-        'semver @ git+https://github.com/python-semver/python-semver@2.13.0',
-        'ztcli-async @ git+https://github.com/freepn/ztcli-async@0.0.7',
+        'appdirs==1.4.1',
+        'diskcache==4.1.0',
+        'datrie @ git+https://github.com/freepn/datrie@0.8.1#egg=datrie',
+        'nanoservice @ git+https://github.com/freepn/nanoservice@0.7.2-2#egg=nanoservice',
+        'python-daemon @ git+https://github.com/freepn/python-daemon@0.2.3#egg=python-daemon',
+        'schedule @ git+https://github.com/freepn/schedule@0.6.0-3#egg=schedule',
+        'semver==2.13.0',
+        'ztcli-async @ git+https://github.com/freepn/ztcli-async@0.0.7#egg=ztcli-async',
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
