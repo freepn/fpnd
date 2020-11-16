@@ -35,7 +35,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip wheel
         sudo apt-get install -y libnanomsg-dev libdatrie-dev
-        pip install Cython tox
+        pip install Cython tox coverage
         pip install git+https://github.com/freepn/nanomsg-python@1.0.2-4#egg=nanomsg
         pip install .
         pwd && ls -l

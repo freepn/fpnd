@@ -1,3 +1,30 @@
+0.9.8 (2020-11-16)
+------------
+- update appdirs version and install coverage for ci
+- README.rst: update build status for github ci. [Stephen L Arnold]
+- Merge pull request #94 from freepn/exp-init. [Steve Arnold]
+- systemd service refactor and misc fixes [Steve Arnold]
+
+  - More logging cleanup, info/debug vs warning.
+  - Update packaging files and requires, switch CI to github.
+  - Bump version 0.9.7 -> 0.9.8 and update readme/release notes.
+  - fpnd.service: refactor systemd service options so stop actually works.
+  - Update msg_responder logging and minor doc fixes.
+
+
+0.9.7 (2020-11-03)
+------------------
+- Update readme docs, add "breaking feature" note and fix overlay name. [Stephen L Arnold]
+- Merge pull request #92 from freepn/chk-version. [Steve Arnold]
+
+  - Add version checking/messages and shutdown for incompatible versions.
+  - Cleanup net scripts, switch to MASQ, remove extraneous ip cmd, fix verbose.
+  - Complete version check with do_shutdown, cleanup net scripts/msg daemons.
+  - Wire up version handling and reply for new announce msg format.
+  - README.rst: add install/upgrade notes and link to issue #88.
+  - README_release-notes_latest.rst: remove version number from filename.
+
+
 0.9.6 (2020-10-25)
 ------------------
 - Merge pull request #90 from freepn/wait-states. [Steve Arnold]
@@ -9,7 +36,6 @@
 Fixes de-wedging nodes who never route and makes us a little more tolerant
 of transient lookup errors (since route check relies on dns/https lookups
 over fpn0 tunnel).
-
 
 
 0.9.5 (2020-10-23)

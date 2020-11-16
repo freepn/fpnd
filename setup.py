@@ -57,7 +57,7 @@ setup(
     download_url=FPND_DOWNLOAD_URL,
     keywords=['freepn', 'vpn', 'p2p'],
     install_requires=[
-        'appdirs==1.4.1',
+        'appdirs==1.4.4',
         'diskcache==4.1.0',
         'datrie @ git+https://github.com/freepn/datrie@0.8.1#egg=datrie',
         'nanoservice @ git+https://github.com/freepn/nanoservice@0.7.2-2#egg=nanoservice',
