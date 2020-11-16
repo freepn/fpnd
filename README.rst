@@ -9,8 +9,9 @@
     :target: https://github.com/freepn/fpnd/releases
     :alt: GitHub tag (latest SemVer, including pre-release)
 
-.. image:: https://travis-ci.org/freepn/fpnd.svg?branch=master
-    :target: https://travis-ci.org/freepn/fpnd
+.. image:: https://img.shields.io/github/workflow/status/freepn/fpnd/ci
+    :target: https://github.com/freepn/fpnd/actions?query=workflow:ci
+    :alt: GitHub CI Build Status
 
 .. image:: https://img.shields.io/codecov/c/github/freepn/fpnd
     :target: https://codecov.io/gh/freepn/fpnd
