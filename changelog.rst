@@ -1,5 +1,10 @@
+================
+ fpnd Changelog
+================
+
+
 0.9.8 (2020-11-16)
-------------
+------------------
 - update appdirs version and install coverage for ci
 - README.rst: update build status for github ci. [Stephen L Arnold]
 - Merge pull request #94 from freepn/exp-init. [Steve Arnold]
@@ -90,7 +95,7 @@ over fpn0 tunnel).
 
 
 0.9.1 (2020-09-24)
------------------
+------------------
 - Merge pull request #75 from freepn/still-more-docs. [Steve Arnold]
 
   * Update release doc version/links, prep changelog, fix stubby example cfg.
