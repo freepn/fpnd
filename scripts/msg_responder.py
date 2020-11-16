@@ -114,7 +114,7 @@ def echo(ver_msg):
                 logger.info('Got valid node version: {}'.format(msg))
             else:
                 reply = make_version_msg(msg[0], 'UPGRADE_REQUIRED')
-                logger.error('Invalid version from host {} is: {} < {}'.format(node_data[msg[0]], msg, min_ver))
+                logger.error('Invalid version from host {} is: {} < {}'.format(node_data[msg[0]], msg[1], min_ver))
             return reply
         else:
             node_data = lookup_node_id(msg, tmp_q)
@@ -141,7 +141,7 @@ def get_node_cfg(msg):
         res = wait_for_cfg_msg(cfg_q, hold_q, reg_q, msg)
         logger.debug('hold_q size: {}'.format(len(list(hold_q))))
         if res:
-            logger.debug('Got cfg result: {}'.format(res))
+            logger.info('Got cfg result: {}'.format(res))
             return res
         else:
             logger.debug('Null result for ID: {}'.format(msg))
@@ -149,7 +149,7 @@ def get_node_cfg(msg):
     else:
         node_data = lookup_node_id(msg, tmp_q)
         if node_data:
-            logger.info('Bad cfg msg from host {} (node {})'.format(node_data[msg], msg))
+            logger.warning('Bad cfg msg from host {} (node {})'.format(node_data[msg], msg))
         else:
             logger.warning('Bad cfg msg: {}'.format(msg))
 
@@ -176,7 +176,7 @@ def offline(msg):
     else:
         node_data = lookup_node_id(msg, tmp_q)
         if node_data:
-            logger.info('Bad offline msg from host {} (node {})'.format(node_data[msg], msg))
+            logger.warning('Bad offline msg from host {} (node {})'.format(node_data[msg], msg))
         else:
             logger.warning('Bad offline msg: {}'.format(msg))
 
@@ -199,7 +199,7 @@ def wedged(msg):
     else:
         node_data = lookup_node_id(msg, tmp_q)
         if node_data:
-            logger.info('Bad wedged msg from host {} (node {})'.format(node_data[msg], msg))
+            logger.warning('Bad wedged msg from host {} (node {})'.format(node_data[msg], msg))
         else:
             logger.warning('Bad wedged msg: {}'.format(msg))
 

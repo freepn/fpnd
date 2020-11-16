@@ -109,11 +109,9 @@ following to install the software.
 Tested Linux distributions
 --------------------------
 
-We test mainly on Gentoo and Ubuntu LTS (Bionic and Focal).  We've also
-determined that 1) the default Python on Xenial lacks sufficient asyncio
-support, so will *not* work out-of-the-box, and 2) Groovy (and Kali Linux)
-now have an incompatible systemd version (so will not work until we have
-a fix released).
+We test mainly on Gentoo, Ubuntu LTS (Bionic, Focal, Groovy) and
+Kali Linux. However, the default Python on Xenial lacks sufficient
+asyncio support, so will *not* work out-of-the-box.
 
 Pre-install
 -----------
@@ -121,13 +119,17 @@ Pre-install
 Before you can install any FreePN packages, you'll need to add the required
 package repository or overlay.
 
-For all ubuntu series, make sure you have the ``gpg`` and ``add-apt-repository``
+For all Ubuntu series, make sure you have the ``gpg`` and ``add-apt-repository``
 commands installed and then add the PPA:
 
 ::
 
   $ sudo apt-get install -y software-properties-common
   $ sudo add-apt-repository -y -s ppa:nerdboy/embedded
+
+Note that on kali you will need to edit the file created under
+``/etc/apt/sources.list.d`` for the PPA and change the series name to
+``focal``, then run ``sudo apt-get update`` again.
 
 For Gentoo or derivatives based on `Portage`_, first install the portage
 overlay.
@@ -202,7 +204,7 @@ updates waiting (or at least when your package tree is getting stale).
 
 * Gentoo
 
-  - Use your proffered tools to keep the overlay synced and check for
+  - Use your preferred tools to keep the overlay synced and check for
     updates frequently; using the "live" ebuild is left as an exercise
     for the reader...
 
