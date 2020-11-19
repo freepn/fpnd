@@ -59,8 +59,8 @@ setup(
     install_requires=[
         'appdirs==1.4.4',
         'diskcache==4.1.0',
-        'datrie @ git+https://github.com/freepn/datrie@0.8.1#egg=datrie',
-        'nanoservice @ git+https://github.com/freepn/nanoservice@0.7.2-2#egg=nanoservice',
+        'datrie @ git+https://github.com/freepn/datrie@0.8.2-1#egg=datrie',
+        'nanoservice @ git+https://github.com/freepn/nanoservice@0.7.2-3#egg=nanoservice',
         'python-daemon @ git+https://github.com/freepn/python-daemon@0.2.3#egg=python-daemon',
         'schedule @ git+https://github.com/freepn/schedule@0.6.0-3#egg=schedule',
         'semver==2.13.0',

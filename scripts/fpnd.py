@@ -13,6 +13,7 @@ import functools
 import diskcache as dc
 from daemon import Daemon
 
+from node_tools import MemberNodeError
 from node_tools import __version__ as fpnd_version
 
 from node_tools.ctlr_funcs import gen_netobj_queue
