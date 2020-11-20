@@ -57,13 +57,13 @@ setup(
     download_url=FPND_DOWNLOAD_URL,
     keywords=['freepn', 'vpn', 'p2p'],
     install_requires=[
-        'appdirs==1.4.4',
-        'diskcache==4.1.0',
+        'appdirs @ git+https://github.com/ActiveState/appdirs@1.4.4#egg=appdirs',
+        'diskcache @ git+https://github.com/grantjenks/python-diskcache@v4.1.0#egg=diskcache',
         'datrie @ git+https://github.com/freepn/datrie@0.8.2-1#egg=datrie',
         'nanoservice @ git+https://github.com/freepn/nanoservice@0.7.2-3#egg=nanoservice',
         'python-daemon @ git+https://github.com/freepn/python-daemon@0.2.3#egg=python-daemon',
         'schedule @ git+https://github.com/freepn/schedule@0.6.0-3#egg=schedule',
-        'semver==2.13.0',
+        'semver @ git+https://github.com/python-semver/python-semver@2.13.0#egg=semver',
         'ztcli-async @ git+https://github.com/freepn/ztcli-async@0.0.7#egg=ztcli-async',
     ],
     classifiers=[
