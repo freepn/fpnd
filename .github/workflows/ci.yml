@@ -46,3 +46,6 @@ jobs:
       uses: codecov/codecov-action@v1
       with:
         env_vars: OS,PYTHON
+    - name: Deploy with tox
+      run: |
+        tox -e deploy
