@@ -123,9 +123,9 @@ def do_cleanup(path=None, addr=None):
         nets = ['fpn_id0', 'fpn_id1']
         ifaces = ['fpn0', 'fpn1']
 
+        put_state_msg('NONE')
         for iface, net in zip(ifaces, nets):
             if state[iface]:
-                put_state_msg('NONE')
                 logger.info('CLEANUP: shutting down {}'.format(iface))
                 cmd = get_net_cmds(path, iface)
                 res = do_net_cmd(cmd)
