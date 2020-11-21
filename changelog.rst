@@ -3,6 +3,26 @@
 ================
 
 
+0.9.10 (2020-11-20)
+-------------------
+- Bump version 0.9.9 -> 0.9.10. [Stephen L Arnold]
+- Merge pull request #97 from freepn/systemd-fixes. [Steve Arnold]
+- Add init fixes for ip6_tables to systemd/openrc and update release notes.
+
+  * closes issue #95 and removes cfg file install
+
+
+0.9.9 (2020-11-19)
+------------------
+- Bump version 0.9.8 -> 0.9.9 (fixes python dep resolution in deb pkg) [Stephen L Arnold]
+- Merge pull request #96 from freepn/check-deps. [Steve Arnold]
+
+  * setup.py: restore old requires urls, keep appdirs version
+  * Add bdist build/deploy check as final step.
+  * Run CI tests on both ubuntu targets.
+  * Setup.py: restore old requires urls, keep appdirs version.
+
+
 0.9.8 (2020-11-16)
 ------------------
 - update appdirs version and install coverage for ci
