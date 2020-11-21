@@ -34,8 +34,13 @@ depend() {
 }
 
 start_pre() {
+	if yesno "$drop_ip6" ; then
+		einfo "Making sure ip6_tables is loaded..."
+		modprobe -q ip6_tables
+	fi
+
 	if [ -e "${FPND_SOCK_DIR}/fpnd.state" ]; then
-		ewarn "Removing stale state file..."
+		einfo "Removing stale state file..."
 		rm -f "${FPND_SOCK_DIR}"/fpnd.state
 	fi
 

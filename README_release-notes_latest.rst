@@ -2,7 +2,7 @@
  Software Version Description for fpnd |Version|
 =================================================
 
-.. |Version| replace:: 0.9.8
+.. |Version| replace:: 0.9.10
 
 :date: |date|, |time| PST8PDT
 :author: Stephen L Arnold
@@ -128,7 +128,7 @@ least one or more places.
 For supported Linux distributions:
 
 * Ubuntu bionic, focal
-* Kali (other ubuntu derivatives should also work)
+* Kali (other ubuntu derivatives with recent Python3 should also work)
 
   + use the `PPA on Launchpad`_
 
@@ -327,9 +327,9 @@ run-time requirements also include a recent Linux kernel with ``bash``,
 
 When you type a "naked" domain into the URL bar in the format: xxx.com, it
 doesn't resolve / times out while trying to load, however https://xxx.com
-*does* resolve (clicking a link to https://xxx.com also resolves immediately.
+*does* resolve (clicking a link to https://xxx.com also resolves immediately).
 Modern browsers have a built-in "prediction" mechanism for "guessing"
-what to do; on www-client/firefox-81.0.1 it defaults to http with xxx.com
+what to do in this case; on firefox-81.0.1 it defaults to http with xxx.com
 but the prediction thing switches to https and adds a trailing slash if
 it recognizes/remembers the domain. From the browser side, the "fix" is
 basically using a plugin, eg, https-everywhere (as we don't have a fix
@@ -339,12 +339,12 @@ yet for the port 80 issue).
 
 The new setting to filter leaky IPv6 traffic depends on some additional
 kernel modules for the basic (ip6) iptables setup.  On at least some Ubuntu
-installs, the ip6tables module is not loaded automatically, so it needs to
-be added to a modules.conf file and placed in the ``/etc/modules-load.d/``
-directory (this is now installed by the latest ``fpnd`` packages for both
-Ubuntu series).  If you have any issues related to IPv6 you can optionally
-disable IPv6 filtering by setting ``drop_ip6`` to ``False`` in the settings
-file (``/etc/fpnd.ini`` on Ubuntu).
+installs, the ip6tables module is not loaded automatically. Earlier versions
+installed a modules.conf file into the ``/etc/modules-load.d/`` directory
+but that still allowed module errors without a reboot or manual ``modprobe``
+on the first start after package install. This is now fixed in the primary
+service files for Systemd and Openrc (so the modules.conf file is no longer
+installed by the .deb packages).  Issue #95 will be closed accordingly.
 
 * Erratic service file behavior with systemd >= 246
 
@@ -370,6 +370,7 @@ on Ubuntu and Kali have the required modules enabled (on Gentoo this is handled
 by checking for the required modules when building the package and issuing a
 warning to the user if necessary).
 
+.. _issue 91: https://github.com/freepn/fpnd/issues/95
 .. _issue 91: https://github.com/freepn/fpnd/issues/91
 .. _issue 39: https://github.com/freepn/fpnd/issues/39
 .. _issue 67: https://github.com/freepn/fpnd/issues/67
