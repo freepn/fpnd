@@ -20,6 +20,15 @@
 .. image:: https://img.shields.io/codeclimate/maintainability/freepn/fpnd
     :target: https://codeclimate.com/github/freepn/fpnd
 
+Announcements
+===========================
+
+7/31/21
+
+FreePN's infrastructure servers are currently offline.
+If you wish to use FreePN, you will need to configure your
+own infrastructure, as detailed in this repo's documentation.
+
 
 What FreePN is (and is not)
 ===========================
